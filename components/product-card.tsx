@@ -1,43 +1,16 @@
 'use client';
 
-import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useToast } from '@/components/ui/use-toast';
-import { formatPrice } from '@/lib/pricing';
-import { useCart } from '@/app/store/cart';
+
 import { ProductDTO } from '@/app/types/product';
+import { AddToCartButton } from '@/components/add-to-cart-button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { formatPrice } from '@/lib/pricing';
 
 type Props = { product: ProductDTO };
 
 export function ProductCard({ product }: Props) {
-  const addItem = useCart((s) => s.addItem);
-  const { toast } = useToast();
-  const [pending, startTransition] = React.useTransition();
-
-  const onAdd = () => {
-    startTransition(() => {
-      addItem(
-        {
-          productId: product.id,
-          priceId: product.priceId,
-          name: product.name,
-          image: product.image,
-          unitAmount: product.unitAmount,
-          currency: product.currency,
-        },
-        1,
-      );
-      toast({
-        title: 'Added to cart',
-        description: `${product.name} • ${formatPrice(product.unitAmount, product.currency)}`,
-      });
-    });
-  };
-
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground transition-shadow hover:shadow-lg">
       <Link href={`/products/${product.id}`} className="block">
@@ -71,10 +44,7 @@ export function ProductCard({ product }: Props) {
           >
             View details
           </Link>
-          <Button size="sm" disabled={pending} onClick={onAdd}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            {pending ? 'Adding…' : 'Add to cart'}
-          </Button>
+          <AddToCartButton product={product} size="sm" />
         </div>
       </div>
     </div>
