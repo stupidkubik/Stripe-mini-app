@@ -12,11 +12,16 @@ const mockState = {
   updateQty: vi.fn(),
   clear: vi.fn(),
   count: () => mockState.items.reduce((acc, item) => acc + item.quantity, 0),
-  total: () => mockState.items.reduce((acc, item) => acc + item.unitAmount * item.quantity, 0),
+  total: () =>
+    mockState.items.reduce(
+      (acc, item) => acc + item.unitAmount * item.quantity,
+      0,
+    ),
 };
 
 vi.mock("@/app/store/cart", () => ({
-  useCart: <T,>(selector: (state: typeof mockState) => T) => selector(mockState),
+  useCart: <T,>(selector: (state: typeof mockState) => T) =>
+    selector(mockState),
 }));
 
 vi.mock("@/lib/stripe-client", () => ({
@@ -35,7 +40,9 @@ describe("CartPageClient", () => {
     render(<CartPageClient />);
 
     expect(screen.getByText(/your cart is empty/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /browse products/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /browse products/i }),
+    ).toBeInTheDocument();
   });
 
   it("shows cart items and total", () => {

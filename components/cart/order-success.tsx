@@ -21,7 +21,9 @@ export default function OrderSuccess() {
       <div className="flex items-center gap-3">
         <CheckCircle2 className="h-10 w-10 text-primary" />
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Payment successful</h1>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            Payment successful
+          </h1>
           <p className="text-sm text-muted-foreground">
             Thank you for your purchase! We&apos;ve emailed you a confirmation.
           </p>

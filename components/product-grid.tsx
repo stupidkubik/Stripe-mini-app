@@ -1,5 +1,5 @@
-import { ProductDTO } from '../app/types/product';
-import { ProductCard, ProductCardSkeleton } from './product-card';
+import { ProductDTO } from "../app/types/product";
+import { ProductCard, ProductCardSkeleton } from "./product-card";
 
 export function ProductGrid({ products }: { products: ProductDTO[] }) {
   return (

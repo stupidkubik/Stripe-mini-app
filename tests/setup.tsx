@@ -12,7 +12,10 @@ vi.mock("next/image", () => ({
       <img
         {...rest}
         alt={alt ?? ""}
-        style={{ objectFit: "cover", ...(style as Record<string, unknown> | undefined) }}
+        style={{
+          objectFit: "cover",
+          ...(style as Record<string, unknown> | undefined),
+        }}
       />
     );
   },

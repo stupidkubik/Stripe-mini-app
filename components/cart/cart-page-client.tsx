@@ -63,7 +63,9 @@ export default function CartPageClient() {
       });
 
       if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
         throw new Error(payload?.error ?? "Failed to initiate checkout");
       }
 
@@ -74,7 +76,9 @@ export default function CartPageClient() {
 
       const stripe = await getStripePromise();
       if (!stripe) {
-        throw new Error("Stripe.js failed to load. Check your publishable key.");
+        throw new Error(
+          "Stripe.js failed to load. Check your publishable key.",
+        );
       }
 
       const { error } = await stripe.redirectToCheckout({ sessionId });
@@ -82,8 +86,13 @@ export default function CartPageClient() {
         throw new Error(error.message);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Checkout failed";
-      toast({ title: "Checkout error", description: message, variant: "destructive" });
+      const message =
+        error instanceof Error ? error.message : "Checkout failed";
+      toast({
+        title: "Checkout error",
+        description: message,
+        variant: "destructive",
+      });
       setCheckingOut(false);
     }
   };
@@ -94,7 +103,8 @@ export default function CartPageClient() {
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
           <p className="text-sm text-muted-foreground">
-            You haven&apos;t added anything yet. Discover products and come back when you&apos;re ready.
+            You haven&apos;t added anything yet. Discover products and come back
+            when you&apos;re ready.
           </p>
         </header>
 
@@ -115,7 +125,9 @@ export default function CartPageClient() {
     <section className="space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
-        <p className="text-sm text-muted-foreground">{count} item{count === 1 ? "" : "s"} ready for checkout.</p>
+        <p className="text-sm text-muted-foreground">
+          {count} item{count === 1 ? "" : "s"} ready for checkout.
+        </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
@@ -137,7 +149,9 @@ export default function CartPageClient() {
 
               <div className="flex flex-1 flex-col gap-3">
                 <div>
-                  <h2 className="text-base font-medium text-foreground sm:text-lg">{item.name}</h2>
+                  <h2 className="text-base font-medium text-foreground sm:text-lg">
+                    {item.name}
+                  </h2>
                   <p className="text-sm text-muted-foreground">
                     {formatPrice(item.unitAmount, item.currency)}
                   </p>
@@ -149,17 +163,23 @@ export default function CartPageClient() {
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
-                      onClick={() => handleDecrement(item.productId, item.quantity)}
+                      onClick={() =>
+                        handleDecrement(item.productId, item.quantity)
+                      }
                       aria-label="Decrease quantity"
                     >
                       <Minus className="h-4 w-4" />
                     </Button>
-                    <span className="px-3 text-sm font-medium">{item.quantity}</span>
+                    <span className="px-3 text-sm font-medium">
+                      {item.quantity}
+                    </span>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-7 w-7"
-                      onClick={() => handleIncrement(item.productId, item.quantity)}
+                      onClick={() =>
+                        handleIncrement(item.productId, item.quantity)
+                      }
                       aria-label="Increase quantity"
                       disabled={item.quantity >= MAX_QUANTITY}
                     >
@@ -190,7 +210,8 @@ export default function CartPageClient() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Taxes and shipping are calculated at checkout. Payments are processed securely via Stripe.
+            Taxes and shipping are calculated at checkout. Payments are
+            processed securely via Stripe.
           </p>
           <Button
             className="w-full"
@@ -200,11 +221,7 @@ export default function CartPageClient() {
           >
             {checkingOut ? "Redirecting…" : "Checkout"}
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full"
-            onClick={clear}
-          >
+          <Button variant="ghost" className="w-full" onClick={clear}>
             Clear cart
           </Button>
         </aside>

@@ -41,7 +41,9 @@ function normalizeProduct(
   };
 }
 
-async function resolvePrice(product: Stripe.Product): Promise<Stripe.Price | null> {
+async function resolvePrice(
+  product: Stripe.Product,
+): Promise<Stripe.Price | null> {
   const { default_price: defaultPrice } = product;
 
   if (defaultPrice && typeof defaultPrice !== "string") {
@@ -96,7 +98,9 @@ async function fetchStripeProducts(): Promise<ProductDTO[]> {
 
 export const listProducts = cache(fetchStripeProducts);
 
-async function fetchStripeProduct(productId: string): Promise<ProductDTO | null> {
+async function fetchStripeProduct(
+  productId: string,
+): Promise<ProductDTO | null> {
   try {
     const product = await stripe.products.retrieve(productId, {
       expand: ["default_price"],
@@ -113,7 +117,10 @@ async function fetchStripeProduct(productId: string): Promise<ProductDTO | null>
 
     return normalizeProduct(product, price);
   } catch (error) {
-    if (error instanceof Stripe.errors.StripeInvalidRequestError && error.code === "resource_missing") {
+    if (
+      error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.code === "resource_missing"
+    ) {
       return null;
     }
 

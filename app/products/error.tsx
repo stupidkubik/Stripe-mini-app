@@ -19,7 +19,8 @@ export default function ProductsError({
     <section className="space-y-4">
       <h1 className="text-2xl font-semibold">Unable to load products</h1>
       <p className="text-sm text-muted-foreground">
-        Something went wrong while fetching the catalog. Please try again in a moment.
+        Something went wrong while fetching the catalog. Please try again in a
+        moment.
       </p>
       <Button onClick={reset}>Retry</Button>
     </section>

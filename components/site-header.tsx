@@ -1,33 +1,32 @@
-'use client';
+"use client";
 
-import * as React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import ThemeToggle from './theme-toggle';
+import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu, ShoppingCart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import ThemeToggle from "./theme-toggle";
 
 const NAV = [
-  { href: '/', label: 'Home' },
-  { href: '/products', label: 'Products' },
-  { href: '/cart', label: 'Cart' },
+  { href: "/", label: "Home" },
+  { href: "/products", label: "Products" },
+  { href: "/cart", label: "Cart" },
 ];
 
 function NavLink({ href, label }: { href: string; label: string }) {
   const pathname = usePathname();
-  const active =
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <Link
       href={href}
       className={[
-        'text-sm px-2 py-1 rounded-md transition-colors',
+        "text-sm px-2 py-1 rounded-md transition-colors",
         active
-          ? 'text-foreground'
-          : 'text-muted-foreground hover:text-foreground',
-      ].join(' ')}
+          ? "text-foreground"
+          : "text-muted-foreground hover:text-foreground",
+      ].join(" ")}
     >
       {label}
     </Link>
@@ -41,7 +40,7 @@ function useCartCount() {
   React.useEffect(() => {
     const read = () => {
       try {
-        const raw = localStorage.getItem('cart');
+        const raw = localStorage.getItem("cart");
         if (!raw) return set(0);
         const items = JSON.parse(raw) as Array<{ quantity?: number }>;
         set(items.reduce((a, i) => a + (i.quantity ?? 1), 0));
@@ -51,10 +50,10 @@ function useCartCount() {
     };
     read();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'cart') read();
+      if (e.key === "cart") read();
     };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
   return count;
 }

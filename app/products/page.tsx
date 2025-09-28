@@ -1,5 +1,5 @@
-import { ProductGrid } from '@/components/product-grid';
-import { listProducts } from '@/lib/stripe';
+import { ProductGrid } from "@/components/product-grid";
+import { listProducts } from "@/lib/stripe";
 
 export const revalidate = 60;
 

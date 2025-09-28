@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/pricing";
 
-type AddToCartButtonProps = Omit<React.ComponentProps<typeof Button>, "onClick"> & {
+type AddToCartButtonProps = Omit<
+  React.ComponentProps<typeof Button>,
+  "onClick"
+> & {
   product: ProductDTO;
   quantity?: number;
   toastDescription?: string;
@@ -61,12 +64,12 @@ export function AddToCartButton({
     >
       {pending
         ? pendingLabel
-        : children ?? (
+        : (children ?? (
             <>
               <Plus className="mr-1.5 h-4 w-4" />
               Add to cart
             </>
-          )}
+          ))}
     </Button>
   );
 }

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
 
-import { ProductDTO } from '@/app/types/product';
-import { AddToCartButton } from '@/components/add-to-cart-button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { formatPrice } from '@/lib/pricing';
+import { ProductDTO } from "@/app/types/product";
+import { AddToCartButton } from "@/components/add-to-cart-button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { formatPrice } from "@/lib/pricing";
 
 type Props = { product: ProductDTO };
 
@@ -28,13 +28,15 @@ export function ProductCard({ product }: Props) {
       </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <div className="mb-1 line-clamp-1 text-sm text-muted-foreground">{product.name}</div>
+        <div className="mb-1 line-clamp-1 text-sm text-muted-foreground">
+          {product.name}
+        </div>
         <div className="mb-3 text-lg font-semibold">
           {formatPrice(product.unitAmount, product.currency)}
         </div>
 
         <p className="line-clamp-2 flex-1 text-sm text-muted-foreground">
-          {product.description || '—'}
+          {product.description || "—"}
         </p>
 
         <div className="mt-4 flex items-center justify-between gap-2">

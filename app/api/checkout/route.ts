@@ -10,7 +10,12 @@ type CheckoutItem = {
 
 function getOriginFromHeaders() {
   const headerList = headers();
-  return headerList.get("origin") ?? headerList.get("referer") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  return (
+    headerList.get("origin") ??
+    headerList.get("referer") ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://localhost:3000"
+  );
 }
 
 export async function POST(request: Request) {
@@ -18,10 +23,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { items?: CheckoutItem[] };
 
     if (!Array.isArray(body.items) || body.items.length === 0) {
-      return NextResponse.json(
-        { error: "Cart is empty" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
     const lineItems = body.items.map((item) => ({
