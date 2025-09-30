@@ -6,9 +6,9 @@ export default function SiteFooter() {
       <div className="container mx-auto px-4 py-10">
         <div className="grid gap-8 md:grid-cols-3">
           <div>
-            <div className="font-semibold">Mini Shop</div>
+            <div className="font-semibold">Verdant Lane</div>
             <p className="mt-2 text-sm text-muted-foreground">
-              A tiny Stripe-powered demo store. Clean UI/UX, real checkout.
+              A Stripe-powered greenhouse for your living room. Explore curated plants and real checkout flows.
             </p>
           </div>
 
@@ -51,14 +51,10 @@ export default function SiteFooter() {
         </div>
 
         <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t pt-6 text-sm text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} Mini Shop. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Verdant Lane. All rights reserved.</p>
           <p>
             Built with Next.js & Stripe •{" "}
-            <Link
-              className="hover:underline"
-              href="https://vercel.com"
-              target="_blank"
-            >
+            <Link className="hover:underline" href="https://vercel.com" target="_blank" rel="noreferrer">
               Deployed on Vercel
             </Link>
           </p>

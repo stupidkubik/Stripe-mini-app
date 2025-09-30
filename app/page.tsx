@@ -1,103 +1,159 @@
 import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+import { ProductGrid } from "@/components/product-grid";
+import { Button } from "@/components/ui/button";
+import { listProducts } from "@/lib/stripe";
+
+export const revalidate = 60;
+
+const FEATURED_ICONS = [
+  {
+    title: "Stripe-secured checkout",
+    description: "Run end-to-end payments in test mode, including 3D Secure flows.",
+    icon: "shield",
+  },
+  {
+    title: "Carefully sourced",
+    description: "Small-batch growers and sustainable greenhouses—no mass-market clones.",
+    icon: "sparkle",
+  },
+  {
+    title: "Delivered thriving",
+    description: "Climate-controlled packaging keeps foliage lush from nursery to doorstep.",
+    icon: "truck",
+  },
+];
+
+function FeatureIcon({ icon }: { icon: "shield" | "truck" | "sparkle" }) {
+  const className = "h-5 w-5 text-primary";
+  switch (icon) {
+    case "shield":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={className}
+          aria-hidden
+        >
+          <path d="M12 3 5 6v6c0 5 4 7 7 9 3-2 7-4 7-9V6l-7-3Z" />
+        </svg>
+      );
+    case "truck":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={className}
+          aria-hidden
+        >
+          <path d="M3 7a1 1 0 0 1 1-1h10v9H4a1 1 0 0 1-1-1V7Zm11 0h3l4 4v3a1 1 0 0 1-1 1h-6V7Z" />
+          <circle cx="7.5" cy="17.5" r="1.5" />
+          <circle cx="17.5" cy="17.5" r="1.5" />
+        </svg>
+      );
+    case "sparkle":
+      return (
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          className={className}
+          aria-hidden
+        >
+          <path d="M12 3v4m0 10v4m7-7h-4M9 12H5m13.5-6.5L16 8m-8 8-2.5 2.5M7.5 5.5 10 8m8 8 2.5 2.5" />
+        </svg>
+      );
+  }
+}
+
+export default async function HomePage() {
+  const products = await listProducts();
+  const featuredProducts = products.slice(0, 4);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="space-y-24">
+      <section className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+        <div className="space-y-8">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-medium text-primary">
+            <span className="inline-flex size-2 rounded-full bg-primary" aria-hidden />
+            Verdant Lane • Houseplant studio
+          </span>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          <div className="space-y-4">
+            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+              Bring calm, living greenery into any room
+            </h1>
+            <p className="text-pretty text-lg text-muted-foreground">
+              Verdant Lane curates resilient indoor plants, pots, and care kits. Explore the collection,
+              add favorites to your cart, and experience a production-grade Stripe checkout in minutes.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Button asChild size="lg" className="sm:min-w-[200px]">
+              <Link href="/products">Explore catalog</Link>
+            </Button>
+            <Button asChild variant="outline" className="sm:min-w-[160px]">
+              <Link href="/cart">View cart</Link>
+            </Button>
+          </div>
+
+          <dl className="grid gap-6 sm:grid-cols-3">
+            {FEATURED_ICONS.map((feature) => (
+              <div key={feature.title} className="rounded-2xl border bg-card p-4 shadow-sm">
+                <div className="flex items-center gap-3">
+                  <FeatureIcon icon={feature.icon} />
+                  <dt className="text-sm font-medium text-foreground">{feature.title}</dt>
+                </div>
+                <dd className="mt-3 text-sm text-muted-foreground">{feature.description}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
+
+        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border bg-muted">
           <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+            src="https://images.unsplash.com/photo-1459664018906-085c36f472af?auto=format&fit=crop&w=1600&q=80"
+            alt="Sunlit living room filled with houseplants"
+            fill
+            priority
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover"
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-white/70 p-4 text-xs text-muted-foreground backdrop-blur dark:border-white/10 dark:bg-black/40">
+            <p className="font-medium text-foreground">Real checkout, gentle onboarding</p>
+            <p>Add a plant to your cart, use Stripe test cards, and see the full fulfillment loop in action.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold tracking-tight">Featured foliage</h2>
+            <p className="text-sm text-muted-foreground">
+              Pulled straight from Stripe Products & Prices; refreshed every minute via ISR.
+            </p>
+          </div>
+          <Button asChild variant="ghost">
+            <Link href="/products">View all products</Link>
+          </Button>
+        </div>
+
+        {featuredProducts.length > 0 ? (
+          <ProductGrid products={featuredProducts} />
+        ) : (
+          <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+            No plants available yet. Seed your Stripe account and refresh to grow the collection.
+          </div>
+        )}
+      </section>
     </div>
   );
 }

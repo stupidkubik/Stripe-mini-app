@@ -16,8 +16,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Mini Shop",
-  description: "Stripe mini e-commerce demo",
+  title: "Verdant Lane",
+  description: "A Stripe-powered houseplant boutique",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  openGraph: {
+    title: "Verdant Lane — Houseplants with Stripe checkout",
+    description:
+      "Discover curated indoor plants and experience a full Stripe checkout flow in test mode.",
+    siteName: "Verdant Lane",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Verdant Lane",
+    description: "Curated indoor plants with Stripe checkout in Next.js",
+  },
 };
 
 export default function RootLayout({

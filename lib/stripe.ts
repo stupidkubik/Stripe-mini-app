@@ -20,7 +20,7 @@ export const stripe = new Stripe(STRIPE_SECRET_KEY, {
 });
 
 const FALLBACK_IMAGE =
-  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1200&q=80";
+  "https://images.unsplash.com/photo-1470163395405-d2b80e7450ed?auto=format&fit=crop&w=1200&q=80"; // lush houseplants arrangement
 
 function normalizeProduct(
   product: Stripe.Product,

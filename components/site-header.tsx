@@ -74,7 +74,7 @@ export default function SiteHeader() {
         {/* left: logo + nav */}
         <div className="flex items-center gap-3">
           <Link href="/" className="font-semibold tracking-tight">
-            Mini&nbsp;Shop
+            Verdant&nbsp;Lane
           </Link>
 
           <nav className="hidden md:flex items-center gap-1" aria-label="Main">
