@@ -1,15 +1,27 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 
-import { stripe } from "@/lib/stripe";
+import { z } from "zod";
 
-type CheckoutItem = {
-  priceId: string;
-  quantity?: number;
-};
+import { listProducts, stripe } from "@/lib/stripe";
 
-function getOriginFromHeaders() {
-  const headerList = headers();
+const checkoutItemSchema = z.object({
+  priceId: z.string().min(1, "priceId is required"),
+  quantity: z
+    .number()
+    .int()
+    .positive()
+    .max(10)
+    .default(1),
+});
+
+const requestSchema = z.object({
+  customerEmail: z.string().email().optional(),
+  items: z.array(checkoutItemSchema).min(1, "Cart is empty"),
+});
+
+async function getOriginFromHeaders() {
+  const headerList = await Promise.resolve(headers());
   return (
     headerList.get("origin") ??
     headerList.get("referer") ??
@@ -20,26 +32,69 @@ function getOriginFromHeaders() {
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { items?: CheckoutItem[] };
+    const json = await request.json().catch(() => null);
+    const parsed = requestSchema.safeParse(json);
 
-    if (!Array.isArray(body.items) || body.items.length === 0) {
+    if (!parsed.success) {
+      return NextResponse.json(
+        {
+          error: "Invalid checkout payload",
+          issues: parsed.error.issues.map((issue) => issue.message),
+        },
+        { status: 400 },
+      );
+    }
+
+    const products = await listProducts();
+    const allowedPrices = new Map(products.map((product) => [product.priceId, product]));
+
+    const lineItemsMap = new Map<string, number>();
+
+    for (const item of parsed.data.items) {
+      const product = allowedPrices.get(item.priceId);
+      if (!product) {
+        return NextResponse.json(
+          { error: "One of the items in your cart is no longer available." },
+          { status: 400 },
+        );
+      }
+
+      const current = lineItemsMap.get(item.priceId) ?? 0;
+      lineItemsMap.set(item.priceId, Math.min(current + item.quantity, 10));
+    }
+
+    if (lineItemsMap.size === 0) {
       return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
     }
 
-    const lineItems = body.items.map((item) => ({
-      price: item.priceId,
-      quantity: Math.max(1, Math.min(item.quantity ?? 1, 10)),
+    const lineItems = Array.from(lineItemsMap.entries()).map(([price, quantity]) => ({
+      price,
+      quantity,
+      adjustable_quantity: {
+        enabled: true,
+        minimum: 1,
+        maximum: 10,
+      },
     }));
 
-    const origin = getOriginFromHeaders();
+    const origin = await getOriginFromHeaders();
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: true },
       allow_promotion_codes: true,
+      customer_email: parsed.data.customerEmail,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/cart`,
+      cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
+      metadata: {
+        cart: JSON.stringify(
+          Array.from(lineItemsMap.entries()).map(([priceId, quantity]) => ({
+            priceId,
+            quantity,
+          })),
+        ),
+      },
     });
 
     return NextResponse.json({ sessionId: session.id });

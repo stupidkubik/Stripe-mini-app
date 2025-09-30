@@ -14,7 +14,7 @@ import { getStripePromise } from "@/lib/stripe-client";
 
 const checkoutSchema = z.object({
   email: z
-    .string({ required_error: "Email is required" })
+    .string()
     .trim()
     .min(1, "Email is required")
     .email("Enter a valid email address"),

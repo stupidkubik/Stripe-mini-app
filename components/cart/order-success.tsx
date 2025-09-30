@@ -6,8 +6,43 @@ import { CheckCircle2 } from "lucide-react";
 
 import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
+import { formatPrice } from "@/lib/pricing";
 
-export default function OrderSuccess() {
+type SuccessLineItem = {
+  id: string;
+  description: string;
+  quantity: number;
+  amountSubtotal?: number;
+  currency?: string;
+  image?: string | null;
+};
+
+type OrderSuccessProps = {
+  sessionId?: string;
+  amountTotal?: number | null;
+  currency?: string | null;
+  customerEmail?: string | null;
+  lineItems?: SuccessLineItem[];
+};
+
+function formatAmount(amount?: number | null, currency?: string | null) {
+  if (amount == null || currency == null) {
+    return null;
+  }
+  try {
+    return formatPrice(amount, currency.toUpperCase());
+  } catch {
+    return null;
+  }
+}
+
+export default function OrderSuccess({
+  sessionId,
+  amountTotal,
+  currency,
+  customerEmail,
+  lineItems,
+}: OrderSuccessProps) {
   const clear = useCart((state) => state.clear);
   const [cleared, setCleared] = React.useState(false);
 
@@ -15,6 +50,8 @@ export default function OrderSuccess() {
     clear();
     setCleared(true);
   }, [clear]);
+
+  const formattedTotal = formatAmount(amountTotal, currency);
 
   return (
     <section className="space-y-6">
@@ -29,6 +66,53 @@ export default function OrderSuccess() {
           </p>
         </div>
       </div>
+
+      {(customerEmail || formattedTotal || sessionId) && (
+        <div className="rounded-2xl border bg-card p-6 text-sm">
+          <ul className="space-y-2 text-muted-foreground">
+            {customerEmail && (
+              <li>
+                <span className="font-medium text-foreground">Receipt sent to:</span>{" "}
+                {customerEmail}
+              </li>
+            )}
+            {formattedTotal && (
+              <li>
+                <span className="font-medium text-foreground">Order total:</span>{" "}
+                {formattedTotal}
+              </li>
+            )}
+            {sessionId && (
+              <li>
+                <span className="font-medium text-foreground">Stripe session:</span>{" "}
+                <code className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                  {sessionId}
+                </code>
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {lineItems && lineItems.length > 0 && (
+        <div className="rounded-2xl border bg-card p-6">
+          <h2 className="text-base font-medium text-foreground">Items in this order</h2>
+          <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            {lineItems.map((item) => {
+              const subtotal = formatAmount(item.amountSubtotal, item.currency ?? currency);
+              return (
+                <li key={item.id} className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-foreground">{item.description}</div>
+                    <div className="text-xs">Quantity: {item.quantity}</div>
+                  </div>
+                  {subtotal && <div className="font-medium text-foreground">{subtotal}</div>}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
         <p>

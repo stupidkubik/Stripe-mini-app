@@ -64,21 +64,28 @@ export default function SiteHeader() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
-          <Link
-            href="/cart"
-            className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border hover:bg-accent"
-            aria-label="Open cart"
+          <Button
+            asChild
+            variant="outline"
+            size="icon"
+            className="relative h-10 w-10 rounded-full border-border/70 bg-background/80 p-0 hover:border-border hover:bg-accent/70"
           >
-            <ShoppingCart className="h-5 w-5" />
-            {cartCount > 0 && (
-              <span
-                aria-label={`${cartCount} items in cart`}
-                className="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full bg-primary px-1 text-[0.7rem] leading-5 text-primary-foreground"
-              >
-                {cartCount}
-              </span>
-            )}
-          </Link>
+            <Link
+              href="/cart"
+              aria-label="Open cart"
+              className="relative flex h-full w-full items-center justify-center"
+            >
+              <ShoppingCart className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span
+                  aria-label={`${cartCount} items in cart`}
+                  className="absolute -right-1.5 -top-1.5 flex h-[1.35rem] min-w-[1.35rem] items-center justify-center rounded-full bg-primary px-1 text-[0.75rem] font-medium text-primary-foreground shadow-sm"
+                >
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </Button>
 
           {/* mobile menu */}
           <div className="md:hidden">

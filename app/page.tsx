@@ -7,7 +7,9 @@ import { listProducts } from "@/lib/stripe";
 
 export const revalidate = 60;
 
-const FEATURED_ICONS = [
+type FeatureIconName = "shield" | "sparkle" | "truck";
+
+const FEATURED_ICONS: ReadonlyArray<{ title: string; description: string; icon: FeatureIconName }> = [
   {
     title: "Stripe-secured checkout",
     description: "Run end-to-end payments in test mode, including 3D Secure flows.",
@@ -25,7 +27,7 @@ const FEATURED_ICONS = [
   },
 ];
 
-function FeatureIcon({ icon }: { icon: "shield" | "truck" | "sparkle" }) {
+function FeatureIcon({ icon }: { icon: FeatureIconName }) {
   const className = "h-5 w-5 text-primary";
   switch (icon) {
     case "shield":
