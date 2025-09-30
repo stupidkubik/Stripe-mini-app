@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stripe Mini Shop
 
-## Getting Started
+![Unit Tests](https://img.shields.io/badge/tests-unit%20%E2%9C%85-0f172a?style=flat&logo=vitest)
+![Coverage](https://img.shields.io/badge/coverage-20%25-f59e0b?style=flat&logo=vitest)
+![E2E](https://img.shields.io/badge/tests-e2e%20ready-2b825d?style=flat&logo=playwright)
 
-First, run the development server:
+A compact, Stripe-powered storefront built with Next.js App Router, TypeScript, and Tailwind. It showcases product browsing, a persisted cart, theme switching, and a full Stripe Checkout flow.
+
+## Prerequisites
+
+- Node.js 18+
+- Stripe account (test mode) with API keys
+- Playwright browsers (`npx playwright install`)
+
+Create an `.env.local` with the required secrets:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Scripts
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js dev server with Turbopack |
+| `npm run build` | Build the production bundle |
+| `npm run start` | Serve the production build |
+| `npm run lint` | Run ESLint |
+| `npm run test:unit` | Execute Vitest unit tests |
+| `npm run test:unit:coverage` | Run unit tests with v8 coverage (HTML + json-summary) |
+| `npm run test:e2e` | Execute Playwright E2E tests |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Testing
 
-## Learn More
+### Unit tests & coverage
 
-To learn more about Next.js, take a look at the following resources:
+Vitest is configured in `vitest.config.ts` with jsdom, React Testing Library helpers, and v8 coverage reporters. Coverage artifacts are emitted to `/coverage` (HTML report at `coverage/index.html`, machine-readable summary at `coverage/coverage-summary.json`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run test:unit:coverage
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### End-to-end tests
 
-## Deploy on Vercel
+Playwright scenarios live in `tests/e2e` and cover critical UX flows (empty cart, cart persistence, success page, custom 404). The Playwright config starts the dev server automatically.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npx playwright install  # once
+npm run test:e2e
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> **Note:** the Playwright server binds to port 3000. Run the command in an environment that allows opening localhost ports (the sandboxed CLI may block it).
+
+Use `npx playwright show-report` to open the latest HTML report.
+
+## Misc
+
+- Stripe seeding scripts: `scripts/seed-stripe.ts`
+- Persisted cart storage key: `localStorage['cart']`
+- The custom 404 page is implemented in `app/not-found.tsx`

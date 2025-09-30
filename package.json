@@ -9,6 +9,7 @@
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:unit": "vitest",
+    "test:unit:coverage": "vitest --coverage",
     "format": "prettier -w ."
   },
   "dependencies": {
