@@ -1,12 +1,11 @@
 "use client";
-
-import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import ThemeToggle from "./theme-toggle";
+import { useCart } from "@/app/store/cart";
 
 const NAV = [
   { href: "/", label: "Home" },
@@ -33,33 +32,10 @@ function NavLink({ href, label }: { href: string; label: string }) {
   );
 }
 
-// Опциональная «автоподсветка» количества из localStorage('cart').
-// Если ещё нет стора — будет 0. Позже свяжешь с Zustand.
-function useCartCount() {
-  const [count, set] = React.useState(0);
-  React.useEffect(() => {
-    const read = () => {
-      try {
-        const raw = localStorage.getItem("cart");
-        if (!raw) return set(0);
-        const items = JSON.parse(raw) as Array<{ quantity?: number }>;
-        set(items.reduce((a, i) => a + (i.quantity ?? 1), 0));
-      } catch {
-        set(0);
-      }
-    };
-    read();
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "cart") read();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
-  return count;
-}
-
 export default function SiteHeader() {
-  const cartCount = useCartCount();
+  const cartCount = useCart((state) =>
+    state.items.reduce((total, item) => total + item.quantity, 0),
+  );
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">

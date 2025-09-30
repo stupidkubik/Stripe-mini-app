@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { AddToCartButton } from "@/components/add-to-cart-button";
 import { formatPrice } from "@/lib/pricing";
 import { getProduct, listProducts } from "@/lib/stripe";
+import { ProductPurchaseActions } from "@/components/product-purchase-actions";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -81,12 +81,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        <div className="mt-auto flex flex-col gap-3 sm:flex-row">
-          <AddToCartButton
-            product={product}
-            size="lg"
-            className="h-11 sm:h-12 sm:min-w-[200px]"
-          />
+        <div className="mt-auto">
+          <ProductPurchaseActions product={product} />
         </div>
       </div>
     </section>

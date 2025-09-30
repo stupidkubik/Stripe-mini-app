@@ -1,18 +1,15 @@
 "use client";
 
-import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/pricing";
-import { getStripePromise } from "@/lib/stripe-client";
-
-const MAX_QUANTITY = 10;
+import { QuantityInput } from "@/components/quantity-input";
+import { CheckoutForm } from "@/components/cart/checkout-form";
 
 export default function CartPageClient() {
   const items = useCart((state) => state.items);
@@ -22,80 +19,7 @@ export default function CartPageClient() {
   const total = useCart((state) => state.total());
   const count = useCart((state) => state.count());
 
-  const { toast } = useToast();
-  const [checkingOut, setCheckingOut] = React.useState(false);
-
   const currency = items[0]?.currency ?? "USD";
-
-  const handleDecrement = (productId: string, quantity: number) => {
-    if (quantity <= 1) {
-      removeItem(productId);
-      return;
-    }
-
-    updateQty(productId, quantity - 1);
-  };
-
-  const handleIncrement = (productId: string, quantity: number) => {
-    if (quantity >= MAX_QUANTITY) {
-      return;
-    }
-
-    updateQty(productId, quantity + 1);
-  };
-
-  const handleCheckout = async () => {
-    if (items.length === 0) {
-      return;
-    }
-
-    setCheckingOut(true);
-    try {
-      const response = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            priceId: item.priceId,
-            quantity: item.quantity,
-          })),
-        }),
-      });
-
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        throw new Error(payload?.error ?? "Failed to initiate checkout");
-      }
-
-      const { sessionId } = (await response.json()) as { sessionId?: string };
-      if (!sessionId) {
-        throw new Error("Stripe session could not be created");
-      }
-
-      const stripe = await getStripePromise();
-      if (!stripe) {
-        throw new Error(
-          "Stripe.js failed to load. Check your publishable key.",
-        );
-      }
-
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) {
-        throw new Error(error.message);
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Checkout failed";
-      toast({
-        title: "Checkout error",
-        description: message,
-        variant: "destructive",
-      });
-      setCheckingOut(false);
-    }
-  };
 
   if (items.length === 0) {
     return (
@@ -158,34 +82,11 @@ export default function CartPageClient() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                  <div className="inline-flex items-center rounded-full border bg-background px-2 py-1 text-sm">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        handleDecrement(item.productId, item.quantity)
-                      }
-                      aria-label="Decrease quantity"
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <span className="px-3 text-sm font-medium">
-                      {item.quantity}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={() =>
-                        handleIncrement(item.productId, item.quantity)
-                      }
-                      aria-label="Increase quantity"
-                      disabled={item.quantity >= MAX_QUANTITY}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <QuantityInput
+                    value={item.quantity}
+                    onChange={(qty) => updateQty(item.productId, qty)}
+                    aria-label={`Quantity for ${item.name}`}
+                  />
 
                   <Button
                     variant="ghost"
@@ -202,29 +103,12 @@ export default function CartPageClient() {
           ))}
         </div>
 
-        <aside className="space-y-4 rounded-2xl border bg-card p-6 text-sm">
-          <div className="flex items-center justify-between text-base text-foreground">
-            <span>Total</span>
-            <span className="text-lg font-semibold">
-              {formatPrice(total, currency)}
-            </span>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Taxes and shipping are calculated at checkout. Payments are
-            processed securely via Stripe.
-          </p>
-          <Button
-            className="w-full"
-            size="lg"
-            onClick={handleCheckout}
-            disabled={checkingOut}
-          >
-            {checkingOut ? "Redirecting…" : "Checkout"}
-          </Button>
-          <Button variant="ghost" className="w-full" onClick={clear}>
-            Clear cart
-          </Button>
-        </aside>
+        <CheckoutForm
+          items={items}
+          currency={currency}
+          total={total}
+          onClear={clear}
+        />
       </div>
     </section>
   );

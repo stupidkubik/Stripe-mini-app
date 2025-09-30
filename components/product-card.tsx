@@ -7,10 +7,31 @@ import { ProductDTO } from "@/app/types/product";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/pricing";
+import { QuantityInput } from "@/components/quantity-input";
+import { useCart } from "@/app/store/cart";
 
 type Props = { product: ProductDTO };
 
+const MAX_QUANTITY = 10;
+
 export function ProductCard({ product }: Props) {
+  const cartItem = useCart((state) =>
+    state.items.find((item) => item.productId === product.id),
+  );
+  const updateQty = useCart((state) => state.updateQty);
+  const removeItem = useCart((state) => state.removeItem);
+
+  const handleQuantityChange = (nextQuantity: number) => {
+    const clamped = Math.max(0, Math.min(nextQuantity, MAX_QUANTITY));
+
+    if (clamped === 0) {
+      removeItem(product.id);
+      return;
+    }
+
+    updateQty(product.id, clamped);
+  };
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground transition-shadow hover:shadow-lg">
       <Link href={`/products/${product.id}`} className="block">
@@ -46,7 +67,17 @@ export function ProductCard({ product }: Props) {
           >
             View details
           </Link>
-          <AddToCartButton product={product} size="sm" />
+          {cartItem ? (
+            <QuantityInput
+              value={cartItem.quantity}
+              onChange={handleQuantityChange}
+              min={0}
+              max={MAX_QUANTITY}
+              aria-label={`Quantity for ${product.name}`}
+            />
+          ) : (
+            <AddToCartButton product={product} size="sm" />
+          )}
         </div>
       </div>
     </div>
