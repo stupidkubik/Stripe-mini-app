@@ -1,57 +1,64 @@
 import Link from "next/link";
 
+const FOOTER_LINK_GROUPS = [
+  {
+    heading: "Shop",
+    links: [
+      { href: "/products", label: "Catalog" },
+      { href: "/cart", label: "Cart" },
+      { href: "/success", label: "Order success" },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { href: "/legal/terms", label: "Terms" },
+      { href: "/legal/privacy", label: "Privacy" },
+    ],
+  },
+];
+
 export default function SiteFooter() {
+  const currentYear = new Date().getFullYear();
+
   return (
     <footer className="border-t bg-background">
-      <div className="container mx-auto px-4 py-10">
-        <div className="grid gap-8 md:grid-cols-3">
-          <div>
-            <div className="font-semibold">Verdant Lane</div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              A Stripe-powered greenhouse for your living room. Explore curated plants and real checkout flows.
+      <div className="page-container py-12">
+        <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-sm space-y-3">
+            <Link href="/" className="text-lg font-semibold tracking-tight">
+              Verdant Lane
+            </Link>
+            <p className="text-sm text-muted-foreground">
+              A Stripe-powered greenhouse for your living room. Discover curated plants, manage your cart, and run the full checkout loop in minutes.
             </p>
+            <div className="text-sm text-muted-foreground">
+              Have a question? Email <a className="font-medium text-foreground underline-offset-4 hover:underline" href="mailto:support@verdantlane.dev">support@verdantlane.dev</a>
+            </div>
           </div>
 
-          <div>
-            <div className="mb-2 text-sm font-medium">Product</div>
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link className="hover:underline" href="/products">
-                  Catalog
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:underline" href="/cart">
-                  Cart
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:underline" href="/success">
-                  Order success
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="mb-2 text-sm font-medium">Legal</div>
-            <ul className="space-y-1 text-sm">
-              <li>
-                <Link className="hover:underline" href="/legal/terms">
-                  Terms
-                </Link>
-              </li>
-              <li>
-                <Link className="hover:underline" href="/legal/privacy">
-                  Privacy
-                </Link>
-              </li>
-            </ul>
-          </div>
+          <nav className="grid gap-8 sm:grid-cols-2" aria-label="Footer">
+            {FOOTER_LINK_GROUPS.map((group) => (
+              <div key={group.heading} className="space-y-3">
+                <div className="text-sm font-medium tracking-wide text-foreground">
+                  {group.heading}
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link className="transition-colors hover:text-foreground" href={link.href}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
         </div>
 
-        <div className="mt-8 flex flex-col items-start justify-between gap-4 border-t pt-6 text-sm text-muted-foreground md:flex-row">
-          <p>© {new Date().getFullYear()} Verdant Lane. All rights reserved.</p>
+        <div className="mt-10 flex flex-col gap-3 border-t pt-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+          <p>© {currentYear} Verdant Lane. All rights reserved.</p>
           <p>
             Built with Next.js & Stripe •{" "}
             <Link className="hover:underline" href="https://vercel.com" target="_blank" rel="noreferrer">

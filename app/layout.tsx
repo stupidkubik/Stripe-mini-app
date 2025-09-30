@@ -44,7 +44,7 @@ export default function RootLayout({
       >
         <Providers>
           <SiteHeader />
-          <main id="content" className="container mx-auto px-4 py-8">
+          <main id="content" className="page-container py-8">
             {children}
           </main>
           <SiteFooter />

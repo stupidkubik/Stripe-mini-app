@@ -48,11 +48,11 @@ export function ProductCard({ product }: Props) {
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-4">
+      <div className="flex flex-1 flex-col p-3 sm:p-4">
         <div className="mb-1 line-clamp-1 text-sm text-muted-foreground">
           {product.name}
         </div>
-        <div className="mb-3 text-lg font-semibold">
+        <div className="mb-2 text-lg sm:mb-3 font-semibold">
           {formatPrice(product.unitAmount, product.currency)}
         </div>
 
@@ -60,7 +60,7 @@ export function ProductCard({ product }: Props) {
           {product.description || "—"}
         </p>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2">
           <Link
             href={`/products/${product.id}`}
             className="text-sm text-primary underline-offset-4 hover:underline"

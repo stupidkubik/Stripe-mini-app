@@ -54,7 +54,7 @@ export default function OrderSuccess({
   const formattedTotal = formatAmount(amountTotal, currency);
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-5 sm:space-y-6">
       <div className="flex items-center gap-3">
         <CheckCircle2 className="h-10 w-10 text-primary" />
         <div>
@@ -68,7 +68,7 @@ export default function OrderSuccess({
       </div>
 
       {(customerEmail || formattedTotal || sessionId) && (
-        <div className="rounded-2xl border bg-card p-6 text-sm">
+        <div className="rounded-2xl border bg-card p-5 text-sm sm:p-6">
           <ul className="space-y-2 text-muted-foreground">
             {customerEmail && (
               <li>
@@ -95,9 +95,9 @@ export default function OrderSuccess({
       )}
 
       {lineItems && lineItems.length > 0 && (
-        <div className="rounded-2xl border bg-card p-6">
+        <div className="rounded-2xl border bg-card p-5 sm:p-6">
           <h2 className="text-base font-medium text-foreground">Items in this order</h2>
-          <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+          <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
             {lineItems.map((item) => {
               const subtotal = formatAmount(item.amountSubtotal, item.currency ?? currency);
               return (
@@ -114,7 +114,7 @@ export default function OrderSuccess({
         </div>
       )}
 
-      <div className="rounded-2xl border bg-card p-6 text-sm text-muted-foreground">
+      <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground sm:p-6">
         <p>
           {cleared
             ? "Your cart has been cleared. Feel free to continue browsing for more products."

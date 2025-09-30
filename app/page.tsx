@@ -79,19 +79,19 @@ export default async function HomePage() {
   const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="space-y-24">
-      <section className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
-        <div className="space-y-8">
+    <div className="space-y-16 sm:space-y-24">
+      <section className="grid gap-8 sm:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+        <div className="space-y-6 sm:space-y-8">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-medium text-primary">
             <span className="inline-flex size-2 rounded-full bg-primary" aria-hidden />
             Verdant Lane • Houseplant studio
           </span>
 
-          <div className="space-y-4">
-            <h1 className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+          <div className="space-y-3 sm:space-y-4">
+            <h1 className="text-balance text-[2.25rem] font-semibold tracking-tight sm:text-5xl">
               Bring calm, living greenery into any room
             </h1>
-            <p className="text-pretty text-lg text-muted-foreground">
+            <p className="text-pretty text-base text-muted-foreground sm:text-lg">
               Verdant Lane curates resilient indoor plants, pots, and care kits. Explore the collection,
               add favorites to your cart, and experience a production-grade Stripe checkout in minutes.
             </p>
@@ -106,7 +106,7 @@ export default async function HomePage() {
             </Button>
           </div>
 
-          <dl className="grid gap-6 sm:grid-cols-3">
+          <dl className="grid gap-4 sm:gap-6 sm:grid-cols-3">
             {FEATURED_ICONS.map((feature) => (
               <div key={feature.title} className="rounded-2xl border bg-card p-4 shadow-sm">
                 <div className="flex items-center gap-3">
@@ -135,8 +135,8 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      <section className="space-y-5 sm:space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
             <h2 className="text-2xl font-semibold tracking-tight">Featured foliage</h2>
             <p className="text-sm text-muted-foreground">

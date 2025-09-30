@@ -3,7 +3,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import ThemeToggle from "./theme-toggle";
 import { useCart } from "@/app/store/cart";
 
@@ -46,9 +51,47 @@ export default function SiteHeader() {
         Skip to content
       </a>
 
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        {/* left: logo + nav */}
-        <div className="flex items-center gap-3">
+      <div className="page-container flex h-14 items-center gap-2 md:gap-3">
+        <div className="flex flex-1 items-center gap-2 md:gap-3">
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 md:hidden"
+                aria-label="Open navigation menu"
+              >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Open navigation menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-72 px-4"
+              aria-labelledby="mobile-navigation-title"
+            >
+              <SheetTitle className="sr-only" id="mobile-navigation-title">
+                Mobile navigation
+              </SheetTitle>
+
+              <nav className="mt-4 flex flex-col gap-2" aria-label="Mobile">
+                {NAV.map((n) => (
+                  <Link
+                    key={n.href}
+                    href={n.href}
+                    className="rounded-md px-2 py-2 text-sm hover:bg-accent"
+                  >
+                    {n.label}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="pt-3">
+                <ThemeToggle />
+              </div>
+            </SheetContent>
+          </Sheet>
+
           <Link href="/" className="font-semibold tracking-tight">
             Verdant&nbsp;Lane
           </Link>
@@ -60,7 +103,6 @@ export default function SiteHeader() {
           </nav>
         </div>
 
-        {/* right: actions */}
         <div className="flex items-center gap-2">
           <ThemeToggle />
 
@@ -68,7 +110,7 @@ export default function SiteHeader() {
             asChild
             variant="outline"
             size="icon"
-            className="relative h-10 w-10 rounded-full border-border/70 bg-background/80 p-0 hover:border-border hover:bg-accent/70"
+            className="relative h-10 w-10 overflow-hidden rounded-full border-border/60 bg-background/90 p-0 shadow-sm transition hover:border-border hover:bg-accent/70 focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <Link
               href="/cart"
@@ -79,40 +121,13 @@ export default function SiteHeader() {
               {cartCount > 0 && (
                 <span
                   aria-label={`${cartCount} items in cart`}
-                  className="absolute -right-1.5 -top-1.5 flex h-[1.35rem] min-w-[1.35rem] items-center justify-center rounded-full bg-primary px-1 text-[0.75rem] font-medium text-primary-foreground shadow-sm"
+                  className="absolute top-0 right-0 flex h-5 min-w-[1.25rem] -translate-y-1/3 translate-x-1/3 items-center justify-center rounded-full bg-primary px-1 text-[0.7rem] font-semibold text-primary-foreground shadow-sm"
                 >
                   {cartCount}
                 </span>
               )}
             </Link>
           </Button>
-
-          {/* mobile menu */}
-          <div className="md:hidden">
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72">
-                <div className="mt-4 flex flex-col gap-2">
-                  {NAV.map((n) => (
-                    <Link
-                      key={n.href}
-                      href={n.href}
-                      className="rounded-md px-2 py-2 text-sm hover:bg-accent"
-                    >
-                      {n.label}
-                    </Link>
-                  ))}
-                  <div className="pt-2">
-                    <ThemeToggle />
-                  </div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
         </div>
       </div>
     </header>

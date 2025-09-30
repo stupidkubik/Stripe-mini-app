@@ -23,7 +23,7 @@ export default function CartPageClient() {
 
   if (items.length === 0) {
     return (
-      <section className="space-y-6">
+      <section className="space-y-5 sm:space-y-6">
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
           <p className="text-sm text-muted-foreground">
@@ -46,7 +46,7 @@ export default function CartPageClient() {
   }
 
   return (
-    <section className="space-y-8">
+    <section className="space-y-6 sm:space-y-8">
       <header className="space-y-2">
         <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
         <p className="text-sm text-muted-foreground">
@@ -54,14 +54,14 @@ export default function CartPageClient() {
         </p>
       </header>
 
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className="space-y-4">
+      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <div className="space-y-3 sm:space-y-4">
           {items.map((item) => (
             <div
               key={item.productId}
               className="flex flex-col gap-4 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center"
             >
-              <div className="relative h-28 w-full overflow-hidden rounded-xl bg-muted sm:h-32 sm:w-32">
+              <div className="relative h-24 w-full overflow-hidden rounded-xl bg-muted sm:h-32 sm:w-32">
                 <Image
                   src={item.image}
                   alt={item.name}
@@ -71,7 +71,7 @@ export default function CartPageClient() {
                 />
               </div>
 
-              <div className="flex flex-1 flex-col gap-3">
+              <div className="flex flex-1 flex-col gap-2.5 sm:gap-3">
                 <div>
                   <h2 className="text-base font-medium text-foreground sm:text-lg">
                     {item.name}

@@ -36,8 +36,8 @@ export default async function CancelPage({ searchParams }: CancelPageProps) {
   }
 
   return (
-    <main className="container mx-auto flex min-h-[60vh] flex-col justify-center gap-6 px-4 py-16 text-center">
-      <div className="space-y-3">
+    <main className="page-container flex min-h-[60vh] flex-col justify-center gap-5 py-14 text-center sm:gap-6 sm:py-16">
+      <div className="space-y-3 sm:space-y-4">
         <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-medium text-primary">
           <span className="inline-flex size-2 rounded-full bg-primary" aria-hidden />
           Checkout cancelled

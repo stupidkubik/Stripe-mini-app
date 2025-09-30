@@ -46,8 +46,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
   }
 
   return (
-    <section className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border bg-muted">
+    <section className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border bg-muted sm:aspect-square">
         <Image
           src={product.image}
           alt={product.name}
@@ -57,8 +57,8 @@ export default async function ProductDetailPage({ params }: PageProps) {
         />
       </div>
 
-      <div className="flex flex-col gap-6">
-        <div className="space-y-3">
+      <div className="flex flex-col gap-5 sm:gap-6">
+        <div className="space-y-2.5 sm:space-y-3">
           <Link
             href="/products"
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
@@ -73,7 +73,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           </p>
         </div>
 
-        <div className="space-y-4 text-sm text-muted-foreground sm:text-base">
+        <div className="space-y-3 text-sm text-muted-foreground sm:space-y-4 sm:text-base">
           {product.description ? (
             <p>{product.description}</p>
           ) : (

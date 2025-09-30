@@ -106,10 +106,10 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-4 rounded-2xl border bg-card p-6 text-sm shadow-sm"
+      className="space-y-3.5 sm:space-y-4 rounded-2xl border bg-card p-5 text-sm shadow-sm sm:p-6"
       noValidate
     >
-      <div className="flex items-center justify-between text-base text-foreground">
+      <div className="flex items-center justify-between text-sm font-medium text-foreground sm:text-base">
         <span>Total</span>
         <span className="text-lg font-semibold">{formatPrice(total, currency)}</span>
       </div>
