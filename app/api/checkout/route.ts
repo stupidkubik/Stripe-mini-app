@@ -18,14 +18,30 @@ const checkoutItemSchema = z.object({
 const requestSchema = z.object({
   customerEmail: z.string().email().optional(),
   items: z.array(checkoutItemSchema).min(1, "Cart is empty"),
+  promotionCode: z.string().trim().max(64).optional(),
 });
+
+async function lookupPromotionCode(code: string) {
+  try {
+    const result = await stripe.promotionCodes.list({
+      code,
+      active: true,
+      limit: 1,
+    });
+
+    return result.data[0] ?? null;
+  } catch (error) {
+    console.error(`Failed to lookup promotion code ${code}`, error);
+    throw error;
+  }
+}
 
 async function getOriginFromHeaders() {
   const headerList = await Promise.resolve(headers());
   return (
     headerList.get("origin") ??
     headerList.get("referer") ??
-    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
     "http://localhost:3000"
   );
 }
@@ -79,22 +95,53 @@ export async function POST(request: Request) {
 
     const origin = await getOriginFromHeaders();
 
+    let promotionCodeId: string | undefined;
+
+    if (parsed.data.promotionCode) {
+      const code = parsed.data.promotionCode.trim();
+      if (code.length > 0) {
+        try {
+          const promotion = await lookupPromotionCode(code);
+          if (!promotion) {
+            return NextResponse.json(
+              { error: "Promo code is invalid or inactive." },
+              { status: 400 },
+            );
+          }
+          promotionCodeId = promotion.id;
+        } catch (error) {
+          console.error(`Failed to apply promo code ${code}`, error);
+          return NextResponse.json(
+            { error: "Unable to apply promo code. Please try again." },
+            { status: 500 },
+          );
+        }
+      }
+    }
+
+    const metadata: Record<string, string> = {
+      cart: JSON.stringify(
+        Array.from(lineItemsMap.entries()).map(([priceId, quantity]) => ({
+          priceId,
+          quantity,
+        })),
+      ),
+    };
+
+    if (parsed.data.promotionCode) {
+      metadata.promotion_code = parsed.data.promotionCode;
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: true },
       allow_promotion_codes: true,
+      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
       customer_email: parsed.data.customerEmail,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
-      metadata: {
-        cart: JSON.stringify(
-          Array.from(lineItemsMap.entries()).map(([priceId, quantity]) => ({
-            priceId,
-            quantity,
-          })),
-        ),
-      },
+      metadata,
     });
 
     return NextResponse.json({ sessionId: session.id });

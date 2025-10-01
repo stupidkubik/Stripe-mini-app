@@ -118,6 +118,16 @@
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+    background-image:
+      radial-gradient(600px circle at 15% 20%, color-mix(in oklab, var(--primary) 35%, transparent), transparent 62%),
+      radial-gradient(480px circle at 85% 10%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 65%),
+      radial-gradient(420px circle at 20% 85%, color-mix(in oklab, var(--muted) 15%, transparent), transparent 66%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  a {
+    @apply transition-colors duration-200;
   }
 }
 

@@ -4,6 +4,7 @@ import { z } from "zod";
 import type Stripe from "stripe";
 
 import OrderSuccess from "@/components/cart/order-success";
+import { getPaymentEvents } from "@/lib/payment-events";
 import { stripe } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
@@ -66,6 +67,12 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     }
 
     const lineItems = normalizeLineItems(session);
+    const paymentIntentId =
+      typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+    const paymentEvents = getPaymentEvents({
+      sessionId: session.id,
+      paymentIntentId,
+    });
 
     return (
       <OrderSuccess
@@ -74,6 +81,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
         currency={session.currency}
         customerEmail={session.customer_details?.email}
         lineItems={lineItems}
+        paymentEvents={paymentEvents}
       />
     );
   } catch (error) {

@@ -51,12 +51,12 @@ export function QuantityInput({
   };
 
   return (
-    <div className="inline-flex items-center rounded-full border bg-background/80 px-1 py-1 text-xs sm:text-sm shadow-sm">
+    <div className="inline-flex items-center rounded-full border border-border/60 bg-background/70 px-1 py-1 text-xs shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-primary/40 hover:shadow-md sm:text-sm">
       <Button
         type="button"
         variant="ghost"
         size="icon"
-        className="h-8 w-8 rounded-full"
+        className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
         onClick={() => handleSet(value - 1)}
         disabled={disabled || value <= min}
         aria-label="Decrease quantity"
@@ -70,7 +70,7 @@ export function QuantityInput({
         onBlur={handleBlur}
         inputMode="numeric"
         pattern="[0-9]*"
-        className="h-8 w-11 border-0 bg-transparent px-0 text-center text-xs font-medium sm:w-12 sm:text-sm focus-visible:ring-0"
+        className="h-8 w-11 border-0 bg-transparent px-0 text-center text-xs font-semibold tracking-wide sm:w-12 sm:text-sm focus-visible:ring-0"
         aria-label={ariaLabel}
         disabled={disabled}
       />
@@ -78,7 +78,7 @@ export function QuantityInput({
         type="button"
         variant="ghost"
         size="icon"
-        className="h-8 w-8 rounded-full"
+        className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground"
         onClick={() => handleSet(value + 1)}
         disabled={disabled || value >= max}
         aria-label="Increase quantity"

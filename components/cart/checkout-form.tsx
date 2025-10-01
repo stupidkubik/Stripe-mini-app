@@ -18,6 +18,11 @@ const checkoutSchema = z.object({
     .trim()
     .min(1, "Email is required")
     .email("Enter a valid email address"),
+  promoCode: z
+    .string()
+    .trim()
+    .max(64, "Promo code is too long")
+    .optional(),
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
@@ -32,6 +37,9 @@ type CheckoutFormProps = {
 export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormProps) {
   const { toast } = useToast();
   const [formError, setFormError] = React.useState<string | null>(null);
+  const helperId = "checkout-email-helper";
+  const errorId = "checkout-email-error";
+  const promoHelperId = "checkout-promo-helper";
 
   const {
     register,
@@ -41,6 +49,7 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
       email: "",
+      promoCode: "",
     },
   });
 
@@ -56,6 +65,9 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
 
     setFormError(null);
 
+    const promotionCode = values.promoCode?.trim();
+    const normalizedPromotionCode = promotionCode ? promotionCode.toUpperCase() : undefined;
+
     try {
       const response = await fetch("/api/checkout", {
         method: "POST",
@@ -66,6 +78,7 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
             priceId: item.priceId,
             quantity: item.quantity,
           })),
+          promotionCode: normalizedPromotionCode,
         }),
       });
 
@@ -113,7 +126,7 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
         <span>Total</span>
         <span className="text-lg font-semibold">{formatPrice(total, currency)}</span>
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p id={helperId} className="text-xs text-muted-foreground">
         Taxes and shipping are calculated at checkout. Payments are processed securely via Stripe.
       </p>
 
@@ -127,14 +140,39 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
           autoComplete="email"
           placeholder="you@example.com"
           aria-invalid={errors.email ? "true" : "false"}
+          aria-describedby={errors.email ? `${helperId} ${errorId}` : helperId}
           {...register("email")}
         />
         {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
+          <p id={errorId} role="alert" className="text-xs text-destructive">
+            {errors.email.message}
+          </p>
         )}
       </div>
 
-      {formError && <p className="text-xs text-destructive">{formError}</p>}
+      <div className="space-y-2">
+        <label htmlFor="checkout-promo" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Promo code (optional)
+        </label>
+        <Input
+          id="checkout-promo"
+          type="text"
+          inputMode="text"
+          placeholder="SUMMER25"
+          autoComplete="off"
+          aria-describedby={promoHelperId}
+          {...register("promoCode")}
+        />
+        <p id={promoHelperId} className="text-xs text-muted-foreground">
+          Enter an active Stripe promotion code to apply it at checkout.
+        </p>
+      </div>
+
+      {formError && (
+        <p role="alert" className="text-xs text-destructive" aria-live="polite">
+          {formError}
+        </p>
+      )}
 
       <Button
         type="submit"

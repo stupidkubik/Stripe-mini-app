@@ -4,67 +4,93 @@
 ![Coverage](https://img.shields.io/badge/coverage-18%25-f59e0b?style=flat&logo=vitest)
 ![E2E](https://img.shields.io/badge/tests-e2e%20ready-2b825d?style=flat&logo=playwright)
 
-A compact, Stripe-powered storefront built with Next.js App Router, TypeScript, and Tailwind. It showcases product browsing, a persisted cart, theme switching, and a full Stripe Checkout flow.
+Verdant Lane is a compact e-commerce demo that connects a polished Next.js App Router UI to real Stripe data. It covers the full journey from catalog browsing and an accessible cart to promo-code aware Checkout, webhooks, and a success timeline.
 
-## Prerequisites
+---
 
-- Node.js 18+
-- Stripe account (test mode) with API keys
-- Playwright browsers (`npx playwright install`)
+## ✨ Features
+- Live product catalog and detail pages rendered from Stripe Products/Prices with ISR caching.
+- Persisted cart (Zustand) with quantity controls, toast feedback, theme toggle, and keyboard-friendly interactions.
+- Stripe Checkout session creator that validates price IDs, enforces quantity limits, and applies promotion codes server-side.
+- Webhook handler that verifies Stripe signatures, records `payment_succeeded` / `payment_failed` events, and surfaces them on the `/success` page.
+- SEO upgrades: dynamic Open Graph image generator, canonical metadata, Twitter cards, and auto-generated `sitemap.xml` + `robots.txt`.
+- Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
 
-Create an `.env.local` with the required secrets:
+## 🛠 Tech Stack
+- **Framework**: Next.js 15 App Router, React 19, TypeScript.
+- **Styling/UI**: Tailwind CSS 4, shadcn/ui primitives, lucide icons.
+- **State & Forms**: Zustand (persisted cart), React Hook Form + Zod validation.
+- **Payments**: Stripe Node SDK, Stripe.js, Stripe Webhooks (Edge friendly).
+- **Tooling**: ESLint, Prettier, Vitest, React Testing Library, Playwright, Stripe CLI (for webhooks/seed scripts).
 
+## 🚀 Getting Started
+### 1. Install dependencies
+```bash
+npm install
+```
+
+### 2. Configure environment variables
+Create `.env.local` (Next.js loads it automatically):
 ```bash
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
+> `NEXT_PUBLIC_SITE_URL` is also used as the fallback origin when creating Stripe Checkout sessions.
 
-## Scripts
+Optional: seed test products via the helper script.
+```bash
+npm run ts-node scripts/seed-stripe.ts
+```
 
+### 3. Run the app
+```bash
+npm run dev
+```
+Visit http://localhost:3000 and add products to your cart.
+
+### 4. Wire up Stripe webhooks
+Use the Stripe CLI to forward events and capture the signing secret:
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
+```
+Copy the printed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`.
+
+### 5. Promotion codes
+Create active promotion codes in your Stripe dashboard. Visitors can enter them in the cart; the API verifies the code before attaching it to the Checkout session, while still letting Stripe’s hosted page accept additional codes.
+
+## ✅ Testing
 | Command | Description |
 | --- | --- |
-| `npm run dev` | Start the Next.js dev server with Turbopack |
-| `npm run build` | Build the production bundle |
-| `npm run start` | Serve the production build |
-| `npm run lint` | Run ESLint |
-| `npm run test:unit` | Execute Vitest unit tests |
-| `npm run test:unit:coverage` | Run unit tests with v8 coverage (HTML + json-summary) |
-| `npm run test:e2e` | Execute Playwright E2E tests |
+| `npm run lint` | ESLint rules (TypeScript-aware) |
+| `npm run test:unit` | Vitest + React Testing Library |
+| `npm run test:unit:coverage` | Vitest with v8 coverage reports |
+| `npm run test:e2e` | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
-## Testing
+Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
 
-### Unit tests & coverage
+## 📁 Key Paths
+| Path | Purpose |
+| --- | --- |
+| `app/api/checkout/route.ts` | Creates Checkout sessions, validates carts, applies promo codes |
+| `app/api/stripe/webhook/route.ts` | Verifies webhook signatures and logs payment status events |
+| `lib/payment-events.ts` | In-memory store for payment timeline data used on `/success` |
+| `app/opengraph-image.tsx` | Dynamic Open Graph preview generator |
+| `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data |
+| `components/cart/**/*` | Cart UI, checkout form, and success summary |
 
-Vitest is configured in `vitest.config.ts` with jsdom, React Testing Library helpers, and v8 coverage reporters. Coverage artifacts are emitted to `/coverage` (HTML report at `coverage/index.html`, machine-readable summary at `coverage/coverage-summary.json`).
+## ⚠️ Limitations & Notes
+- The payment event log is in-memory; it resets on server restarts and is intended as a demo.
+- There is no dedicated database—order metadata lives in Stripe, and cart state persists in the browser via localStorage.
+- Product data is cached via Next.js ISR; adding/removing Stripe products may require revalidation or a redeploy to appear instantly.
+- Ensure your Stripe test mode has products, prices, and promotion codes before running E2E flows.
 
-```bash
-npm run test:unit:coverage
-```
+## 📦 Deployment
+Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`).
 
-### End-to-end tests
+Use the Stripe CLI or dashboard to point webhooks at the deployed URL (e.g., `https://yourdomain.com/api/stripe/webhook`).
 
-Playwright scenarios live in `tests/e2e` and cover critical UX flows (empty cart, cart persistence, success page, custom 404). The Playwright config starts the dev server automatically.
+---
 
-```bash
-npx playwright install  # once
-npm run test:e2e
-```
-
-> **Note:** the Playwright server binds to port 3000. Run the command in an environment that allows opening localhost ports (the sandboxed CLI may block it).
-
-Use `npx playwright show-report` to open the latest HTML report.
-
-### Stripe Test Mode checkout
-
-1. Seed products/prices (see `scripts/seed-stripe.ts`) or create them manually in the Stripe dashboard.
-2. Start the app (`npm run dev`) and add items to your cart.
-3. Enter a test email on the cart page and press **Proceed to checkout**.
-4. Complete the hosted checkout with any Stripe test card (e.g. `4242 4242 4242 4242`, future expiry, any CVC and ZIP).
-5. Stripe redirects back to `/success?session_id=...`, where the cart is cleared and the order summary is displayed. Choosing **Cancel** in checkout will redirect to `/cancel` with guidance to resume the flow.
-
-## Misc
-
-- Stripe seeding scripts: `scripts/seed-stripe.ts`
-- Persisted cart storage key: `localStorage['cart']`
-- The custom 404 page is implemented in `app/not-found.tsx`
+Questions or ideas for improvements are welcome—feel free to open an issue or tweak the roadmap!

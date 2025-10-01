@@ -8,6 +8,8 @@ import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/pricing";
 
+import type { PaymentEventLog } from "@/lib/payment-events";
+
 type SuccessLineItem = {
   id: string;
   description: string;
@@ -23,6 +25,7 @@ type OrderSuccessProps = {
   currency?: string | null;
   customerEmail?: string | null;
   lineItems?: SuccessLineItem[];
+  paymentEvents?: PaymentEventLog[];
 };
 
 function formatAmount(amount?: number | null, currency?: string | null) {
@@ -42,6 +45,7 @@ export default function OrderSuccess({
   currency,
   customerEmail,
   lineItems,
+  paymentEvents,
 }: OrderSuccessProps) {
   const clear = useCart((state) => state.clear);
   const [cleared, setCleared] = React.useState(false);
@@ -90,6 +94,46 @@ export default function OrderSuccess({
                 </code>
               </li>
             )}
+          </ul>
+        </div>
+      )}
+
+      {paymentEvents && paymentEvents.length > 0 && (
+        <div className="rounded-2xl border bg-card p-5 sm:p-6">
+          <h2 className="text-base font-medium text-foreground">Payment status</h2>
+          <ul className="mt-3 space-y-3 text-sm">
+            {paymentEvents.map((event) => {
+              const amount = formatAmount(event.amount, event.currency ?? currency);
+              const timestamp = new Date(event.createdAt);
+              const label = event.type === "payment_succeeded" ? "Payment succeeded" : "Payment failed";
+
+              return (
+                <li key={event.id} className="flex items-start justify-between gap-4 rounded-xl border bg-background p-3">
+                  <div className="space-y-1">
+                    <p
+                      className={
+                        event.type === "payment_succeeded"
+                          ? "font-medium text-emerald-600"
+                          : "font-medium text-destructive"
+                      }
+                    >
+                      {label}
+                    </p>
+                    {amount && <p className="text-xs text-muted-foreground">{amount}</p>}
+                    {event.errorMessage && (
+                      <p className="text-xs text-destructive/90">{event.errorMessage}</p>
+                    )}
+                  </div>
+                  <time
+                    className="shrink-0 text-xs text-muted-foreground"
+                    dateTime={timestamp.toISOString()}
+                    suppressHydrationWarning
+                  >
+                    {timestamp.toLocaleString()}
+                  </time>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

@@ -15,6 +15,10 @@ type Props = { product: ProductDTO };
 const MAX_QUANTITY = 10;
 
 export function ProductCard({ product }: Props) {
+  const idPrefix = `product-card-${product.id}`;
+  const titleId = `${idPrefix}-title`;
+  const descriptionId = `${idPrefix}-description`;
+
   const cartItem = useCart((state) =>
     state.items.find((item) => item.productId === product.id),
   );
@@ -33,7 +37,11 @@ export function ProductCard({ product }: Props) {
   };
 
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card text-card-foreground transition-shadow hover:shadow-lg">
+    <article
+      aria-labelledby={titleId}
+      aria-describedby={descriptionId}
+      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/90 text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+    >
       <Link href={`/products/${product.id}`} className="block">
         <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
           {/* Если используешь внешние домены — добавь их в next.config.js -> images.domains */}
@@ -49,14 +57,14 @@ export function ProductCard({ product }: Props) {
       </Link>
 
       <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <div className="mb-1 line-clamp-1 text-sm text-muted-foreground">
+        <h3 id={titleId} className="mb-1 line-clamp-1 text-sm font-medium text-foreground">
           {product.name}
-        </div>
-        <div className="mb-2 text-lg sm:mb-3 font-semibold">
+        </h3>
+        <p className="mb-2 text-lg font-semibold sm:mb-3">
           {formatPrice(product.unitAmount, product.currency)}
-        </div>
+        </p>
 
-        <p className="line-clamp-2 flex-1 text-sm text-muted-foreground">
+        <p id={descriptionId} className="line-clamp-2 flex-1 text-sm text-muted-foreground">
           {product.description || "—"}
         </p>
 
@@ -80,7 +88,7 @@ export function ProductCard({ product }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </article>
   );
 }
 

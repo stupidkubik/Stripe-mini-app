@@ -31,9 +31,37 @@ export async function generateMetadata({
     };
   }
 
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const relativeUrl = `/products/${product.id}`;
+  const absoluteUrl = new URL(relativeUrl, baseUrl).toString();
+  const ogImage = product.image ?? "/opengraph-image";
+
   return {
     title: `${product.name} | Mini Shop`,
     description: product.description ?? undefined,
+    alternates: {
+      canonical: relativeUrl,
+    },
+    openGraph: {
+      type: "website",
+      url: absoluteUrl,
+      title: `${product.name} | Mini Shop`,
+      description: product.description ?? undefined,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: product.name,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${product.name} | Mini Shop`,
+      description: product.description ?? undefined,
+      images: [ogImage],
+    },
   };
 }
 
@@ -54,6 +82,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
           className="object-cover"
+          priority
         />
       </div>
 
