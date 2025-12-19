@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/pricing";
 import { QuantityInput } from "@/components/quantity-input";
 import { CheckoutForm } from "@/components/cart/checkout-form";
+import CartStickySummary from "@/components/cart/cart-sticky-summary";
+import styles from "./cart-page-client.module.css";
 
 export default function CartPageClient() {
   const items = useCart((state) => state.items);
@@ -23,20 +25,20 @@ export default function CartPageClient() {
 
   if (items.length === 0) {
     return (
-      <section className="space-y-5 sm:space-y-6">
-        <header className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
-          <p className="text-sm text-muted-foreground">
+      <section className={`${styles.page} ${styles.pageEmpty}`}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>Your cart</h1>
+          <p className={styles.subtitle}>
             You haven&apos;t added anything yet. Discover products and come back
             when you&apos;re ready.
           </p>
         </header>
 
-        <div className="rounded-2xl border border-dashed p-10 text-center">
-          <p className="text-sm text-muted-foreground">Your cart is empty.</p>
+        <div className={styles.emptyCard}>
+          <p className={styles.emptyText}>Your cart is empty.</p>
           <Link
             href="/products"
-            className="mt-4 inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+            className={styles.emptyLink}
           >
             Browse products
           </Link>
@@ -46,55 +48,55 @@ export default function CartPageClient() {
   }
 
   return (
-    <section className="space-y-6 sm:space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight">Your cart</h1>
-        <p className="text-sm text-muted-foreground">
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Your cart</h1>
+        <p className={styles.subtitle}>
           {count} item{count === 1 ? "" : "s"} ready for checkout.
         </p>
       </header>
 
-      <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className="space-y-3 sm:space-y-4">
+      <div className={styles.layout}>
+        <div className={styles.items}>
           {items.map((item) => (
             <div
               key={item.productId}
-              className="flex flex-col gap-4 rounded-2xl border bg-card p-4 sm:flex-row sm:items-center"
+              className={styles.itemCard}
             >
-              <div className="relative h-24 w-full overflow-hidden rounded-xl bg-muted sm:h-32 sm:w-32">
+              <div className={styles.itemImage}>
                 <Image
                   src={item.image}
                   alt={item.name}
                   fill
                   sizes="128px"
-                  className="object-cover"
                 />
               </div>
 
-              <div className="flex flex-1 flex-col gap-2.5 sm:gap-3">
+              <div className={styles.itemContent}>
                 <div>
-                  <h2 className="text-base font-medium text-foreground sm:text-lg">
+                  <h2 className={styles.itemName}>
                     {item.name}
                   </h2>
-                  <p className="text-sm text-muted-foreground">
+                  <p className={styles.itemPrice}>
                     {formatPrice(item.unitAmount, item.currency)}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
+                <div className={styles.itemActions}>
                   <QuantityInput
                     value={item.quantity}
                     onChange={(qty) => updateQty(item.productId, qty)}
                     aria-label={`Quantity for ${item.name}`}
+                    size="lg"
                   />
 
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-destructive"
+                    className={styles.removeButton}
                     onClick={() => removeItem(item.productId)}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 />
                     Remove
                   </Button>
                 </div>
@@ -103,31 +105,37 @@ export default function CartPageClient() {
           ))}
         </div>
 
-        <CheckoutForm
-          items={items}
-          currency={currency}
-          total={total}
-          onClear={clear}
-        />
+        <div className={styles.checkoutColumn}>
+          <div id="cart-checkout" className={styles.checkoutAnchor}>
+            <CheckoutForm
+              items={items}
+              currency={currency}
+              total={total}
+              onClear={clear}
+            />
+          </div>
+        </div>
       </div>
+
+      <CartStickySummary />
     </section>
   );
 }
 
 export function CartPageSkeleton() {
   return (
-    <section className="space-y-8">
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-40" />
-        <Skeleton className="h-4 w-64" />
+    <section className={styles.skeletonPage}>
+      <div className={styles.skeletonHeader}>
+        <Skeleton className={styles.skeletonTitle} />
+        <Skeleton className={styles.skeletonSubtitle} />
       </div>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <div className="space-y-4">
+      <div className={styles.skeletonLayout}>
+        <div className={styles.skeletonItems}>
           {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={index} className="h-40 w-full rounded-2xl" />
+            <Skeleton key={index} className={styles.skeletonItem} />
           ))}
         </div>
-        <Skeleton className="h-52 w-full rounded-2xl" />
+        <Skeleton className={styles.skeletonSidebar} />
       </div>
     </section>
   );

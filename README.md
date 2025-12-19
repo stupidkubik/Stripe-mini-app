@@ -17,8 +17,8 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 - Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
 
 ## 🛠 Tech Stack
-- **Framework**: Next.js 15 App Router, React 19, TypeScript.
-- **Styling/UI**: Tailwind CSS 4, shadcn/ui primitives, lucide icons.
+- **Framework**: Next.js 16 App Router, React 19, TypeScript.
+- **Styling/UI**: CSS Modules (modern CSS), shadcn/ui primitives, lucide icons.
 - **State & Forms**: Zustand (persisted cart), React Hook Form + Zod validation.
 - **Payments**: Stripe Node SDK, Stripe.js, Stripe Webhooks (Edge friendly).
 - **Tooling**: ESLint, Prettier, Vitest, React Testing Library, Playwright, Stripe CLI (for webhooks/seed scripts).
@@ -41,7 +41,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 
 Optional: seed test products via the helper script.
 ```bash
-npm run ts-node scripts/seed-stripe.ts
+npx ts-node scripts/seed-stripe.ts
 ```
 
 ### 3. Run the app

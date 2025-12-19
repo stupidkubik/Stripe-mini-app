@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/pricing";
 import { QuantityInput } from "@/components/quantity-input";
 import { useCart } from "@/app/store/cart";
+import styles from "./product-card.module.css";
 
 type Props = { product: ProductDTO };
 
@@ -40,38 +41,38 @@ export function ProductCard({ product }: Props) {
     <article
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
-      className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-card/90 text-card-foreground shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl"
+      className={styles.card}
     >
-      <Link href={`/products/${product.id}`} className="block">
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+      <Link href={`/products/${product.id}`} className={styles.imageLink}>
+        <div className={styles.imageWrapper}>
           {/* Если используешь внешние домены — добавь их в next.config.js -> images.domains */}
           <Image
             src={product.image}
             alt={product.name}
             fill
             sizes="(min-width:1024px) 25vw, (min-width:768px) 33vw, 100vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className={styles.image}
             priority={false}
           />
         </div>
       </Link>
 
-      <div className="flex flex-1 flex-col p-3 sm:p-4">
-        <h3 id={titleId} className="mb-1 line-clamp-1 text-sm font-medium text-foreground">
+      <div className={styles.content}>
+        <h3 id={titleId} className={styles.title}>
           {product.name}
         </h3>
-        <p className="mb-2 text-lg font-semibold sm:mb-3">
+        <p className={styles.price}>
           {formatPrice(product.unitAmount, product.currency)}
         </p>
 
-        <p id={descriptionId} className="line-clamp-2 flex-1 text-sm text-muted-foreground">
+        <p id={descriptionId} className={styles.description}>
           {product.description || "—"}
         </p>
 
-        <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2">
+        <div className={styles.actions}>
           <Link
             href={`/products/${product.id}`}
-            className="text-sm text-primary underline-offset-4 hover:underline"
+            className={styles.detailsLink}
           >
             View details
           </Link>
@@ -84,7 +85,11 @@ export function ProductCard({ product }: Props) {
               aria-label={`Quantity for ${product.name}`}
             />
           ) : (
-            <AddToCartButton product={product} size="sm" />
+            <AddToCartButton
+              product={product}
+              size="sm"
+              className={styles.addButton}
+            />
           )}
         </div>
       </div>
@@ -94,15 +99,15 @@ export function ProductCard({ product }: Props) {
 
 export function ProductCardSkeleton() {
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border">
-      <Skeleton className="aspect-[4/3] w-full" />
-      <div className="space-y-2 p-4">
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-6 w-1/3" />
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-5/6" />
-        <div className="flex justify-end pt-2">
-          <Skeleton className="h-9 w-28" />
+    <div className={styles.skeletonCard}>
+      <Skeleton className={styles.skeletonMedia} />
+      <div className={styles.skeletonBody}>
+        <Skeleton className={styles.skeletonLineShort} />
+        <Skeleton className={styles.skeletonLinePrice} />
+        <Skeleton className={styles.skeletonLineFull} />
+        <Skeleton className={styles.skeletonLineLong} />
+        <div className={styles.skeletonActions}>
+          <Skeleton className={styles.skeletonButton} />
         </div>
       </div>
     </div>

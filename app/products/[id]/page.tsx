@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/pricing";
 import { getProduct, listProducts } from "@/lib/stripe";
 import { ProductPurchaseActions } from "@/components/product-purchase-actions";
+import styles from "./page.module.css";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -74,35 +75,34 @@ export default async function ProductDetailPage({ params }: PageProps) {
   }
 
   return (
-    <section className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border bg-muted sm:aspect-square">
+    <section className={styles.page}>
+      <div className={styles.imageWrapper}>
         <Image
           src={product.image}
           alt={product.name}
           fill
           sizes="(min-width: 1024px) 50vw, 100vw"
-          className="object-cover"
           priority
         />
       </div>
 
-      <div className="flex flex-col gap-5 sm:gap-6">
-        <div className="space-y-2.5 sm:space-y-3">
+      <div className={styles.content}>
+        <div className={styles.intro}>
           <Link
             href="/products"
-            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            className={styles.backLink}
           >
             ← Back to catalog
           </Link>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+          <h1 className={styles.title}>
             {product.name}
           </h1>
-          <p className="text-2xl font-semibold text-primary sm:text-3xl">
+          <p className={styles.price}>
             {formatPrice(product.unitAmount, product.currency)}
           </p>
         </div>
 
-        <div className="space-y-3 text-sm text-muted-foreground sm:space-y-4 sm:text-base">
+        <div className={styles.description}>
           {product.description ? (
             <p>{product.description}</p>
           ) : (
@@ -110,7 +110,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
           )}
         </div>
 
-        <div className="mt-auto">
+        <div className={styles.actions}>
           <ProductPurchaseActions product={product} />
         </div>
       </div>

@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { ProductDTO } from "../app/types/product";
 import { ProductCard, ProductCardSkeleton } from "./product-card";
+import styles from "./product-grid.module.css";
 
 const INITIAL_VISIBLE = 12;
 const LOAD_BATCH = 8;
@@ -49,9 +50,9 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
   const hasMore = visibleCount < products.length;
 
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="list">
+    <ul className={styles.grid} role="list">
       {displayedProducts.map((p) => (
-        <li key={p.id} className="h-full">
+        <li key={p.id} className={styles.item}>
           <ProductCard product={p} />
         </li>
       ))}
@@ -60,7 +61,7 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
           key="sentinel"
           ref={sentinelRef}
           aria-hidden
-          className="h-1 w-full"
+          className={styles.sentinel}
         />
       )}
     </ul>
@@ -69,9 +70,9 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
 
 export function ProductGridSkeleton({ count = 8 }: { count?: number }) {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="list" aria-busy="true">
+    <ul className={styles.grid} role="list" aria-busy="true">
       {Array.from({ length: count }).map((_, i) => (
-        <li key={i} className="h-full">
+        <li key={i} className={styles.item}>
           <ProductCardSkeleton />
         </li>
       ))}

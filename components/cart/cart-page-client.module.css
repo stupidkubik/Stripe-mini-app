@@ -1,0 +1,219 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding-bottom: 96px;
+}
+
+.pageEmpty {
+  padding-bottom: 0;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.emptyCard {
+  border: 1px dashed var(--border);
+  padding: 40px;
+  border-radius: 16px;
+  text-align: center;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.emptyLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.emptyLink:hover {
+  background: color-mix(in oklab, var(--primary) 90%, black);
+}
+
+.layout {
+  display: grid;
+  gap: 24px;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 16px;
+}
+
+.itemImage {
+  position: relative;
+  height: 96px;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+
+.itemImage img {
+  object-fit: cover;
+}
+
+.itemContent {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.itemName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.itemPrice {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.itemActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.removeButton {
+  height: 40px;
+  padding: 0 16px;
+  color: var(--muted-foreground);
+}
+
+.removeButton:hover {
+  color: var(--destructive);
+}
+
+.removeButton svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+}
+
+.checkoutColumn {
+  align-self: start;
+}
+
+.checkoutAnchor {
+  scroll-margin-top: 96px;
+}
+
+.skeletonPage {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.skeletonHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonTitle {
+  height: 40px;
+  width: 160px;
+}
+
+.skeletonSubtitle {
+  height: 16px;
+  width: 256px;
+}
+
+.skeletonLayout {
+  display: grid;
+  gap: 32px;
+}
+
+.skeletonItems {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.skeletonItem {
+  height: 160px;
+  border-radius: 16px;
+}
+
+.skeletonSidebar {
+  height: 208px;
+  border-radius: 16px;
+}
+
+@media (min-width: 640px) {
+  .page {
+    gap: 32px;
+  }
+
+  .itemCard {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .itemImage {
+    height: 128px;
+    width: 128px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .page {
+    padding-bottom: 0;
+  }
+
+  .layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+
+  .checkoutColumn {
+    position: sticky;
+    top: 24px;
+  }
+}

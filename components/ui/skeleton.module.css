@@ -1,0 +1,17 @@
+.skeleton {
+  border-radius: 0.75rem;
+  background: color-mix(in oklab, var(--accent) 70%, var(--card));
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0.55;
+  }
+}

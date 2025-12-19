@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import styles from "./theme-toggle.module.css";
 
 export default function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -16,10 +17,10 @@ export default function ThemeToggle() {
       <Button
         variant="ghost"
         size="icon"
-        className="h-9 w-9"
+        className={styles.toggleButton}
         aria-label="Toggle theme"
       >
-        <Sun className="h-5 w-5" />
+        <Sun className={styles.icon} />
       </Button>
     );
   }
@@ -30,11 +31,11 @@ export default function ThemeToggle() {
     <Button
       variant="ghost"
       size="icon"
-      className="h-9 w-9"
+      className={styles.toggleButton}
       aria-label="Toggle theme"
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      {isDark ? <Sun className={styles.icon} /> : <Moon className={styles.icon} />}
     </Button>
   );
 }

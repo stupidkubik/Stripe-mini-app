@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 import { useTheme } from "next-themes";
+import "./sonner.css";
 
 // утилита для склейки классов (если у тебя есть своя — замени)
 const cn = (...cls: Array<string | undefined>) => cls.filter(Boolean).join(" ");
@@ -52,14 +53,14 @@ export function Toaster({
       richColors={richColors ?? true}
       closeButton={closeButton ?? true}
       duration={duration ?? 4000}
-      className={cn("toaster group shadow-lg", className)}
+      className={cn("toaster", className)}
       style={cssVars}
       toastOptions={{
         ...toastOptions,
         // пример: общий класс для всех тостов (если нужно):
         classNames: {
           ...toastOptions?.classNames,
-          toast: cn("border bg-[var(--normal-bg)] text-[var(--normal-text)]"),
+          toast: cn("toast"),
         },
       }}
     />

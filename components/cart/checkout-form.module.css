@@ -1,0 +1,77 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 20px;
+  font-size: 0.875rem;
+  box-shadow: 0 12px 28px -24px rgba(15, 23, 42, 0.35);
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.totalValue {
+  font-size: 1.125rem;
+}
+
+.helper {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+}
+
+.error {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--destructive);
+}
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--destructive);
+}
+
+.issuesList {
+  margin: 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+
+.actionButton {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .form {
+    padding: 24px;
+    gap: 16px;
+  }
+
+  .totalRow {
+    font-size: 1rem;
+  }
+}

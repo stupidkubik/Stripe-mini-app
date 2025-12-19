@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import styles from "../../error.module.css";
 
 export default function ProductDetailError({
   error,
@@ -16,9 +17,9 @@ export default function ProductDetailError({
   }, [error]);
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Something went wrong</h1>
-      <p className="text-sm text-muted-foreground">
+    <section className={styles.section}>
+      <h1 className={styles.title}>Something went wrong</h1>
+      <p className={styles.description}>
         We couldn&apos;t load this product. Try again and if the problem
         persists, please contact support.
       </p>

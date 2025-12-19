@@ -1,0 +1,89 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--border) 65%, transparent);
+  background: color-mix(in oklab, var(--background) 80%, transparent);
+  box-shadow: 0 10px 20px -18px color-mix(in oklab, var(--foreground) 25%, transparent);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.wrapper:hover {
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+  box-shadow: 0 12px 20px -16px color-mix(in oklab, var(--foreground) 25%, transparent);
+}
+
+.sizeSm {
+  padding: 4px;
+  font-size: 0.75rem;
+}
+
+.sizeMd {
+  padding: 4px;
+  font-size: 0.875rem;
+}
+
+.sizeLg {
+  padding: 6px;
+  font-size: 0.95rem;
+}
+
+.button {
+  border-radius: 999px;
+  color: var(--muted-foreground);
+}
+
+.buttonSm {
+  width: 32px;
+  height: 32px;
+}
+
+.buttonMd {
+  width: 36px;
+  height: 36px;
+}
+
+.buttonLg {
+  width: 40px;
+  height: 40px;
+}
+
+.button:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.input {
+  border: none;
+  background: transparent;
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  outline: none;
+}
+
+.input:focus-visible {
+  outline: none;
+}
+
+.inputSm {
+  width: 40px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+
+.inputMd {
+  width: 48px;
+  height: 36px;
+  font-size: 0.875rem;
+}
+
+.inputLg {
+  width: 56px;
+  height: 40px;
+  font-size: 0.95rem;
+}

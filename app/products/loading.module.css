@@ -1,0 +1,10 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.titleSkeleton {
+  width: 160px;
+  height: 28px;
+}

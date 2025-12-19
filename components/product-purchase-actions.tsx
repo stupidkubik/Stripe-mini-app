@@ -6,6 +6,7 @@ import type { ProductDTO } from "@/app/types/product";
 
 import { QuantityInput } from "./quantity-input";
 import { AddToCartButton } from "./add-to-cart-button";
+import styles from "./product-purchase-actions.module.css";
 
 const MAX_QUANTITY = 10;
 
@@ -19,7 +20,7 @@ export function ProductPurchaseActions({
   const [quantity, setQuantity] = React.useState(1);
 
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+    <div className={styles.actions}>
       <QuantityInput
         value={quantity}
         onChange={setQuantity}
@@ -30,7 +31,7 @@ export function ProductPurchaseActions({
         product={product}
         quantity={quantity}
         size="lg"
-        className="h-11 sm:h-12 sm:min-w-[200px]"
+        className={styles.addButton}
       />
     </div>
   );

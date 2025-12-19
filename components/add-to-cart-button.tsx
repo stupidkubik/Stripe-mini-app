@@ -8,6 +8,7 @@ import type { ProductDTO } from "@/app/types/product";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/pricing";
+import styles from "./add-to-cart-button.module.css";
 
 type AddToCartButtonProps = Omit<
   React.ComponentProps<typeof Button>,
@@ -66,7 +67,7 @@ export function AddToCartButton({
         ? pendingLabel
         : (children ?? (
             <>
-              <Plus className="mr-1.5 h-4 w-4" />
+              <Plus className={styles.icon} />
               Add to cart
             </>
           ))}

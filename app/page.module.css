@@ -1,0 +1,213 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.hero {
+  display: grid;
+  gap: 32px;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--primary) 30%, transparent);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
+  padding: 4px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.heroTitle {
+  margin: 0;
+  font-size: 2.25rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.heroText {
+  margin: 12px 0 0;
+  font-size: 1rem;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.heroActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.primaryAction {
+  min-width: 200px;
+}
+
+.secondaryAction {
+  min-width: 160px;
+}
+
+.features {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+}
+
+.featureCard {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 16px;
+  box-shadow: 0 12px 24px -22px rgba(15, 23, 42, 0.35);
+}
+
+.featureHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.featureIcon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
+}
+
+.featureTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.featureDescription {
+  margin: 12px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.heroImage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+}
+
+.heroImage img {
+  object-fit: cover;
+}
+
+.heroCaption {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, white 40%, transparent);
+  background: color-mix(in oklab, white 70%, transparent);
+  padding: 16px;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  backdrop-filter: blur(12px);
+}
+
+.heroCaption strong {
+  display: block;
+  font-weight: 600;
+  color: var(--foreground);
+  margin-bottom: 4px;
+}
+
+.featuredSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sectionText {
+  margin: 4px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.emptyCard {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  padding: 40px;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .page {
+    gap: 96px;
+  }
+
+  .hero {
+    gap: 48px;
+  }
+
+  .heroTitle {
+    font-size: 3rem;
+  }
+
+  .heroText {
+    font-size: 1.125rem;
+  }
+
+  .heroActions {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .features {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    align-items: center;
+  }
+}
+
+:global(.dark) .heroCaption {
+  border-color: color-mix(in oklab, white 10%, transparent);
+  background: color-mix(in oklab, black 55%, transparent);
+}

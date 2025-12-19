@@ -1,0 +1,31 @@
+.input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 0.5rem;
+  border: 1px solid var(--input);
+  background: color-mix(in oklab, var(--background) 92%, transparent);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.input:focus-visible {
+  outline: none;
+  border-color: color-mix(in oklab, var(--ring) 60%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 30%, transparent);
+  background: var(--background);
+}
+
+.input[aria-invalid="true"] {
+  border-color: color-mix(in oklab, var(--destructive) 70%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--destructive) 25%, transparent);
+}
+
+.input::placeholder {
+  color: color-mix(in oklab, var(--muted-foreground) 70%, transparent);
+}
+
+.input:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

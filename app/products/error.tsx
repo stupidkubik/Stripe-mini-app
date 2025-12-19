@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import styles from "../error.module.css";
 
 export default function ProductsError({
   error,
@@ -16,9 +17,9 @@ export default function ProductsError({
   }, [error]);
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Unable to load products</h1>
-      <p className="text-sm text-muted-foreground">
+    <section className={styles.section}>
+      <h1 className={styles.title}>Unable to load products</h1>
+      <p className={styles.description}>
         Something went wrong while fetching the catalog. Please try again in a
         moment.
       </p>

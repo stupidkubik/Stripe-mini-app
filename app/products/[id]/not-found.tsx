@@ -1,18 +1,18 @@
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
+import styles from "../../error.module.css";
+
 export default function ProductNotFound() {
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Product not found</h1>
-      <p className="text-sm text-muted-foreground">
+    <section className={styles.section}>
+      <h1 className={styles.title}>Product not found</h1>
+      <p className={styles.description}>
         The product you&apos;re looking for is unavailable or has been removed.
       </p>
-      <Link
-        href="/products"
-        className="inline-flex h-10 items-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
-      >
-        Back to catalog
-      </Link>
+      <Button asChild>
+        <Link href="/products">Back to catalog</Link>
+      </Button>
     </section>
   );
 }

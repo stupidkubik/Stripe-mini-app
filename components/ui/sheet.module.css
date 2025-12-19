@@ -1,0 +1,124 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.overlay[data-state="open"] {
+  opacity: 1;
+}
+
+.content {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: var(--background);
+  color: var(--foreground);
+  box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.45);
+  transition: transform 0.3s ease;
+}
+
+.contentRight {
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 75%;
+  max-width: 360px;
+  border-left: 1px solid var(--border);
+  transform: translateX(100%);
+}
+
+.contentRight[data-state="open"] {
+  transform: translateX(0);
+}
+
+.contentLeft {
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 75%;
+  max-width: 360px;
+  border-right: 1px solid var(--border);
+  transform: translateX(-100%);
+}
+
+.contentLeft[data-state="open"] {
+  transform: translateX(0);
+}
+
+.contentTop {
+  top: 0;
+  left: 0;
+  right: 0;
+  border-bottom: 1px solid var(--border);
+  transform: translateY(-100%);
+}
+
+.contentTop[data-state="open"] {
+  transform: translateY(0);
+}
+
+.contentBottom {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  border-top: 1px solid var(--border);
+  transform: translateY(100%);
+}
+
+.contentBottom[data-state="open"] {
+  transform: translateY(0);
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color 0.2s ease, background-color 0.2s ease;
+  padding: 6px;
+}
+
+.close:hover {
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--accent) 70%, transparent);
+}
+
+.close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.footer {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}

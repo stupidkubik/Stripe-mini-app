@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ProductGrid } from "@/components/product-grid";
 import { Button } from "@/components/ui/button";
 import { listProducts } from "@/lib/stripe";
+import styles from "./page.module.css";
 
 export const revalidate = 60;
 
@@ -28,7 +29,7 @@ const FEATURED_ICONS: ReadonlyArray<{ title: string; description: string; icon: 
 ];
 
 function FeatureIcon({ icon }: { icon: FeatureIconName }) {
-  const className = "h-5 w-5 text-primary";
+  const className = styles.featureIcon;
   switch (icon) {
     case "shield":
       return (
@@ -79,67 +80,66 @@ export default async function HomePage() {
   const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="space-y-16 sm:space-y-24">
-      <section className="grid gap-8 sm:gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
-        <div className="space-y-6 sm:space-y-8">
-          <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-medium text-primary">
-            <span className="inline-flex size-2 rounded-full bg-primary" aria-hidden />
+    <div className={styles.page}>
+      <section className={styles.hero}>
+        <div className={styles.heroContent}>
+          <span className={styles.badge}>
+            <span className={styles.badgeDot} aria-hidden />
             Verdant Lane • Houseplant studio
           </span>
 
-          <div className="space-y-3 sm:space-y-4">
-            <h1 className="text-balance text-[2.25rem] font-semibold tracking-tight sm:text-5xl">
+          <div>
+            <h1 className={styles.heroTitle}>
               Bring calm, living greenery into any room
             </h1>
-            <p className="text-pretty text-base text-muted-foreground sm:text-lg">
+            <p className={styles.heroText}>
               Verdant Lane curates resilient indoor plants, pots, and care kits. Explore the collection,
               add favorites to your cart, and experience a production-grade Stripe checkout in minutes.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button asChild size="lg" className="sm:min-w-[200px]">
+          <div className={styles.heroActions}>
+            <Button asChild size="lg" className={styles.primaryAction}>
               <Link href="/products">Explore catalog</Link>
             </Button>
-            <Button asChild variant="outline" className="sm:min-w-[160px]">
+            <Button asChild variant="outline" className={styles.secondaryAction}>
               <Link href="/cart">View cart</Link>
             </Button>
           </div>
 
-          <dl className="grid gap-4 sm:gap-6 sm:grid-cols-3">
+          <dl className={styles.features}>
             {FEATURED_ICONS.map((feature) => (
-              <div key={feature.title} className="rounded-2xl border bg-card p-4 shadow-sm">
-                <div className="flex items-center gap-3">
+              <div key={feature.title} className={styles.featureCard}>
+                <div className={styles.featureHeader}>
                   <FeatureIcon icon={feature.icon} />
-                  <dt className="text-sm font-medium text-foreground">{feature.title}</dt>
+                  <dt className={styles.featureTitle}>{feature.title}</dt>
                 </div>
-                <dd className="mt-3 text-sm text-muted-foreground">{feature.description}</dd>
+                <dd className={styles.featureDescription}>{feature.description}</dd>
               </div>
             ))}
           </dl>
         </div>
 
-        <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border bg-muted">
+        <div className={styles.heroImage}>
           <Image
             src="https://images.unsplash.com/photo-1459664018906-085c36f472af?auto=format&fit=crop&w=1600&q=80"
             alt="Sunlit living room filled with houseplants"
             fill
             priority
             sizes="(min-width: 1024px) 45vw, 100vw"
-            className="object-cover"
           />
-          <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/40 bg-white/70 p-4 text-xs text-muted-foreground backdrop-blur dark:border-white/10 dark:bg-black/40">
-            <p className="font-medium text-foreground">Real checkout, gentle onboarding</p>
+          <div className={styles.heroCaption}>
+            <strong>Real checkout, gentle onboarding</strong>
             <p>Add a plant to your cart, use Stripe test cards, and see the full fulfillment loop in action.</p>
           </div>
         </div>
       </section>
 
-      <section className="space-y-5 sm:space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold tracking-tight">Featured foliage</h2>
-            <p className="text-sm text-muted-foreground">
+      <section className={styles.featuredSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>Featured foliage</h2>
+            <p className={styles.sectionText}>
               Pulled straight from Stripe Products & Prices; refreshed every minute via ISR.
             </p>
           </div>
@@ -151,7 +151,7 @@ export default async function HomePage() {
         {featuredProducts.length > 0 ? (
           <ProductGrid products={featuredProducts} />
         ) : (
-          <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+          <div className={styles.emptyCard}>
             No plants available yet. Seed your Stripe account and refresh to grow the collection.
           </div>
         )}

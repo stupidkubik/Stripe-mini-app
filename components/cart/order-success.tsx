@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/pricing";
 
 import type { PaymentEventLog } from "@/lib/payment-events";
+import styles from "./order-success.module.css";
 
 type SuccessLineItem = {
   id: string;
@@ -58,38 +59,38 @@ export default function OrderSuccess({
   const formattedTotal = formatAmount(amountTotal, currency);
 
   return (
-    <section className="space-y-5 sm:space-y-6">
-      <div className="flex items-center gap-3">
-        <CheckCircle2 className="h-10 w-10 text-primary" />
+    <section className={styles.section}>
+      <div className={styles.titleRow}>
+        <CheckCircle2 className={styles.icon} />
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className={styles.heading}>
             Payment successful
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className={styles.subtitle}>
             Thank you for your purchase! We&apos;ve emailed you a confirmation.
           </p>
         </div>
       </div>
 
       {(customerEmail || formattedTotal || sessionId) && (
-        <div className="rounded-2xl border bg-card p-5 text-sm sm:p-6">
-          <ul className="space-y-2 text-muted-foreground">
+        <div className={styles.card}>
+          <ul className={styles.cardList}>
             {customerEmail && (
               <li>
-                <span className="font-medium text-foreground">Receipt sent to:</span>{" "}
+                <span className={styles.label}>Receipt sent to:</span>{" "}
                 {customerEmail}
               </li>
             )}
             {formattedTotal && (
               <li>
-                <span className="font-medium text-foreground">Order total:</span>{" "}
+                <span className={styles.label}>Order total:</span>{" "}
                 {formattedTotal}
               </li>
             )}
             {sessionId && (
               <li>
-                <span className="font-medium text-foreground">Stripe session:</span>{" "}
-                <code className="rounded-md bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                <span className={styles.label}>Stripe session:</span>{" "}
+                <code className={styles.sessionCode}>
                   {sessionId}
                 </code>
               </li>
@@ -99,33 +100,33 @@ export default function OrderSuccess({
       )}
 
       {paymentEvents && paymentEvents.length > 0 && (
-        <div className="rounded-2xl border bg-card p-5 sm:p-6">
-          <h2 className="text-base font-medium text-foreground">Payment status</h2>
-          <ul className="mt-3 space-y-3 text-sm">
+        <div className={styles.card}>
+          <h2 className={styles.label}>Payment status</h2>
+          <ul className={styles.timeline}>
             {paymentEvents.map((event) => {
               const amount = formatAmount(event.amount, event.currency ?? currency);
               const timestamp = new Date(event.createdAt);
               const label = event.type === "payment_succeeded" ? "Payment succeeded" : "Payment failed";
 
               return (
-                <li key={event.id} className="flex items-start justify-between gap-4 rounded-xl border bg-background p-3">
-                  <div className="space-y-1">
+                <li key={event.id} className={styles.timelineItem}>
+                  <div className={styles.timelineContent}>
                     <p
                       className={
                         event.type === "payment_succeeded"
-                          ? "font-medium text-emerald-600"
-                          : "font-medium text-destructive"
+                          ? `${styles.timelineLabel} ${styles.timelineLabelSuccess}`
+                          : `${styles.timelineLabel} ${styles.timelineLabelError}`
                       }
                     >
                       {label}
                     </p>
-                    {amount && <p className="text-xs text-muted-foreground">{amount}</p>}
+                    {amount && <p className={styles.timelineAmount}>{amount}</p>}
                     {event.errorMessage && (
-                      <p className="text-xs text-destructive/90">{event.errorMessage}</p>
+                      <p className={styles.timelineError}>{event.errorMessage}</p>
                     )}
                   </div>
                   <time
-                    className="shrink-0 text-xs text-muted-foreground"
+                    className={styles.timestamp}
                     dateTime={timestamp.toISOString()}
                     suppressHydrationWarning
                   >
@@ -139,18 +140,18 @@ export default function OrderSuccess({
       )}
 
       {lineItems && lineItems.length > 0 && (
-        <div className="rounded-2xl border bg-card p-5 sm:p-6">
-          <h2 className="text-base font-medium text-foreground">Items in this order</h2>
-          <ul className="mt-3 space-y-2.5 text-sm text-muted-foreground">
+        <div className={styles.card}>
+          <h2 className={styles.label}>Items in this order</h2>
+          <ul className={styles.lineItems}>
             {lineItems.map((item) => {
               const subtotal = formatAmount(item.amountSubtotal, item.currency ?? currency);
               return (
-                <li key={item.id} className="flex items-start justify-between gap-4">
+                <li key={item.id} className={styles.lineItem}>
                   <div>
-                    <div className="text-foreground">{item.description}</div>
-                    <div className="text-xs">Quantity: {item.quantity}</div>
+                    <div className={styles.lineItemTitle}>{item.description}</div>
+                    <div className={styles.lineItemMeta}>Quantity: {item.quantity}</div>
                   </div>
-                  {subtotal && <div className="font-medium text-foreground">{subtotal}</div>}
+                  {subtotal && <div className={styles.lineItemTotal}>{subtotal}</div>}
                 </li>
               );
             })}
@@ -158,7 +159,7 @@ export default function OrderSuccess({
         </div>
       )}
 
-      <div className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground sm:p-6">
+      <div className={styles.note}>
         <p>
           {cleared
             ? "Your cart has been cleared. Feel free to continue browsing for more products."
@@ -166,10 +167,10 @@ export default function OrderSuccess({
         </p>
       </div>
 
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className={styles.actions}>
         <Link
           href="/products"
-          className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+          className={styles.primaryLink}
         >
           Continue shopping
         </Link>

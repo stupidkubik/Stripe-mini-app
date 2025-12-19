@@ -57,12 +57,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${inter.variable} ${geistMono.variable}`}>
         <Providers>
           <SiteHeader />
-          <main id="content" className="page-container py-8">
+          <main id="content" className="page-container main-content">
             {children}
           </main>
           <SiteFooter />

@@ -6,20 +6,29 @@ import { z } from "zod";
 import { listProducts, stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
-  priceId: z.string().min(1, "priceId is required"),
+  priceId: z.string().min(1, "Price ID is missing for one of the items."),
   quantity: z
     .number()
     .int()
-    .positive()
-    .max(10)
+    .min(1, "Quantity must be at least 1.")
+    .max(10, "Quantity cannot exceed 10.")
     .default(1),
 });
 
 const requestSchema = z.object({
   customerEmail: z.string().email().optional(),
-  items: z.array(checkoutItemSchema).min(1, "Cart is empty"),
+  items: z.array(checkoutItemSchema).min(1, "Your cart is empty."),
   promotionCode: z.string().trim().max(64).optional(),
 });
+
+const CHECKOUT_ERROR_CODES = {
+  invalidPayload: "invalid_payload",
+  cartEmpty: "cart_empty",
+  itemUnavailable: "item_unavailable",
+  promoInvalid: "promo_invalid",
+  promoApplyFailed: "promo_apply_failed",
+  checkoutFailed: "checkout_failed",
+} as const;
 
 async function lookupPromotionCode(code: string) {
   try {
@@ -54,7 +63,8 @@ export async function POST(request: Request) {
     if (!parsed.success) {
       return NextResponse.json(
         {
-          error: "Invalid checkout payload",
+          error: "Some checkout details need your attention.",
+          code: CHECKOUT_ERROR_CODES.invalidPayload,
           issues: parsed.error.issues.map((issue) => issue.message),
         },
         { status: 400 },
@@ -70,7 +80,10 @@ export async function POST(request: Request) {
       const product = allowedPrices.get(item.priceId);
       if (!product) {
         return NextResponse.json(
-          { error: "One of the items in your cart is no longer available." },
+          {
+            error: "One of the items in your cart is no longer available.",
+            code: CHECKOUT_ERROR_CODES.itemUnavailable,
+          },
           { status: 400 },
         );
       }
@@ -80,7 +93,10 @@ export async function POST(request: Request) {
     }
 
     if (lineItemsMap.size === 0) {
-      return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Your cart is empty.", code: CHECKOUT_ERROR_CODES.cartEmpty },
+        { status: 400 },
+      );
     }
 
     const lineItems = Array.from(lineItemsMap.entries()).map(([price, quantity]) => ({
@@ -104,7 +120,10 @@ export async function POST(request: Request) {
           const promotion = await lookupPromotionCode(code);
           if (!promotion) {
             return NextResponse.json(
-              { error: "Promo code is invalid or inactive." },
+              {
+                error: "Promo code is invalid or inactive.",
+                code: CHECKOUT_ERROR_CODES.promoInvalid,
+              },
               { status: 400 },
             );
           }
@@ -112,7 +131,10 @@ export async function POST(request: Request) {
         } catch (error) {
           console.error(`Failed to apply promo code ${code}`, error);
           return NextResponse.json(
-            { error: "Unable to apply promo code. Please try again." },
+            {
+              error: "Unable to apply promo code. Please try again.",
+              code: CHECKOUT_ERROR_CODES.promoApplyFailed,
+            },
             { status: 500 },
           );
         }
@@ -148,7 +170,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Failed to create Stripe Checkout session", error);
     return NextResponse.json(
-      { error: "Unable to start checkout. Please try again." },
+      {
+        error: "Unable to start checkout. Please try again.",
+        code: CHECKOUT_ERROR_CODES.checkoutFailed,
+      },
       { status: 500 },
     );
   }

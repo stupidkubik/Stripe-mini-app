@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/pricing";
 import { getStripePromise } from "@/lib/stripe-client";
+import styles from "./checkout-form.module.css";
 
 const checkoutSchema = z.object({
   email: z
@@ -25,7 +26,31 @@ const checkoutSchema = z.object({
     .optional(),
 });
 
+const CHECKOUT_ERROR_COPY: Record<string, string> = {
+  cart_empty: "Your cart is empty. Add an item before checking out.",
+  item_unavailable: "Some items in your cart are no longer available. Remove them and try again.",
+  promo_invalid: "That promo code isn't valid or active.",
+  promo_apply_failed: "We couldn't apply that promo code. Try again or remove it.",
+  invalid_payload: "Please review your cart details and try again.",
+  checkout_failed: "We couldn't start checkout. Please try again.",
+};
+
+const PROMO_ERROR_CODES = new Set(["promo_invalid", "promo_apply_failed"]);
+const WARNING_ERROR_CODES = new Set([
+  "cart_empty",
+  "item_unavailable",
+  "promo_invalid",
+  "promo_apply_failed",
+  "invalid_payload",
+]);
+
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
+
+type CheckoutErrorPayload = {
+  error?: string;
+  code?: string;
+  issues?: string[];
+};
 
 type CheckoutFormProps = {
   items: CartItem[];
@@ -34,16 +59,42 @@ type CheckoutFormProps = {
   onClear: () => void;
 };
 
+function resolveCheckoutError(payload?: CheckoutErrorPayload | null) {
+  if (!payload) {
+    return {
+      message: CHECKOUT_ERROR_COPY.checkout_failed,
+      issues: [],
+      code: undefined,
+    };
+  }
+
+  const code = payload.code;
+  const message =
+    payload.error ||
+    (code && CHECKOUT_ERROR_COPY[code]) ||
+    CHECKOUT_ERROR_COPY.checkout_failed;
+
+  return {
+    message,
+    issues: payload.issues?.filter(Boolean) ?? [],
+    code,
+  };
+}
+
 export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormProps) {
   const { toast } = useToast();
   const [formError, setFormError] = React.useState<string | null>(null);
+  const [formIssues, setFormIssues] = React.useState<string[]>([]);
   const helperId = "checkout-email-helper";
   const errorId = "checkout-email-error";
   const promoHelperId = "checkout-promo-helper";
+  const promoErrorId = "checkout-promo-error";
 
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -53,17 +104,46 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
     },
   });
 
+  const handleCheckoutError = React.useCallback(
+    (payload?: CheckoutErrorPayload | null) => {
+      const resolved = resolveCheckoutError(payload);
+      const promoIssue = resolved.issues.find((issue) =>
+        issue.toLowerCase().includes("promo code"),
+      );
+      const promoMessage =
+        (resolved.code && PROMO_ERROR_CODES.has(resolved.code) && resolved.message) || promoIssue;
+      const issues = promoIssue
+        ? resolved.issues.filter((issue) => issue !== promoIssue)
+        : resolved.issues;
+      const variant = resolved.code && WARNING_ERROR_CODES.has(resolved.code) ? "warning" : "destructive";
+
+      setFormIssues(issues);
+
+      if (promoMessage) {
+        setFormError(null);
+        setError("promoCode", { type: "server", message: promoMessage });
+      } else {
+        setFormError(resolved.message);
+      }
+
+      toast({
+        title: "Checkout needs attention",
+        description: promoMessage ?? resolved.message,
+        variant,
+      });
+    },
+    [setError, setFormError, setFormIssues, toast],
+  );
+
   const onSubmit = handleSubmit(async (values) => {
     if (items.length === 0) {
-      toast({
-        title: "Cart is empty",
-        description: "Add an item before proceeding to checkout.",
-        variant: "destructive",
-      });
+      handleCheckoutError({ code: "cart_empty" });
       return;
     }
 
     setFormError(null);
+    setFormIssues([]);
+    clearErrors("promoCode");
 
     const promotionCode = values.promoCode?.trim();
     const normalizedPromotionCode = promotionCode ? promotionCode.toUpperCase() : undefined;
@@ -83,16 +163,18 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
       });
 
       const payload = (await response.json().catch(() => null)) as
-        | { sessionId?: string; error?: string }
+        | { sessionId?: string; error?: string; code?: string; issues?: string[] }
         | null;
 
       if (!response.ok) {
-        throw new Error(payload?.error ?? "Failed to initiate checkout");
+        handleCheckoutError(payload);
+        return;
       }
 
       const sessionId = payload?.sessionId;
       if (!sessionId) {
-        throw new Error("Stripe session could not be created");
+        handleCheckoutError({ error: "Stripe session could not be created", code: "checkout_failed" });
+        return;
       }
 
       const stripe = await getStripePromise();
@@ -106,32 +188,27 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Checkout failed. Please try again.";
-      setFormError(message);
-      toast({
-        title: "Checkout error",
-        description: message,
-        variant: "destructive",
-      });
+        error instanceof Error ? error.message : CHECKOUT_ERROR_COPY.checkout_failed;
+      handleCheckoutError({ error: message });
     }
   });
 
   return (
     <form
       onSubmit={onSubmit}
-      className="space-y-3.5 sm:space-y-4 rounded-2xl border bg-card p-5 text-sm shadow-sm sm:p-6"
+      className={styles.form}
       noValidate
     >
-      <div className="flex items-center justify-between text-sm font-medium text-foreground sm:text-base">
+      <div className={styles.totalRow}>
         <span>Total</span>
-        <span className="text-lg font-semibold">{formatPrice(total, currency)}</span>
+        <span className={styles.totalValue}>{formatPrice(total, currency)}</span>
       </div>
-      <p id={helperId} className="text-xs text-muted-foreground">
+      <p id={helperId} className={styles.helper}>
         Taxes and shipping are calculated at checkout. Payments are processed securely via Stripe.
       </p>
 
-      <div className="space-y-2">
-        <label htmlFor="checkout-email" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className={styles.field}>
+        <label htmlFor="checkout-email" className={styles.label}>
           Email for receipts
         </label>
         <Input
@@ -144,14 +221,14 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
           {...register("email")}
         />
         {errors.email && (
-          <p id={errorId} role="alert" className="text-xs text-destructive">
+          <p id={errorId} role="alert" className={styles.error}>
             {errors.email.message}
           </p>
         )}
       </div>
 
-      <div className="space-y-2">
-        <label htmlFor="checkout-promo" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className={styles.field}>
+        <label htmlFor="checkout-promo" className={styles.label}>
           Promo code (optional)
         </label>
         <Input
@@ -160,23 +237,36 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
           inputMode="text"
           placeholder="SUMMER25"
           autoComplete="off"
-          aria-describedby={promoHelperId}
+          aria-invalid={errors.promoCode ? "true" : "false"}
+          aria-describedby={errors.promoCode ? `${promoHelperId} ${promoErrorId}` : promoHelperId}
           {...register("promoCode")}
         />
-        <p id={promoHelperId} className="text-xs text-muted-foreground">
+        <p id={promoHelperId} className={styles.helper}>
           Enter an active Stripe promotion code to apply it at checkout.
         </p>
+        {errors.promoCode && (
+          <p id={promoErrorId} role="alert" className={styles.error}>
+            {errors.promoCode.message}
+          </p>
+        )}
       </div>
 
-      {formError && (
-        <p role="alert" className="text-xs text-destructive" aria-live="polite">
-          {formError}
-        </p>
+      {(formError || formIssues.length > 0) && (
+        <div role="alert" className={styles.issues} aria-live="polite">
+          {formError && <p>{formError}</p>}
+          {formIssues.length > 0 && (
+            <ul className={styles.issuesList}>
+              {formIssues.map((issue, index) => (
+                <li key={`${issue}-${index}`}>{issue}</li>
+              ))}
+            </ul>
+          )}
+        </div>
       )}
 
       <Button
         type="submit"
-        className="w-full"
+        className={styles.actionButton}
         size="lg"
         disabled={isSubmitting || items.length === 0}
       >
@@ -185,7 +275,7 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
       <Button
         type="button"
         variant="ghost"
-        className="w-full"
+        className={styles.actionButton}
         onClick={onClear}
         disabled={isSubmitting || items.length === 0}
       >

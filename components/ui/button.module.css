@@ -1,0 +1,130 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease,
+    color 0.2s ease, border-color 0.2s ease;
+  background: transparent;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 40%, transparent);
+}
+
+.button svg {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.sizeDefault {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 0.875rem;
+}
+
+.sizeSm {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 0.8125rem;
+}
+
+.sizeLg {
+  min-height: 44px;
+  padding: 0 24px;
+  font-size: 0.95rem;
+}
+
+.sizeIcon {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+}
+
+.variantDefault {
+  background: linear-gradient(
+    135deg,
+    color-mix(in oklab, var(--primary) 95%, white),
+    color-mix(in oklab, var(--primary) 88%, black)
+  );
+  color: var(--primary-foreground);
+  border-color: color-mix(in oklab, var(--primary) 60%, transparent);
+  box-shadow: 0 14px 24px -18px color-mix(in oklab, var(--primary) 60%, transparent);
+}
+
+.variantDefault:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 26px -18px color-mix(in oklab, var(--primary) 70%, transparent);
+}
+
+.variantDefault:active {
+  transform: translateY(0);
+}
+
+.variantDestructive {
+  background: var(--destructive);
+  color: white;
+  border-color: color-mix(in oklab, var(--destructive) 60%, transparent);
+}
+
+.variantDestructive:hover {
+  background: color-mix(in oklab, var(--destructive) 85%, black);
+}
+
+.variantOutline {
+  background: color-mix(in oklab, var(--background) 85%, transparent);
+  border-color: color-mix(in oklab, var(--border) 70%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 6px 14px -12px color-mix(in oklab, var(--foreground) 20%, transparent);
+}
+
+.variantOutline:hover {
+  border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+  background: color-mix(in oklab, var(--background) 90%, var(--accent));
+  transform: translateY(-1px);
+}
+
+.variantSecondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: color-mix(in oklab, var(--secondary) 70%, transparent);
+  box-shadow: 0 10px 20px -16px color-mix(in oklab, var(--secondary) 70%, transparent);
+}
+
+.variantSecondary:hover {
+  transform: translateY(-1px);
+  background: color-mix(in oklab, var(--secondary) 85%, white);
+}
+
+.variantGhost {
+  background: transparent;
+  color: inherit;
+  border-color: transparent;
+}
+
+.variantGhost:hover {
+  background: color-mix(in oklab, var(--accent) 65%, transparent);
+  color: var(--accent-foreground);
+}
+
+.variantLink {
+  padding: 0;
+  min-height: auto;
+  border-radius: 0;
+  background: transparent;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}

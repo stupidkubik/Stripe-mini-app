@@ -3,8 +3,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import CancelCartSummary from "@/components/cart/cancel-cart-summary";
 import { Button } from "@/components/ui/button";
 import { stripe } from "@/lib/stripe";
+import styles from "./page.module.css";
 
 const searchParamsSchema = z.object({
   session_id: z.string().min(1, "session_id is required"),
@@ -36,28 +38,30 @@ export default async function CancelPage({ searchParams }: CancelPageProps) {
   }
 
   return (
-    <main className="page-container flex min-h-[60vh] flex-col justify-center gap-5 py-14 text-center sm:gap-6 sm:py-16">
-      <div className="space-y-3 sm:space-y-4">
-        <span className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1 text-xs font-medium text-primary">
-          <span className="inline-flex size-2 rounded-full bg-primary" aria-hidden />
+    <section className={styles.page}>
+      <div className={styles.panel}>
+        <span className={styles.badge}>
+          <span className={styles.badgeDot} aria-hidden />
           Checkout cancelled
         </span>
-        <h1 className="text-balance text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className={styles.title}>
           Your payment was cancelled
         </h1>
-        <p className="text-sm text-muted-foreground sm:text-base">
-          No charges were made. You can revisit your cart, adjust quantities, and submit the checkout again whenever you&apos;re ready.
+        <p className={styles.description}>
+          No charges were made. Your cart is saved below, so you can adjust quantities and try checkout again whenever you&apos;re ready.
         </p>
+
+        <div className={styles.actions}>
+          <Button asChild size="lg" className={styles.primaryAction}>
+            <Link href="/cart">Try checkout again</Link>
+          </Button>
+          <Button asChild variant="ghost" className={styles.secondaryAction}>
+            <Link href="/products">Continue browsing</Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
-        <Button asChild size="lg" className="sm:min-w-[200px]">
-          <Link href="/cart">Return to cart</Link>
-        </Button>
-        <Button asChild variant="ghost" className="sm:min-w-[160px]">
-          <Link href="/products">Continue browsing</Link>
-        </Button>
-      </div>
-    </main>
+      <CancelCartSummary />
+    </section>
   );
 }

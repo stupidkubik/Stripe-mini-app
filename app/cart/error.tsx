@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import styles from "../error.module.css";
 
 export default function CartError({
   error,
@@ -16,9 +17,9 @@ export default function CartError({
   }, [error]);
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-semibold">Cart unavailable</h1>
-      <p className="text-sm text-muted-foreground">
+    <section className={styles.section}>
+      <h1 className={styles.title}>Cart unavailable</h1>
+      <p className={styles.description}>
         We couldn&apos;t load your cart. Refresh the page or try again shortly.
       </p>
       <Button onClick={reset}>Try again</Button>
