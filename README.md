@@ -13,6 +13,7 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 - Persisted cart (Zustand) with quantity controls, toast feedback, theme toggle, and keyboard-friendly interactions.
 - Stripe Checkout session creator that validates price IDs, enforces quantity limits, and applies promotion codes server-side.
 - Webhook handler that verifies Stripe signatures, records `payment_succeeded` / `payment_failed` events, and surfaces them on the `/success` page.
+- Success page includes a timeline plus an itemized order summary (images, quantities, totals, promo code).
 - SEO upgrades: dynamic Open Graph image generator, canonical metadata, Twitter cards, and auto-generated `sitemap.xml` + `robots.txt`.
 - Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
 
@@ -36,8 +37,10 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_DEMO_SUCCESS=true
 ```
 > `NEXT_PUBLIC_SITE_URL` is also used as the fallback origin when creating Stripe Checkout sessions.
+> `NEXT_PUBLIC_DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
 
 Optional: seed test products via the helper script.
 ```bash
@@ -59,6 +62,13 @@ Copy the printed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`.
 
 ### 5. Promotion codes
 Create active promotion codes in your Stripe dashboard. Visitors can enter them in the cart; the API verifies the code before attaching it to the Checkout session, while still letting Stripe’s hosted page accept additional codes.
+
+### 6. Preview the success page (demo helper)
+In dev, you can bypass the paid check with:
+```
+/success?session_id=cs_test_...&preview=1
+```
+Outside dev, set `NEXT_PUBLIC_DEMO_SUCCESS=true` and include `preview=1` to allow the same flow. A valid `session_id` is still required.
 
 ## ✅ Testing
 | Command | Description |
@@ -85,6 +95,7 @@ Playwright spins up the dev server automatically. Use `npx playwright show-repor
 - There is no dedicated database—order metadata lives in Stripe, and cart state persists in the browser via localStorage.
 - Product data is cached via Next.js ISR; adding/removing Stripe products may require revalidation or a redeploy to appear instantly.
 - Ensure your Stripe test mode has products, prices, and promotion codes before running E2E flows.
+- Preview mode only bypasses the paid check; it still fetches the Stripe Checkout session by `session_id`.
 
 ## 📦 Deployment
 Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`).

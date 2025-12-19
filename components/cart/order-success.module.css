@@ -61,7 +61,7 @@
   font-size: 0.75rem;
 }
 
-.timeline {
+.stepList {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -70,10 +70,9 @@
   list-style: none;
 }
 
-.timelineItem {
+.stepItem {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 16px;
   border-radius: 14px;
   border: 1px solid var(--border);
@@ -81,36 +80,59 @@
   padding: 12px;
 }
 
-.timelineContent {
+.stepIconComplete,
+.stepIconPending {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.stepIconComplete {
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.stepIconPending {
+  background: color-mix(in oklab, var(--muted) 70%, transparent);
+  color: var(--muted-foreground);
+}
+
+.stepIconComplete svg,
+.stepIconPending svg {
+  width: 18px;
+  height: 18px;
+}
+
+.stepBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.stepHeader {
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
-.timelineLabel {
+.stepTitle {
+  margin: 0;
   font-weight: 600;
+  color: var(--foreground);
 }
 
-.timelineLabelSuccess {
-  color: #059669;
-}
-
-.timelineLabelError {
-  color: var(--destructive);
-}
-
-.timelineAmount {
+.stepTime {
   font-size: 0.75rem;
   color: var(--muted-foreground);
 }
 
-.timelineError {
-  font-size: 0.75rem;
-  color: color-mix(in oklab, var(--destructive) 80%, transparent);
-}
-
-.timestamp {
-  flex-shrink: 0;
+.stepDescription {
+  margin: 0;
   font-size: 0.75rem;
   color: var(--muted-foreground);
 }
@@ -127,9 +149,29 @@
 
 .lineItem {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+.lineItemInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.lineItemImage {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--muted);
+  flex-shrink: 0;
+}
+
+.lineItemImage img {
+  object-fit: cover;
 }
 
 .lineItemTitle {
@@ -141,6 +183,28 @@
 }
 
 .lineItemTotal {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
+.totals {
+  margin-top: 16px;
+  border-top: 1px dashed var(--border);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.totalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted-foreground);
+}
+
+.totalRowStrong {
   font-weight: 600;
   color: var(--foreground);
 }
@@ -189,5 +253,11 @@
 
   .actions {
     flex-direction: row;
+  }
+
+  .stepHeader {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 }

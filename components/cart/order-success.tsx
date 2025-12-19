@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 
@@ -8,25 +9,36 @@ import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/pricing";
 
-import type { PaymentEventLog } from "@/lib/payment-events";
 import styles from "./order-success.module.css";
 
 type SuccessLineItem = {
   id: string;
   description: string;
   quantity: number;
+  unitAmount?: number | null;
   amountSubtotal?: number;
   currency?: string;
   image?: string | null;
 };
 
+type TimelineStep = {
+  id: string;
+  label: string;
+  description?: string;
+  timestamp?: number;
+  status: "complete" | "pending";
+};
+
 type OrderSuccessProps = {
   sessionId?: string;
   amountTotal?: number | null;
+  amountSubtotal?: number | null;
+  amountDiscount?: number | null;
+  promoCode?: string | null;
   currency?: string | null;
   customerEmail?: string | null;
   lineItems?: SuccessLineItem[];
-  paymentEvents?: PaymentEventLog[];
+  timelineSteps?: TimelineStep[];
 };
 
 function formatAmount(amount?: number | null, currency?: string | null) {
@@ -43,10 +55,13 @@ function formatAmount(amount?: number | null, currency?: string | null) {
 export default function OrderSuccess({
   sessionId,
   amountTotal,
+  amountSubtotal,
+  amountDiscount,
+  promoCode,
   currency,
   customerEmail,
   lineItems,
-  paymentEvents,
+  timelineSteps,
 }: OrderSuccessProps) {
   const clear = useCart((state) => state.clear);
   const [cleared, setCleared] = React.useState(false);
@@ -57,6 +72,9 @@ export default function OrderSuccess({
   }, [clear]);
 
   const formattedTotal = formatAmount(amountTotal, currency);
+  const formattedSubtotal = formatAmount(amountSubtotal ?? undefined, currency);
+  const shouldShowDiscount = typeof amountDiscount === "number" && amountDiscount > 0;
+  const formattedDiscount = shouldShowDiscount ? formatAmount(amountDiscount, currency) : null;
 
   return (
     <section className={styles.section}>
@@ -99,39 +117,39 @@ export default function OrderSuccess({
         </div>
       )}
 
-      {paymentEvents && paymentEvents.length > 0 && (
+      {timelineSteps && timelineSteps.length > 0 && (
         <div className={styles.card}>
-          <h2 className={styles.label}>Payment status</h2>
-          <ul className={styles.timeline}>
-            {paymentEvents.map((event) => {
-              const amount = formatAmount(event.amount, event.currency ?? currency);
-              const timestamp = new Date(event.createdAt);
-              const label = event.type === "payment_succeeded" ? "Payment succeeded" : "Payment failed";
+          <h2 className={styles.label}>Order timeline</h2>
+          <ul className={styles.stepList}>
+            {timelineSteps.map((step) => {
+              const timestamp = step.timestamp ? new Date(step.timestamp) : null;
+              const isComplete = step.status === "complete";
 
               return (
-                <li key={event.id} className={styles.timelineItem}>
-                  <div className={styles.timelineContent}>
-                    <p
-                      className={
-                        event.type === "payment_succeeded"
-                          ? `${styles.timelineLabel} ${styles.timelineLabelSuccess}`
-                          : `${styles.timelineLabel} ${styles.timelineLabelError}`
-                      }
-                    >
-                      {label}
-                    </p>
-                    {amount && <p className={styles.timelineAmount}>{amount}</p>}
-                    {event.errorMessage && (
-                      <p className={styles.timelineError}>{event.errorMessage}</p>
+                <li key={step.id} className={styles.stepItem}>
+                  <span
+                    className={isComplete ? styles.stepIconComplete : styles.stepIconPending}
+                    aria-hidden
+                  >
+                    <CheckCircle2 />
+                  </span>
+                  <div className={styles.stepBody}>
+                    <div className={styles.stepHeader}>
+                      <p className={styles.stepTitle}>{step.label}</p>
+                      {timestamp && (
+                        <time
+                          className={styles.stepTime}
+                          dateTime={timestamp.toISOString()}
+                          suppressHydrationWarning
+                        >
+                          {timestamp.toLocaleString()}
+                        </time>
+                      )}
+                    </div>
+                    {step.description && (
+                      <p className={styles.stepDescription}>{step.description}</p>
                     )}
                   </div>
-                  <time
-                    className={styles.timestamp}
-                    dateTime={timestamp.toISOString()}
-                    suppressHydrationWarning
-                  >
-                    {timestamp.toLocaleString()}
-                  </time>
                 </li>
               );
             })}
@@ -145,17 +163,55 @@ export default function OrderSuccess({
           <ul className={styles.lineItems}>
             {lineItems.map((item) => {
               const subtotal = formatAmount(item.amountSubtotal, item.currency ?? currency);
+              const unitAmount =
+                item.unitAmount != null
+                  ? formatAmount(item.unitAmount, item.currency ?? currency)
+                  : null;
+
               return (
                 <li key={item.id} className={styles.lineItem}>
-                  <div>
-                    <div className={styles.lineItemTitle}>{item.description}</div>
-                    <div className={styles.lineItemMeta}>Quantity: {item.quantity}</div>
+                  <div className={styles.lineItemInfo}>
+                    {item.image && (
+                      <div className={styles.lineItemImage}>
+                        <Image
+                          src={item.image}
+                          alt={item.description}
+                          fill
+                          sizes="64px"
+                        />
+                      </div>
+                    )}
+                    <div>
+                      <div className={styles.lineItemTitle}>{item.description}</div>
+                      <div className={styles.lineItemMeta}>
+                        Qty {item.quantity}
+                        {unitAmount ? ` • ${unitAmount}` : ""}
+                      </div>
+                    </div>
                   </div>
                   {subtotal && <div className={styles.lineItemTotal}>{subtotal}</div>}
                 </li>
               );
             })}
           </ul>
+          <div className={styles.totals}>
+            {formattedSubtotal && (
+              <div className={styles.totalRow}>
+                <span>Subtotal</span>
+                <span>{formattedSubtotal}</span>
+              </div>
+            )}
+            {formattedDiscount && (
+              <div className={styles.totalRow}>
+                <span>{promoCode ? `Promo code (${promoCode})` : "Discount"}</span>
+                <span>-{formattedDiscount}</span>
+              </div>
+            )}
+            <div className={`${styles.totalRow} ${styles.totalRowStrong}`}>
+              <span>Total</span>
+              <span>{formattedTotal ?? "—"}</span>
+            </div>
+          </div>
         </div>
       )}
 
