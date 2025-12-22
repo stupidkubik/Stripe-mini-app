@@ -69,7 +69,7 @@ describe("CartPageClient", () => {
     render(<CartPageClient />);
 
     expect(screen.getByText(/test product/i)).toBeInTheDocument();
-    expect(screen.getByText("$50.00")).toBeInTheDocument();
+    expect(screen.getAllByText("$50.00")).toHaveLength(2);
     expect(
       screen.getByRole("button", { name: /proceed to checkout/i }),
     ).toBeInTheDocument();

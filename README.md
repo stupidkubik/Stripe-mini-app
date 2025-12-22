@@ -80,6 +80,8 @@ Outside dev, set `NEXT_PUBLIC_DEMO_SUCCESS=true` and include `preview=1` to allo
 
 Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
 
+Coverage targets and the list of critical modules are documented in `TESTING.md`.
+
 ## 📁 Key Paths
 | Path | Purpose |
 | --- | --- |
