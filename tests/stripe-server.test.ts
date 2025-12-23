@@ -189,4 +189,124 @@ describe("stripe server helpers", () => {
       unitAmount: 1800,
     });
   });
+
+  it("finds products by slug and normalizes metadata", async () => {
+    stripeState.products.search.mockResolvedValue({
+      data: [
+        {
+          id: "prod_slug",
+          name: "Slug Plant",
+          description: "Prickly",
+          images: [],
+          metadata: {
+            slug: "fern",
+            category: "Cactus",
+            light: "Bright",
+            pet_safe: "TRUE",
+            watering: "Monthly",
+          },
+          default_price: {
+            id: "price_slug",
+            unit_amount: 2400,
+            currency: "usd",
+          },
+        },
+      ],
+    });
+
+    const { getProductBySlug } = await loadStripeModule();
+
+    const product = await getProductBySlug(" fern ");
+
+    expect(product).toEqual({
+      id: "prod_slug",
+      name: "Slug Plant",
+      description: "Prickly",
+      image: FALLBACK_IMAGE,
+      priceId: "price_slug",
+      currency: "USD",
+      unitAmount: 2400,
+      metadata: {
+        slug: "fern",
+        category: "cactus",
+        light: "bright",
+        petSafe: true,
+        watering: "monthly",
+      },
+    });
+  });
+
+  it("falls back to listing products when search fails", async () => {
+    stripeState.products.search.mockRejectedValue(new Error("search down"));
+    stripeState.products.list.mockResolvedValue({
+      data: [
+        {
+          id: "prod_list",
+          name: "Listed",
+          description: null,
+          images: [],
+          metadata: { slug: "aloe" },
+          default_price: {
+            id: "price_list",
+            unit_amount: 1900,
+            currency: "usd",
+          },
+        },
+      ],
+    });
+
+    const { getProductBySlug } = await loadStripeModule();
+
+    const product = await getProductBySlug("ALOE");
+
+    expect(product?.id).toBe("prod_list");
+    expect(product?.metadata?.slug).toBe("aloe");
+  });
+
+  it("falls back to product id lookup when slug is not found", async () => {
+    stripeState.products.search.mockResolvedValue({ data: [] });
+    stripeState.products.list.mockResolvedValue({
+      data: [
+        {
+          id: "prod_other",
+          name: "Other",
+          description: null,
+          images: [],
+          metadata: { slug: "other" },
+          default_price: {
+            id: "price_other",
+            unit_amount: 2100,
+            currency: "usd",
+          },
+        },
+      ],
+    });
+    stripeState.products.retrieve.mockResolvedValue({
+      id: "prod_1",
+      name: "Fallback",
+      description: null,
+      images: [],
+      default_price: {
+        id: "price_fallback",
+        unit_amount: 1600,
+        currency: "usd",
+      },
+    });
+
+    const { getProductBySlug } = await loadStripeModule();
+
+    const product = await getProductBySlug("PROD_1");
+
+    expect(stripeState.products.retrieve).toHaveBeenCalledWith("prod_1", {
+      expand: ["default_price"],
+    });
+    expect(product?.id).toBe("prod_1");
+  });
+
+  it("returns null for blank slugs", async () => {
+    const { getProductBySlug } = await loadStripeModule();
+
+    await expect(getProductBySlug("   ")).resolves.toBeNull();
+    expect(stripeState.products.search).not.toHaveBeenCalled();
+  });
 });

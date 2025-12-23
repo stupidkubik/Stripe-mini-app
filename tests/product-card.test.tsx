@@ -102,4 +102,30 @@ describe("ProductCard", () => {
 
     expect(screen.getByText("—")).toBeInTheDocument();
   });
+
+  it("renders metadata badges when available", () => {
+    render(
+      <ProductCard
+        product={{
+          ...product,
+          metadata: {
+            category: "air-plant",
+            light: "low",
+            watering: "weekly",
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Air Plant")).toBeInTheDocument();
+    expect(screen.getByText("Low light")).toBeInTheDocument();
+    expect(screen.getByText("Weekly")).toBeInTheDocument();
+  });
+
+  it("hides metadata badges when none are present", () => {
+    render(<ProductCard product={product} />);
+
+    expect(screen.queryByText("Low light")).not.toBeInTheDocument();
+    expect(screen.queryByText("Weekly")).not.toBeInTheDocument();
+  });
 });

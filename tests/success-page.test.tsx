@@ -158,6 +158,72 @@ describe("Success page", () => {
     });
   });
 
+  it("uses discount promo code when metadata is missing", async () => {
+    stripeMock.checkout.sessions.retrieve.mockResolvedValue({
+      ...baseSession,
+      metadata: {},
+      discounts: [{ promotion_code: { code: "PROMO20" } }],
+    });
+    getPaymentEventsMock.mockReturnValue([]);
+
+    const { default: SuccessPage } = await loadPage();
+
+    const element = await SuccessPage({
+      searchParams: Promise.resolve({ session_id: "cs_123" }),
+    });
+    const props = (element as { props: Record<string, unknown> }).props;
+
+    expect(props.promoCode).toBe("PROMO20");
+  });
+
+  it("normalizes line items when price details are missing", async () => {
+    stripeMock.checkout.sessions.retrieve.mockResolvedValue({
+      ...baseSession,
+      payment_intent: { id: "pi_obj" },
+      metadata: {},
+      discounts: [],
+      amount_subtotal: undefined,
+      currency: "eur",
+      line_items: {
+        data: [
+          {
+            id: "li_missing",
+            quantity: 2,
+            amount_subtotal: 5000,
+            description: "Fallback item",
+            price: null,
+          },
+        ],
+      },
+    });
+    getPaymentEventsMock.mockReturnValue([]);
+
+    const { default: SuccessPage } = await loadPage();
+
+    const element = await SuccessPage({
+      searchParams: Promise.resolve({ session_id: "cs_123" }),
+    });
+    const props = (element as { props: Record<string, unknown> }).props;
+
+    expect(props.promoCode).toBeNull();
+    expect(props.amountSubtotal).toBe(5000);
+    expect(props.lineItems).toEqual([
+      {
+        id: "li_missing",
+        description: "Fallback item",
+        quantity: 2,
+        unitAmount: 2500,
+        amountSubtotal: 5000,
+        currency: "EUR",
+        image: null,
+      },
+    ]);
+    expect(getPaymentEventsMock).toHaveBeenCalledWith({
+      sessionId: "cs_123",
+      paymentIntentId: "pi_obj",
+    });
+  });
+
   it("allows preview when demo mode is enabled", async () => {
     process.env.NEXT_PUBLIC_DEMO_SUCCESS = "true";
     stripeMock.checkout.sessions.retrieve.mockResolvedValue({

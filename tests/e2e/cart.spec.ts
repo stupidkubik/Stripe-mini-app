@@ -27,7 +27,8 @@ test.describe("Cart page", () => {
                 productId: "prod_fake",
                 priceId: "price_fake",
                 name: "Test Product",
-                image: "https://via.placeholder.com/400x300.png?text=Test",
+                image:
+                  "https://images.unsplash.com/photo-1470163395405-d2b80e7450ed?auto=format&fit=crop&w=400&q=80",
                 unitAmount: 1500,
                 currency: "USD",
                 quantity: 2,

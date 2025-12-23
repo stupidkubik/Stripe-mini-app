@@ -34,7 +34,7 @@ test.describe("Products catalog", () => {
     const name = (await firstCard.locator("h3").textContent())?.trim();
 
     await firstCard.getByRole("link", { name: /view details/i }).click();
-    await expect(page).toHaveURL(/\\/products\\//);
+    await expect(page).toHaveURL(/\/products\//);
 
     if (name) {
       await expect(page.getByRole("heading", { name })).toBeVisible();

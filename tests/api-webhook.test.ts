@@ -182,4 +182,90 @@ describe("POST /api/stripe/webhook", () => {
       }),
     );
   });
+
+  it("uses checkout_session_id metadata without listing sessions", async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      id: "evt_meta",
+      type: "payment_intent.payment_failed",
+      created: 1700000200,
+      data: {
+        object: {
+          id: "pi_meta",
+          amount: 1200,
+          currency: "usd",
+          metadata: { checkout_session_id: "cs_meta" },
+          receipt_email: "buyer@example.com",
+          last_payment_error: { message: "Failed" },
+        },
+      },
+    });
+    setMockHeaders({ "stripe-signature": "sig" });
+
+    const { POST } = await loadRoute();
+    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ received: true });
+    expect(stripeMock.checkout.sessions.list).not.toHaveBeenCalled();
+    expect(recordPaymentEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "evt_meta",
+        type: "payment_failed",
+        sessionId: "cs_meta",
+        customerEmail: "buyer@example.com",
+      }),
+    );
+  });
+
+  it("returns 200 for unhandled event types", async () => {
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      id: "evt_other",
+      type: "customer.created",
+      created: 1700000300,
+      data: { object: {} },
+    });
+    setMockHeaders({ "stripe-signature": "sig" });
+
+    const { POST } = await loadRoute();
+    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ received: true });
+    expect(recordPaymentEventMock).not.toHaveBeenCalled();
+  });
+
+  it("returns 500 when handler throws", async () => {
+    recordPaymentEventMock.mockImplementation(() => {
+      throw new Error("boom");
+    });
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      id: "evt_boom",
+      type: "checkout.session.completed",
+      created: 1700000400,
+      data: {
+        object: {
+          id: "cs_boom",
+          payment_intent: "pi_boom",
+          amount_total: 4200,
+          currency: "usd",
+          customer_details: { email: "buyer@example.com" },
+        },
+      },
+    });
+    setMockHeaders({ "stripe-signature": "sig" });
+
+    const { POST } = await loadRoute();
+    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toEqual({
+      error: "Webhook handler failure",
+    });
+  });
 });

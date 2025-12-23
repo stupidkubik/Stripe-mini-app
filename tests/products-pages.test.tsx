@@ -60,6 +60,10 @@ const product = {
   unitAmount: 2500,
   metadata: {
     slug: "fern",
+    category: "tropical",
+    light: "bright",
+    watering: "weekly",
+    petSafe: true,
   },
 };
 
@@ -177,6 +181,11 @@ describe("Products pages", () => {
     expect(screen.getByRole("heading", { name: "Fern" })).toBeInTheDocument();
     expect(screen.getByText("$25.00")).toBeInTheDocument();
     expect(screen.getByText("Leafy plant")).toBeInTheDocument();
+    expect(screen.getByText("Plant details")).toBeInTheDocument();
+    expect(screen.getByText("Tropical")).toBeInTheDocument();
+    expect(screen.getByText("Bright light")).toBeInTheDocument();
+    expect(screen.getByText("Weekly")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /back to catalog/i }),
     ).toHaveAttribute("href", "/products");
@@ -188,6 +197,10 @@ describe("Products pages", () => {
     getProductBySlugMock.mockResolvedValue({
       ...product,
       description: null,
+      metadata: {
+        ...product.metadata,
+        petSafe: false,
+      },
     });
 
     const { default: ProductDetailPage } = await loadProductDetailPage();
@@ -201,5 +214,6 @@ describe("Products pages", () => {
     expect(
       screen.getByText(/no description provided for this product yet/i),
     ).toBeInTheDocument();
+    expect(screen.getByText("No")).toBeInTheDocument();
   });
 });
