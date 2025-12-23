@@ -44,11 +44,10 @@ export default async function CancelPage({ searchParams }: CancelPageProps) {
           <span className={styles.badgeDot} aria-hidden />
           Checkout cancelled
         </span>
-        <h1 className={styles.title}>
-          Your payment was cancelled
-        </h1>
+        <h1 className={styles.title}>Your payment was cancelled</h1>
         <p className={styles.description}>
-          No charges were made. Your cart is saved below, so you can adjust quantities and try checkout again whenever you&apos;re ready.
+          No charges were made. Your cart is saved below, so you can adjust
+          quantities and try checkout again whenever you&apos;re ready.
         </p>
 
         <div className={styles.actions}>

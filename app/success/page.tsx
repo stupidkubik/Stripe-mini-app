@@ -23,7 +23,9 @@ export const metadata: Metadata = {
 
 export const dynamic = "force-dynamic";
 
-function isActiveProduct(product: Stripe.Product | Stripe.DeletedProduct): product is Stripe.Product {
+function isActiveProduct(
+  product: Stripe.Product | Stripe.DeletedProduct,
+): product is Stripe.Product {
   return !("deleted" in product) || product.deleted !== true;
 }
 
@@ -33,7 +35,9 @@ function normalizeLineItems(session: Stripe.Checkout.Session) {
   return items.map((item) => {
     const price = item.price;
     const product =
-      price && typeof price.product === "object" && isActiveProduct(price.product)
+      price &&
+      typeof price.product === "object" &&
+      isActiveProduct(price.product)
         ? price.product
         : null;
     const quantity = item.quantity ?? 1;
@@ -100,7 +104,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
     const allowPreview =
       parsed.data.preview === "1" &&
-      (process.env.NEXT_PUBLIC_DEMO_SUCCESS === "true" || process.env.NODE_ENV === "development");
+      (process.env.NEXT_PUBLIC_DEMO_SUCCESS === "true" ||
+        process.env.NODE_ENV === "development");
 
     if (!session || (session.payment_status !== "paid" && !allowPreview)) {
       redirect("/cart");
@@ -108,15 +113,21 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
     const lineItems = normalizeLineItems(session);
     const paymentIntentId =
-      typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+      typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id;
     const paymentEvents = getPaymentEvents({
       sessionId: session.id,
       paymentIntentId,
     });
-    const paymentSuccessEvent = paymentEvents.find((event) => event.type === "payment_succeeded");
+    const paymentSuccessEvent = paymentEvents.find(
+      (event) => event.type === "payment_succeeded",
+    );
     const orderPlacedAt = session.created ? session.created * 1000 : undefined;
     const paymentConfirmedAt = paymentSuccessEvent?.createdAt ?? orderPlacedAt;
-    const receiptSentAt = session.customer_details?.email ? paymentConfirmedAt : undefined;
+    const receiptSentAt = session.customer_details?.email
+      ? paymentConfirmedAt
+      : undefined;
     const promoCode = resolvePromotionCode(session);
 
     const amountSubtotal =

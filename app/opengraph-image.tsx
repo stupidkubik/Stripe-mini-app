@@ -14,22 +14,29 @@ const background =
 
 export default async function OpenGraphImage() {
   return new ImageResponse(
-    (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        padding: "64px",
+        background,
+        color: "#f1f5f9",
+        justifyContent: "space-between",
+        borderRadius: "24px",
+      }}
+    >
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          width: "100%",
-          height: "100%",
-          padding: "64px",
-          background,
-          color: "#f1f5f9",
-          justifyContent: "space-between",
-          borderRadius: "24px",
+          gap: "20px",
+          maxWidth: "760px",
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px", maxWidth: "760px" }}>
-          <span style={{
+        <span
+          style={{
             display: "inline-flex",
             alignItems: "center",
             gap: "12px",
@@ -37,56 +44,63 @@ export default async function OpenGraphImage() {
             letterSpacing: "0.08em",
             textTransform: "uppercase",
             color: "rgba(226, 232, 240, 0.75)",
-          }}>
-            Verdant Lane
-          </span>
-          <h1
-            style={{
-              fontSize: "80px",
-              lineHeight: "88px",
-              fontWeight: 700,
-              margin: 0,
-            }}
-          >
-            Houseplants, Stripe Checkout, and Next.js Magic
-          </h1>
-          <p
-            style={{
-              fontSize: "28px",
-              lineHeight: "38px",
-              color: "rgba(226, 232, 240, 0.85)",
-              margin: 0,
-            }}
-          >
-            Explore a mini e-commerce experience wired to real Stripe products, promo codes, and webhooks.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "6px",
-              fontSize: "22px",
-              color: "rgba(226, 232, 240, 0.9)",
-            }}
-          >
-            <span>stripe-mini-shop</span>
-            <span>nextjs • typescript • stripe</span>
-          </div>
-          <div
-            style={{
-              height: "140px",
-              width: "140px",
-              borderRadius: "100%",
-              background: "rgba(15, 118, 110, 0.35)",
-              border: "4px solid rgba(226, 232, 240, 0.4)",
-            }}
-          />
-        </div>
+          }}
+        >
+          Verdant Lane
+        </span>
+        <h1
+          style={{
+            fontSize: "80px",
+            lineHeight: "88px",
+            fontWeight: 700,
+            margin: 0,
+          }}
+        >
+          Houseplants, Stripe Checkout, and Next.js Magic
+        </h1>
+        <p
+          style={{
+            fontSize: "28px",
+            lineHeight: "38px",
+            color: "rgba(226, 232, 240, 0.85)",
+            margin: 0,
+          }}
+        >
+          Explore a mini e-commerce experience wired to real Stripe products,
+          promo codes, and webhooks.
+        </p>
       </div>
-    ),
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+            fontSize: "22px",
+            color: "rgba(226, 232, 240, 0.9)",
+          }}
+        >
+          <span>stripe-mini-shop</span>
+          <span>nextjs • typescript • stripe</span>
+        </div>
+        <div
+          style={{
+            height: "140px",
+            width: "140px",
+            borderRadius: "100%",
+            background: "rgba(15, 118, 110, 0.35)",
+            border: "4px solid rgba(226, 232, 240, 0.4)",
+          }}
+        />
+      </div>
+    </div>,
     {
       ...size,
     },

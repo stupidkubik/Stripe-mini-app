@@ -1,4 +1,10 @@
-type JsonBody = Record<string, unknown> | unknown[] | string | number | boolean | null;
+type JsonBody =
+  | Record<string, unknown>
+  | unknown[]
+  | string
+  | number
+  | boolean
+  | null;
 
 function buildHeaders(init?: HeadersInit) {
   return new Headers(init);

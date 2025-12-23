@@ -5,14 +5,19 @@ import CartStickySummary from "@/components/cart/cart-sticky-summary";
 
 const { mockState } = vi.hoisted(() => ({
   mockState: {
-    items: [] as Array<{ productId: string; currency: string; quantity: number }>,
+    items: [] as Array<{
+      productId: string;
+      currency: string;
+      quantity: number;
+    }>,
     total: vi.fn(),
     count: vi.fn(),
   },
 }));
 
 vi.mock("@/app/store/cart", () => ({
-  useCart: <T,>(selector: (state: typeof mockState) => T) => selector(mockState),
+  useCart: <T,>(selector: (state: typeof mockState) => T) =>
+    selector(mockState),
 }));
 
 describe("CartStickySummary", () => {

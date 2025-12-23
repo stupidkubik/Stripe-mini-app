@@ -8,9 +8,9 @@ import CartPage from "@/app/cart/page";
 import CancelPage from "@/app/cancel/page";
 import NotFound from "@/app/not-found";
 import ProductsError from "@/app/products/error";
-import ProductDetailLoading from "@/app/products/[id]/loading";
-import ProductNotFound from "@/app/products/[id]/not-found";
-import ProductDetailError from "@/app/products/[id]/error";
+import ProductDetailLoading from "@/app/products/[slug]/loading";
+import ProductNotFound from "@/app/products/[slug]/not-found";
+import ProductDetailError from "@/app/products/[slug]/error";
 
 class RedirectError extends Error {
   url: string;
@@ -67,12 +67,17 @@ describe("Quick pages", () => {
 
     render(<CartError error={error} reset={reset} />);
 
-    expect(screen.getByRole("heading", { name: /cart unavailable/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /cart unavailable/i }),
+    ).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /try again/i }));
     expect(reset).toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("Cart page failed to render", error);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Cart page failed to render",
+        error,
+      );
     });
     consoleSpy.mockRestore();
   });
@@ -118,7 +123,9 @@ describe("Quick pages", () => {
       CancelPage({ searchParams: Promise.resolve({ session_id: "cs_fail" }) }),
     ).rejects.toBeInstanceOf(RedirectError);
 
-    expect(stripeMock.checkout.sessions.retrieve).toHaveBeenCalledWith("cs_fail");
+    expect(stripeMock.checkout.sessions.retrieve).toHaveBeenCalledWith(
+      "cs_fail",
+    );
   });
 
   it("renders cancel page content", async () => {
@@ -151,7 +158,10 @@ describe("Quick pages", () => {
     expect(reset).toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("Products page failed to load", error);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Products page failed to load",
+        error,
+      );
     });
     consoleSpy.mockRestore();
   });
@@ -188,7 +198,10 @@ describe("Quick pages", () => {
     expect(reset).toHaveBeenCalled();
 
     await waitFor(() => {
-      expect(consoleSpy).toHaveBeenCalledWith("Product detail failed to load", error);
+      expect(consoleSpy).toHaveBeenCalledWith(
+        "Product detail failed to load",
+        error,
+      );
     });
     consoleSpy.mockRestore();
   });

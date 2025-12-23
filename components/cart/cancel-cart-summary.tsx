@@ -47,23 +47,16 @@ export default function CancelCartSummary() {
 
       <div className={styles.items}>
         {items.map((item) => (
-          <div
-            key={item.productId}
-            className={styles.itemCard}
-          >
+          <div key={item.productId} className={styles.itemCard}>
             <div className={styles.itemImage}>
-              <Image
-                src={item.image}
-                alt={item.name}
-                fill
-                sizes="80px"
-              />
+              <Image src={item.image} alt={item.name} fill sizes="80px" />
             </div>
 
             <div className={styles.itemContent}>
               <div className={styles.itemName}>{item.name}</div>
               <div className={styles.itemMeta}>
-                {formatPrice(item.unitAmount, item.currency)} · Qty {item.quantity}
+                {formatPrice(item.unitAmount, item.currency)} · Qty{" "}
+                {item.quantity}
               </div>
             </div>
 

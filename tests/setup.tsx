@@ -17,7 +17,12 @@ vi.mock("sonner", async () => await import("./test-utils/sonner"));
 
 vi.mock("next/image", () => ({
   __esModule: true,
-  default: (props: ImgHTMLAttributes<HTMLImageElement> & { fill?: boolean; priority?: boolean }) => {
+  default: (
+    props: ImgHTMLAttributes<HTMLImageElement> & {
+      fill?: boolean;
+      priority?: boolean;
+    },
+  ) => {
     const { style, alt, priority, ...rest } = props;
     const forward = { ...rest } as Record<string, unknown>;
     delete forward.fill;

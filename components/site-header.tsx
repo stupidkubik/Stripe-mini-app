@@ -104,11 +104,7 @@ export default function SiteHeader() {
         <div className={styles.actions}>
           <ThemeToggle />
 
-          <Button
-            asChild
-            variant="ghost"
-            className={styles.cartButton}
-          >
+          <Button asChild variant="ghost" className={styles.cartButton}>
             <Link
               href="/cart"
               aria-label={cartLabel}
@@ -119,9 +115,7 @@ export default function SiteHeader() {
                 <span className={styles.cartText}>Cart</span>
               </span>
               {cartCount > 0 && (
-                <span className={styles.cartBadge}>
-                  {cartCount}
-                </span>
+                <span className={styles.cartBadge}>{cartCount}</span>
               )}
             </Link>
           </Button>

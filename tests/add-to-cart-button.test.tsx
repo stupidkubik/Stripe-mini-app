@@ -69,10 +69,7 @@ describe("AddToCartButton", () => {
 
     await user.click(screen.getByRole("button", { name: /add to cart/i }));
 
-    expect(mockAddItem).toHaveBeenCalledWith(
-      expect.any(Object),
-      3,
-    );
+    expect(mockAddItem).toHaveBeenCalledWith(expect.any(Object), 3);
     expect(mockToast).toHaveBeenCalledWith({
       title: "Added to cart",
       description: "Custom copy",

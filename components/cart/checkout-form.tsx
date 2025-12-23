@@ -19,18 +19,16 @@ const checkoutSchema = z.object({
     .trim()
     .min(1, "Email is required")
     .email("Enter a valid email address"),
-  promoCode: z
-    .string()
-    .trim()
-    .max(64, "Promo code is too long")
-    .optional(),
+  promoCode: z.string().trim().max(64, "Promo code is too long").optional(),
 });
 
 const CHECKOUT_ERROR_COPY: Record<string, string> = {
   cart_empty: "Your cart is empty. Add an item before checking out.",
-  item_unavailable: "Some items in your cart are no longer available. Remove them and try again.",
+  item_unavailable:
+    "Some items in your cart are no longer available. Remove them and try again.",
   promo_invalid: "That promo code isn't valid or active.",
-  promo_apply_failed: "We couldn't apply that promo code. Try again or remove it.",
+  promo_apply_failed:
+    "We couldn't apply that promo code. Try again or remove it.",
   invalid_payload: "Please review your cart details and try again.",
   checkout_failed: "We couldn't start checkout. Please try again.",
 };
@@ -81,7 +79,12 @@ function resolveCheckoutError(payload?: CheckoutErrorPayload | null) {
   };
 }
 
-export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormProps) {
+export function CheckoutForm({
+  items,
+  currency,
+  total,
+  onClear,
+}: CheckoutFormProps) {
   const { toast } = useToast();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [formIssues, setFormIssues] = React.useState<string[]>([]);
@@ -111,11 +114,17 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
         issue.toLowerCase().includes("promo code"),
       );
       const promoMessage =
-        (resolved.code && PROMO_ERROR_CODES.has(resolved.code) && resolved.message) || promoIssue;
+        (resolved.code &&
+          PROMO_ERROR_CODES.has(resolved.code) &&
+          resolved.message) ||
+        promoIssue;
       const issues = promoIssue
         ? resolved.issues.filter((issue) => issue !== promoIssue)
         : resolved.issues;
-      const variant = resolved.code && WARNING_ERROR_CODES.has(resolved.code) ? "warning" : "destructive";
+      const variant =
+        resolved.code && WARNING_ERROR_CODES.has(resolved.code)
+          ? "warning"
+          : "destructive";
 
       setFormIssues(issues);
 
@@ -146,7 +155,9 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
     clearErrors("promoCode");
 
     const promotionCode = values.promoCode?.trim();
-    const normalizedPromotionCode = promotionCode ? promotionCode.toUpperCase() : undefined;
+    const normalizedPromotionCode = promotionCode
+      ? promotionCode.toUpperCase()
+      : undefined;
 
     try {
       const response = await fetch("/api/checkout", {
@@ -162,9 +173,12 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { sessionId?: string; error?: string; code?: string; issues?: string[] }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        sessionId?: string;
+        error?: string;
+        code?: string;
+        issues?: string[];
+      } | null;
 
       if (!response.ok) {
         handleCheckoutError(payload);
@@ -173,13 +187,18 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
 
       const sessionId = payload?.sessionId;
       if (!sessionId) {
-        handleCheckoutError({ error: "Stripe session could not be created", code: "checkout_failed" });
+        handleCheckoutError({
+          error: "Stripe session could not be created",
+          code: "checkout_failed",
+        });
         return;
       }
 
       const stripe = await getStripePromise();
       if (!stripe) {
-        throw new Error("Stripe.js failed to load. Check your publishable key.");
+        throw new Error(
+          "Stripe.js failed to load. Check your publishable key.",
+        );
       }
 
       const { error } = await stripe.redirectToCheckout({ sessionId });
@@ -188,23 +207,24 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
       }
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : CHECKOUT_ERROR_COPY.checkout_failed;
+        error instanceof Error
+          ? error.message
+          : CHECKOUT_ERROR_COPY.checkout_failed;
       handleCheckoutError({ error: message });
     }
   });
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className={styles.form}
-      noValidate
-    >
+    <form onSubmit={onSubmit} className={styles.form} noValidate>
       <div className={styles.totalRow}>
         <span>Total</span>
-        <span className={styles.totalValue}>{formatPrice(total, currency)}</span>
+        <span className={styles.totalValue}>
+          {formatPrice(total, currency)}
+        </span>
       </div>
       <p id={helperId} className={styles.helper}>
-        Taxes and shipping are calculated at checkout. Payments are processed securely via Stripe.
+        Taxes and shipping are calculated at checkout. Payments are processed
+        securely via Stripe.
       </p>
 
       <div className={styles.field}>
@@ -238,7 +258,11 @@ export function CheckoutForm({ items, currency, total, onClear }: CheckoutFormPr
           placeholder="SUMMER25"
           autoComplete="off"
           aria-invalid={errors.promoCode ? "true" : "false"}
-          aria-describedby={errors.promoCode ? `${promoHelperId} ${promoErrorId}` : promoHelperId}
+          aria-describedby={
+            errors.promoCode
+              ? `${promoHelperId} ${promoErrorId}`
+              : promoHelperId
+          }
           {...register("promoCode")}
         />
         <p id={promoHelperId} className={styles.helper}>

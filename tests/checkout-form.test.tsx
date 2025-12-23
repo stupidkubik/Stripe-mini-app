@@ -44,12 +44,7 @@ describe("CheckoutForm", () => {
   it("warns when submitting with an empty cart", async () => {
     const user = userEvent.setup();
     const { container } = render(
-      <CheckoutForm
-        items={[]}
-        currency="USD"
-        total={0}
-        onClear={vi.fn()}
-      />,
+      <CheckoutForm items={[]} currency="USD" total={0} onClear={vi.fn()} />,
     );
 
     await user.type(
@@ -59,9 +54,7 @@ describe("CheckoutForm", () => {
 
     fireEvent.submit(container.querySelector("form") as HTMLFormElement);
 
-    expect(
-      await screen.findByText(/your cart is empty/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/your cart is empty/i)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -151,7 +144,9 @@ describe("CheckoutForm", () => {
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "destructive",
-        description: expect.stringMatching(/stripe session could not be created/i),
+        description: expect.stringMatching(
+          /stripe session could not be created/i,
+        ),
       }),
     );
   });

@@ -41,12 +41,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   try {
     const products = await listProducts();
-    const productRoutes: MetadataRoute.Sitemap = products.map((product) => ({
-      url: `${baseUrl}/products/${product.id}`,
-      lastModified: now,
-      changeFrequency: "daily",
-      priority: 0.7,
-    }));
+    const productRoutes: MetadataRoute.Sitemap = products.map((product) => {
+      const slug = product.metadata?.slug ?? product.id;
+
+      return {
+        url: `${baseUrl}/products/${encodeURIComponent(slug)}`,
+        lastModified: now,
+        changeFrequency: "daily",
+        priority: 0.7,
+      };
+    });
 
     return [...staticRoutes, ...productRoutes];
   } catch (error) {

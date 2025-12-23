@@ -16,10 +16,7 @@ const coverageFile = getArg(
 const outputDir = getArg("--out-dir", path.resolve("badges"));
 
 const escapeHtml = (value) =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 const textWidth = (text) => Math.max(30, text.length * 6 + 10);
 

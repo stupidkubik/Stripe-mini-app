@@ -5,9 +5,15 @@ test.describe("Cart page", () => {
     const response = await page.goto("/cart");
     expect(response?.ok()).toBeTruthy();
 
-    await expect(page.getByRole("heading", { name: "Your cart" })).toBeVisible();
-    await expect(page.getByText(/You haven't added anything yet/i)).toBeVisible();
-    await expect(page.getByRole("link", { name: /browse products/i })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Your cart" }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/You haven't added anything yet/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /browse products/i }),
+    ).toBeVisible();
   });
 
   test("clears items when the user empties the cart", async ({ page }) => {
@@ -35,7 +41,9 @@ test.describe("Cart page", () => {
 
     await page.goto("/cart");
 
-    await expect(page.getByRole("button", { name: /clear cart/i })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /clear cart/i }),
+    ).toBeVisible();
     await page.getByRole("button", { name: /clear cart/i }).click();
     await expect(page.getByText(/your cart is empty/i)).toBeVisible();
   });

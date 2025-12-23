@@ -36,7 +36,10 @@ describe("ProductGrid", () => {
     expect(observers.length).toBeGreaterThan(0);
 
     act(() => {
-      observers[0].trigger({ target: sentinel as Element, isIntersecting: true });
+      observers[0].trigger({
+        target: sentinel as Element,
+        isIntersecting: true,
+      });
     });
 
     expect(screen.getAllByTestId("product-card")).toHaveLength(20);

@@ -44,9 +44,13 @@ describe("POST /api/checkout", () => {
 
   it("returns 400 for invalid payload", async () => {
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/checkout", "invalid-json", {
-      headers: { "content-type": "application/json" },
-    });
+    const request = createTextRequest(
+      "http://localhost:3000/api/checkout",
+      "invalid-json",
+      {
+        headers: { "content-type": "application/json" },
+      },
+    );
 
     const response = await POST(request);
 
@@ -94,7 +98,9 @@ describe("POST /api/checkout", () => {
 
   it("returns 500 when promo lookup fails", async () => {
     listProductsMock.mockResolvedValue([product]);
-    stripeMock.promotionCodes.list.mockRejectedValue(new Error("lookup failed"));
+    stripeMock.promotionCodes.list.mockRejectedValue(
+      new Error("lookup failed"),
+    );
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
@@ -112,8 +118,12 @@ describe("POST /api/checkout", () => {
 
   it("creates a Stripe session with discounts", async () => {
     listProductsMock.mockResolvedValue([product]);
-    stripeMock.promotionCodes.list.mockResolvedValue({ data: [{ id: "promo_1" }] });
-    stripeMock.checkout.sessions.create.mockResolvedValue({ id: "cs_test_123" });
+    stripeMock.promotionCodes.list.mockResolvedValue({
+      data: [{ id: "promo_1" }],
+    });
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_123",
+    });
     setMockHeaders({ origin: "https://example.com" });
 
     const { POST } = await loadRoute();
@@ -126,7 +136,9 @@ describe("POST /api/checkout", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ sessionId: "cs_test_123" });
+    await expect(response.json()).resolves.toEqual({
+      sessionId: "cs_test_123",
+    });
     expect(stripeMock.promotionCodes.list).toHaveBeenCalledWith({
       code: "SUMMER25",
       active: true,
@@ -136,8 +148,10 @@ describe("POST /api/checkout", () => {
       expect.objectContaining({
         discounts: [{ promotion_code: "promo_1" }],
         customer_email: "buyer@example.com",
-        success_url: "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
-        cancel_url: "https://example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
+        success_url:
+          "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url:
+          "https://example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
         metadata: expect.objectContaining({
           promotion_code: "SUMMER25",
         }),
@@ -147,7 +161,9 @@ describe("POST /api/checkout", () => {
 
   it("returns 500 when Stripe session creation fails", async () => {
     listProductsMock.mockResolvedValue([product]);
-    stripeMock.checkout.sessions.create.mockRejectedValue(new Error("Stripe down"));
+    stripeMock.checkout.sessions.create.mockRejectedValue(
+      new Error("Stripe down"),
+    );
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {

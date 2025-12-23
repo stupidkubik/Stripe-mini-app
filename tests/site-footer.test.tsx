@@ -20,9 +20,8 @@ describe("SiteFooter", () => {
       "href",
       "/legal/terms",
     );
-    expect(screen.getByRole("link", { name: /deployed on vercel/i })).toHaveAttribute(
-      "href",
-      "https://vercel.com",
-    );
+    expect(
+      screen.getByRole("link", { name: /deployed on vercel/i }),
+    ).toHaveAttribute("href", "https://vercel.com");
   });
 });

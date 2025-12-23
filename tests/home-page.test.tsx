@@ -51,10 +51,14 @@ describe("Home page", () => {
     const element = await HomePage();
     render(element);
 
-    expect(screen.getByRole("heading", { name: /featured foliage/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /featured foliage/i }),
+    ).toBeInTheDocument();
     expect(screen.getByTestId("product-grid")).toBeInTheDocument();
     expect(productGridState.lastProps?.products).toHaveLength(4);
-    expect(screen.queryByText(/no plants available yet/i)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/no plants available yet/i),
+    ).not.toBeInTheDocument();
   });
 
   it("shows empty catalog message when no products", async () => {
@@ -65,8 +69,6 @@ describe("Home page", () => {
     const element = await HomePage();
     render(element);
 
-    expect(
-      screen.getByText(/no plants available yet/i),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/no plants available yet/i)).toBeInTheDocument();
   });
 });

@@ -72,7 +72,9 @@ export async function POST(request: Request) {
     }
 
     const products = await listProducts();
-    const allowedPrices = new Map(products.map((product) => [product.priceId, product]));
+    const allowedPrices = new Map(
+      products.map((product) => [product.priceId, product]),
+    );
 
     const lineItemsMap = new Map<string, number>();
 
@@ -99,15 +101,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const lineItems = Array.from(lineItemsMap.entries()).map(([price, quantity]) => ({
-      price,
-      quantity,
-      adjustable_quantity: {
-        enabled: true,
-        minimum: 1,
-        maximum: 10,
-      },
-    }));
+    const lineItems = Array.from(lineItemsMap.entries()).map(
+      ([price, quantity]) => ({
+        price,
+        quantity,
+        adjustable_quantity: {
+          enabled: true,
+          minimum: 1,
+          maximum: 10,
+        },
+      }),
+    );
 
     const origin = await getOriginFromHeaders();
 
@@ -159,7 +163,9 @@ export async function POST(request: Request) {
       line_items: lineItems,
       automatic_tax: { enabled: true },
       allow_promotion_codes: true,
-      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
+      ...(promotionCodeId
+        ? { discounts: [{ promotion_code: promotionCodeId }] }
+        : {}),
       customer_email: parsed.data.customerEmail,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,

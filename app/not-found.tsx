@@ -15,7 +15,8 @@ export default function NotFound() {
           We couldn&apos;t find what you were looking for
         </h1>
         <p className={styles.description}>
-          The page may have been moved or no longer exists. Check the URL or head back to the catalog to continue exploring plants.
+          The page may have been moved or no longer exists. Check the URL or
+          head back to the catalog to continue exploring plants.
         </p>
       </div>
 

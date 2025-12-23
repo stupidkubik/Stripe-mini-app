@@ -19,7 +19,8 @@ const { mockState } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/app/store/cart", () => ({
-  useCart: <T,>(selector: (state: typeof mockState) => T) => selector(mockState),
+  useCart: <T,>(selector: (state: typeof mockState) => T) =>
+    selector(mockState),
 }));
 
 describe("CancelCartSummary", () => {

@@ -10,6 +10,7 @@ const { stripeState, StripeInvalidRequestError } = vi.hoisted(() => {
       products: {
         list: vi.fn(),
         retrieve: vi.fn(),
+        search: vi.fn(),
       },
       prices: {
         retrieve: vi.fn(),
@@ -47,6 +48,7 @@ describe("stripe server helpers", () => {
   beforeEach(() => {
     stripeState.products.list.mockReset();
     stripeState.products.retrieve.mockReset();
+    stripeState.products.search.mockReset();
     stripeState.prices.retrieve.mockReset();
     stripeState.prices.list.mockReset();
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -94,7 +96,10 @@ describe("stripe server helpers", () => {
 
     const products = await listProducts();
 
-    expect(products.map((entry) => entry.name)).toEqual(["Aloe", "Zebra Plant"]);
+    expect(products.map((entry) => entry.name)).toEqual([
+      "Aloe",
+      "Zebra Plant",
+    ]);
     expect(products[0]).toEqual({
       id: "prod_a",
       name: "Aloe",

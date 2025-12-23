@@ -6,6 +6,11 @@ import Link from "next/link";
 import { ProductDTO } from "@/app/types/product";
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  formatCategory,
+  formatLight,
+  formatWatering,
+} from "@/lib/product-metadata";
 import { formatPrice } from "@/lib/pricing";
 import { QuantityInput } from "@/components/quantity-input";
 import { useCart } from "@/app/store/cart";
@@ -19,6 +24,8 @@ export function ProductCard({ product }: Props) {
   const idPrefix = `product-card-${product.id}`;
   const titleId = `${idPrefix}-title`;
   const descriptionId = `${idPrefix}-description`;
+  const productSlug = product.metadata?.slug ?? product.id;
+  const productHref = `/products/${encodeURIComponent(productSlug)}`;
 
   const cartItem = useCart((state) =>
     state.items.find((item) => item.productId === product.id),
@@ -37,15 +44,20 @@ export function ProductCard({ product }: Props) {
     updateQty(product.id, clamped);
   };
 
+  const metaBadges = [
+    formatCategory(product.metadata?.category),
+    formatLight(product.metadata?.light),
+    formatWatering(product.metadata?.watering),
+  ].filter((badge): badge is string => Boolean(badge));
+
   return (
     <article
       aria-labelledby={titleId}
       aria-describedby={descriptionId}
       className={styles.card}
     >
-      <Link href={`/products/${product.id}`} className={styles.imageLink}>
+      <Link href={productHref} className={styles.imageLink}>
         <div className={styles.imageWrapper}>
-          {/* Если используешь внешние домены — добавь их в next.config.js -> images.domains */}
           <Image
             src={product.image}
             alt={product.name}
@@ -64,16 +76,22 @@ export function ProductCard({ product }: Props) {
         <p className={styles.price}>
           {formatPrice(product.unitAmount, product.currency)}
         </p>
+        {metaBadges.length > 0 && (
+          <div className={styles.metaBadges}>
+            {metaBadges.map((badge, index) => (
+              <span key={`${badge}-${index}`} className={styles.metaBadge}>
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
 
         <p id={descriptionId} className={styles.description}>
           {product.description || "—"}
         </p>
 
         <div className={styles.actions}>
-          <Link
-            href={`/products/${product.id}`}
-            className={styles.detailsLink}
-          >
+          <Link href={productHref} className={styles.detailsLink}>
             View details
           </Link>
           {cartItem ? (
@@ -82,7 +100,7 @@ export function ProductCard({ product }: Props) {
               onChange={handleQuantityChange}
               min={0}
               max={MAX_QUANTITY}
-              aria-label={`Quantity for ${product.name}`}
+              ariaLabel={`Quantity for ${product.name}`}
             />
           ) : (
             <AddToCartButton

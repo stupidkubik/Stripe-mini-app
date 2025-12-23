@@ -27,7 +27,9 @@
   box-shadow: 0 24px 48px -32px rgba(15, 23, 42, 0.45);
   transform: translate(-50%, -50%) scale(0.96);
   opacity: 0;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .content[data-state="open"] {
@@ -44,7 +46,9 @@
   border: none;
   color: var(--muted-foreground);
   cursor: pointer;
-  transition: color 0.2s ease, background-color 0.2s ease;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease;
   padding: 6px;
 }
 

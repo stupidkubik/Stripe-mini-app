@@ -5,13 +5,13 @@ class NotFoundError extends Error {}
 
 const {
   listProductsMock,
-  getProductMock,
+  getProductBySlugMock,
   notFoundMock,
   productGridState,
   purchaseActionsState,
 } = vi.hoisted(() => ({
   listProductsMock: vi.fn(),
-  getProductMock: vi.fn(),
+  getProductBySlugMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new NotFoundError("not found");
   }),
@@ -29,7 +29,7 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/stripe", () => ({
   listProducts: listProductsMock,
-  getProduct: getProductMock,
+  getProductBySlug: getProductBySlugMock,
 }));
 
 vi.mock("@/components/product-grid", () => ({
@@ -47,7 +47,8 @@ vi.mock("@/components/product-purchase-actions", () => ({
 }));
 
 const loadProductsPage = async () => await import("@/app/products/page");
-const loadProductDetailPage = async () => await import("@/app/products/[id]/page");
+const loadProductDetailPage = async () =>
+  await import("@/app/products/[slug]/page");
 
 const product = {
   id: "prod_1",
@@ -57,6 +58,9 @@ const product = {
   priceId: "price_1",
   currency: "USD",
   unitAmount: 2500,
+  metadata: {
+    slug: "fern",
+  },
 };
 
 const ORIGINAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
@@ -64,7 +68,7 @@ const ORIGINAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
 describe("Products pages", () => {
   beforeEach(() => {
     listProductsMock.mockReset();
-    getProductMock.mockReset();
+    getProductBySlugMock.mockReset();
     notFoundMock.mockClear();
     productGridState.lastProps = null;
     purchaseActionsState.lastProps = null;
@@ -105,25 +109,25 @@ describe("Products pages", () => {
 
   it("generates static params from products", async () => {
     listProductsMock.mockResolvedValue([
-      { id: "prod_a" },
+      { id: "prod_a", metadata: { slug: "aloe" } },
       { id: "prod_b" },
     ]);
 
     const { generateStaticParams } = await loadProductDetailPage();
 
     await expect(generateStaticParams()).resolves.toEqual([
-      { id: "prod_a" },
-      { id: "prod_b" },
+      { slug: "aloe" },
+      { slug: "prod_b" },
     ]);
   });
 
   it("generates metadata for missing product", async () => {
-    getProductMock.mockResolvedValue(null);
+    getProductBySlugMock.mockResolvedValue(null);
 
     const { generateMetadata } = await loadProductDetailPage();
 
     const metadata = await generateMetadata({
-      params: Promise.resolve({ id: "missing" }),
+      params: Promise.resolve({ slug: "missing" }),
     });
 
     expect(metadata).toEqual({
@@ -134,38 +138,38 @@ describe("Products pages", () => {
 
   it("generates metadata for product", async () => {
     process.env.NEXT_PUBLIC_SITE_URL = "https://example.com";
-    getProductMock.mockResolvedValue(product);
+    getProductBySlugMock.mockResolvedValue(product);
 
     const { generateMetadata } = await loadProductDetailPage();
 
     const metadata = await generateMetadata({
-      params: Promise.resolve({ id: "prod_1" }),
+      params: Promise.resolve({ slug: "fern" }),
     });
 
     expect(metadata.title).toBe("Fern | Mini Shop");
-    expect(metadata.alternates?.canonical).toBe("/products/prod_1");
-    expect(metadata.openGraph?.url).toBe("https://example.com/products/prod_1");
+    expect(metadata.alternates?.canonical).toBe("/products/fern");
+    expect(metadata.openGraph?.url).toBe("https://example.com/products/fern");
     expect(metadata.openGraph?.images?.[0]?.url).toBe(product.image);
   });
 
   it("calls notFound when product is missing", async () => {
-    getProductMock.mockResolvedValue(null);
+    getProductBySlugMock.mockResolvedValue(null);
 
     const { default: ProductDetailPage } = await loadProductDetailPage();
 
     await expect(
-      ProductDetailPage({ params: Promise.resolve({ id: "missing" }) }),
+      ProductDetailPage({ params: Promise.resolve({ slug: "missing" }) }),
     ).rejects.toBeInstanceOf(NotFoundError);
     expect(notFoundMock).toHaveBeenCalled();
   });
 
   it("renders product details with description", async () => {
-    getProductMock.mockResolvedValue(product);
+    getProductBySlugMock.mockResolvedValue(product);
 
     const { default: ProductDetailPage } = await loadProductDetailPage();
 
     const element = await ProductDetailPage({
-      params: Promise.resolve({ id: "prod_1" }),
+      params: Promise.resolve({ slug: "fern" }),
     });
 
     render(element);
@@ -173,16 +177,15 @@ describe("Products pages", () => {
     expect(screen.getByRole("heading", { name: "Fern" })).toBeInTheDocument();
     expect(screen.getByText("$25.00")).toBeInTheDocument();
     expect(screen.getByText("Leafy plant")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /back to catalog/i })).toHaveAttribute(
-      "href",
-      "/products",
-    );
+    expect(
+      screen.getByRole("link", { name: /back to catalog/i }),
+    ).toHaveAttribute("href", "/products");
     expect(screen.getByTestId("purchase-actions")).toBeInTheDocument();
     expect(purchaseActionsState.lastProps?.product).toEqual(product);
   });
 
   it("renders fallback description when missing", async () => {
-    getProductMock.mockResolvedValue({
+    getProductBySlugMock.mockResolvedValue({
       ...product,
       description: null,
     });
@@ -190,7 +193,7 @@ describe("Products pages", () => {
     const { default: ProductDetailPage } = await loadProductDetailPage();
 
     const element = await ProductDetailPage({
-      params: Promise.resolve({ id: "prod_1" }),
+      params: Promise.resolve({ slug: "fern" }),
     });
 
     render(element);

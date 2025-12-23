@@ -57,14 +57,10 @@ function SheetContent({
         data-slot="sheet-content"
         className={cn(
           styles.content,
-          side === "right" &&
-            styles.contentRight,
-          side === "left" &&
-            styles.contentLeft,
-          side === "top" &&
-            styles.contentTop,
-          side === "bottom" &&
-            styles.contentBottom,
+          side === "right" && styles.contentRight,
+          side === "left" && styles.contentLeft,
+          side === "top" && styles.contentTop,
+          side === "bottom" && styles.contentBottom,
           className,
         )}
         {...props}

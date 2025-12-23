@@ -73,17 +73,18 @@ export default function OrderSuccess({
 
   const formattedTotal = formatAmount(amountTotal, currency);
   const formattedSubtotal = formatAmount(amountSubtotal ?? undefined, currency);
-  const shouldShowDiscount = typeof amountDiscount === "number" && amountDiscount > 0;
-  const formattedDiscount = shouldShowDiscount ? formatAmount(amountDiscount, currency) : null;
+  const shouldShowDiscount =
+    typeof amountDiscount === "number" && amountDiscount > 0;
+  const formattedDiscount = shouldShowDiscount
+    ? formatAmount(amountDiscount, currency)
+    : null;
 
   return (
     <section className={styles.section}>
       <div className={styles.titleRow}>
         <CheckCircle2 className={styles.icon} />
         <div>
-          <h1 className={styles.heading}>
-            Payment successful
-          </h1>
+          <h1 className={styles.heading}>Payment successful</h1>
           <p className={styles.subtitle}>
             Thank you for your purchase! We&apos;ve emailed you a confirmation.
           </p>
@@ -108,9 +109,7 @@ export default function OrderSuccess({
             {sessionId && (
               <li>
                 <span className={styles.label}>Stripe session:</span>{" "}
-                <code className={styles.sessionCode}>
-                  {sessionId}
-                </code>
+                <code className={styles.sessionCode}>{sessionId}</code>
               </li>
             )}
           </ul>
@@ -122,13 +121,19 @@ export default function OrderSuccess({
           <h2 className={styles.label}>Order timeline</h2>
           <ul className={styles.stepList}>
             {timelineSteps.map((step) => {
-              const timestamp = step.timestamp ? new Date(step.timestamp) : null;
+              const timestamp = step.timestamp
+                ? new Date(step.timestamp)
+                : null;
               const isComplete = step.status === "complete";
 
               return (
                 <li key={step.id} className={styles.stepItem}>
                   <span
-                    className={isComplete ? styles.stepIconComplete : styles.stepIconPending}
+                    className={
+                      isComplete
+                        ? styles.stepIconComplete
+                        : styles.stepIconPending
+                    }
                     aria-hidden
                   >
                     <CheckCircle2 />
@@ -147,7 +152,9 @@ export default function OrderSuccess({
                       )}
                     </div>
                     {step.description && (
-                      <p className={styles.stepDescription}>{step.description}</p>
+                      <p className={styles.stepDescription}>
+                        {step.description}
+                      </p>
                     )}
                   </div>
                 </li>
@@ -162,7 +169,10 @@ export default function OrderSuccess({
           <h2 className={styles.label}>Items in this order</h2>
           <ul className={styles.lineItems}>
             {lineItems.map((item) => {
-              const subtotal = formatAmount(item.amountSubtotal, item.currency ?? currency);
+              const subtotal = formatAmount(
+                item.amountSubtotal,
+                item.currency ?? currency,
+              );
               const unitAmount =
                 item.unitAmount != null
                   ? formatAmount(item.unitAmount, item.currency ?? currency)
@@ -182,14 +192,18 @@ export default function OrderSuccess({
                       </div>
                     )}
                     <div>
-                      <div className={styles.lineItemTitle}>{item.description}</div>
+                      <div className={styles.lineItemTitle}>
+                        {item.description}
+                      </div>
                       <div className={styles.lineItemMeta}>
                         Qty {item.quantity}
                         {unitAmount ? ` • ${unitAmount}` : ""}
                       </div>
                     </div>
                   </div>
-                  {subtotal && <div className={styles.lineItemTotal}>{subtotal}</div>}
+                  {subtotal && (
+                    <div className={styles.lineItemTotal}>{subtotal}</div>
+                  )}
                 </li>
               );
             })}
@@ -203,7 +217,9 @@ export default function OrderSuccess({
             )}
             {formattedDiscount && (
               <div className={styles.totalRow}>
-                <span>{promoCode ? `Promo code (${promoCode})` : "Discount"}</span>
+                <span>
+                  {promoCode ? `Promo code (${promoCode})` : "Discount"}
+                </span>
                 <span>-{formattedDiscount}</span>
               </div>
             )}
@@ -224,10 +240,7 @@ export default function OrderSuccess({
       </div>
 
       <div className={styles.actions}>
-        <Link
-          href="/products"
-          className={styles.primaryLink}
-        >
+        <Link href="/products" className={styles.primaryLink}>
           Continue shopping
         </Link>
         <Button asChild variant="ghost">

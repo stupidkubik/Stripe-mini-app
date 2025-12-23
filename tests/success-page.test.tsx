@@ -103,7 +103,9 @@ describe("Success page", () => {
     const { default: SuccessPage } = await loadPage();
 
     await expect(
-      SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_unpaid" }) }),
+      SuccessPage({
+        searchParams: Promise.resolve({ session_id: "cs_unpaid" }),
+      }),
     ).rejects.toBeInstanceOf(RedirectError);
 
     expect(redirectMock).toHaveBeenCalledWith("/cart");

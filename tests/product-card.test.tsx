@@ -17,18 +17,26 @@ const { mockState } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/app/store/cart", () => ({
-  useCart: <T,>(selector: (state: typeof mockState) => T) => selector(mockState),
+  useCart: <T,>(selector: (state: typeof mockState) => T) =>
+    selector(mockState),
 }));
 
 vi.mock("@/components/quantity-input", () => ({
-  QuantityInput: (props: { value: number; onChange: (value: number) => void }) => {
+  QuantityInput: (props: {
+    value: number;
+    onChange: (value: number) => void;
+  }) => {
     lastQuantityProps = props;
     return <div data-testid="quantity-input" />;
   },
 }));
 
 vi.mock("@/components/add-to-cart-button", () => ({
-  AddToCartButton: () => <button data-testid="add-to-cart" type="button">Add</button>,
+  AddToCartButton: () => (
+    <button data-testid="add-to-cart" type="button">
+      Add
+    </button>
+  ),
 }));
 
 const product = {

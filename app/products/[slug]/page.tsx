@@ -4,26 +4,33 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { formatPrice } from "@/lib/pricing";
-import { getProduct, listProducts } from "@/lib/stripe";
+import {
+  formatCategory,
+  formatLight,
+  formatWatering,
+} from "@/lib/product-metadata";
+import { getProductBySlug, listProducts } from "@/lib/stripe";
 import { ProductPurchaseActions } from "@/components/product-purchase-actions";
 import styles from "./page.module.css";
 
 type PageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 };
 
 export const revalidate = 60;
 
 export async function generateStaticParams() {
   const products = await listProducts();
-  return products.map((product) => ({ id: product.id }));
+  return products.map((product) => ({
+    slug: product.metadata?.slug ?? product.id,
+  }));
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     return {
@@ -33,7 +40,8 @@ export async function generateMetadata({
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const relativeUrl = `/products/${product.id}`;
+  const productSlug = product.metadata?.slug ?? product.id;
+  const relativeUrl = `/products/${encodeURIComponent(productSlug)}`;
   const absoluteUrl = new URL(relativeUrl, baseUrl).toString();
   const ogImage = product.image ?? "/opengraph-image";
 
@@ -67,12 +75,37 @@ export async function generateMetadata({
 }
 
 export default async function ProductDetailPage({ params }: PageProps) {
-  const { id } = await params;
-  const product = await getProduct(id);
+  const { slug } = await params;
+  const product = await getProductBySlug(slug);
 
   if (!product) {
     notFound();
   }
+
+  const metadata = product.metadata;
+  const detailRows = [
+    {
+      label: "Category",
+      value: formatCategory(metadata?.category),
+    },
+    {
+      label: "Light",
+      value: formatLight(metadata?.light),
+    },
+    {
+      label: "Watering",
+      value: formatWatering(metadata?.watering),
+    },
+    {
+      label: "Pet safe",
+      value:
+        metadata?.petSafe === undefined
+          ? undefined
+          : metadata.petSafe
+            ? "Yes"
+            : "No",
+    },
+  ].filter((row) => row.value);
 
   return (
     <section className={styles.page}>
@@ -88,15 +121,10 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
       <div className={styles.content}>
         <div className={styles.intro}>
-          <Link
-            href="/products"
-            className={styles.backLink}
-          >
+          <Link href="/products" className={styles.backLink}>
             ← Back to catalog
           </Link>
-          <h1 className={styles.title}>
-            {product.name}
-          </h1>
+          <h1 className={styles.title}>{product.name}</h1>
           <p className={styles.price}>
             {formatPrice(product.unitAmount, product.currency)}
           </p>
@@ -109,6 +137,20 @@ export default async function ProductDetailPage({ params }: PageProps) {
             <p>No description provided for this product yet.</p>
           )}
         </div>
+
+        {detailRows.length > 0 && (
+          <div className={styles.detailCard}>
+            <h2 className={styles.detailTitle}>Plant details</h2>
+            <dl className={styles.detailList}>
+              {detailRows.map((row) => (
+                <div key={row.label} className={styles.detailRow}>
+                  <dt className={styles.detailLabel}>{row.label}</dt>
+                  <dd className={styles.detailValue}>{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
 
         <div className={styles.actions}>
           <ProductPurchaseActions product={product} />

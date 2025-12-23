@@ -19,7 +19,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Verdant Lane",
   description: "A Stripe-powered houseplant boutique",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   alternates: {
     canonical: "/",
   },

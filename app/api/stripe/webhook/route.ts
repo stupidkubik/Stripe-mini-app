@@ -8,14 +8,18 @@ import { stripe } from "@/lib/stripe";
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 
 if (!STRIPE_WEBHOOK_SECRET) {
-  throw new Error("STRIPE_WEBHOOK_SECRET is not set. Add it to your environment before receiving Stripe webhooks.");
+  throw new Error(
+    "STRIPE_WEBHOOK_SECRET is not set. Add it to your environment before receiving Stripe webhooks.",
+  );
 }
 
 const webhookSecret: string = STRIPE_WEBHOOK_SECRET;
 
 export const runtime = "nodejs";
 
-function resolvePaymentIntentId(primary: Stripe.Checkout.Session["payment_intent"] | undefined) {
+function resolvePaymentIntentId(
+  primary: Stripe.Checkout.Session["payment_intent"] | undefined,
+) {
   if (!primary) {
     return undefined;
   }
@@ -30,7 +34,10 @@ export async function POST(request: Request) {
 
   if (!signature) {
     console.warn("Stripe webhook received without Stripe-Signature header");
-    return NextResponse.json({ error: "Missing Stripe-Signature header" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing Stripe-Signature header" },
+      { status: 400 },
+    );
   }
 
   let event: Stripe.Event;
@@ -39,11 +46,20 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
     if (error instanceof Stripe.errors.StripeSignatureVerificationError) {
-      console.error("Stripe webhook signature verification failed", error.message);
+      console.error(
+        "Stripe webhook signature verification failed",
+        error.message,
+      );
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
-    console.error("Unexpected error while verifying Stripe webhook signature", error);
-    return NextResponse.json({ error: "Unable to process webhook" }, { status: 400 });
+    console.error(
+      "Unexpected error while verifying Stripe webhook signature",
+      error,
+    );
+    return NextResponse.json(
+      { error: "Unable to process webhook" },
+      { status: 400 },
+    );
   }
 
   try {
@@ -56,7 +72,9 @@ export async function POST(request: Request) {
           type: "payment_succeeded",
           createdAt: event.created * 1000,
           sessionId: session.id,
-          paymentIntentId: resolvePaymentIntentId(session.payment_intent ?? undefined),
+          paymentIntentId: resolvePaymentIntentId(
+            session.payment_intent ?? undefined,
+          ),
           amount: session.amount_total,
           currency: session.currency,
           customerEmail: session.customer_details?.email ?? null,
@@ -94,7 +112,8 @@ export async function POST(request: Request) {
           currency: paymentIntent.currency,
           customerEmail:
             paymentIntent.receipt_email ??
-            paymentIntent.last_payment_error?.payment_method?.billing_details?.email ??
+            paymentIntent.last_payment_error?.payment_method?.billing_details
+              ?.email ??
             null,
           errorMessage: paymentIntent.last_payment_error?.message ?? null,
         });
@@ -108,6 +127,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Failed to process Stripe webhook event", event.type, error);
-    return NextResponse.json({ error: "Webhook handler failure" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Webhook handler failure" },
+      { status: 500 },
+    );
   }
 }

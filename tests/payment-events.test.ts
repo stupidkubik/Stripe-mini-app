@@ -2,7 +2,8 @@ import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { getPaymentEvents, recordPaymentEvent } from "@/lib/payment-events";
 
-const uniqueId = (prefix: string) => `${prefix}-${Math.random().toString(36).slice(2)}`;
+const uniqueId = (prefix: string) =>
+  `${prefix}-${Math.random().toString(36).slice(2)}`;
 
 beforeAll(() => {
   vi.spyOn(console, "info").mockImplementation(() => {});
@@ -78,7 +79,11 @@ describe("payment events", () => {
     });
 
     const events = getPaymentEvents({ sessionId, paymentIntentId });
-    expect(events.map((event) => event.id)).toEqual(["evt-2", "evt-3", "evt-1"]);
+    expect(events.map((event) => event.id)).toEqual([
+      "evt-2",
+      "evt-3",
+      "evt-1",
+    ]);
   });
 
   it("keeps only the last 10 events per key", () => {

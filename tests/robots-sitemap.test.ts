@@ -58,7 +58,9 @@ describe("Robots and sitemap", () => {
     expect(routes[6].url).toBe("https://example.com/products/prod_2");
 
     for (const route of routes) {
-      expect(route.lastModified?.toISOString()).toBe("2024-01-01T00:00:00.000Z");
+      expect(route.lastModified?.toISOString()).toBe(
+        "2024-01-01T00:00:00.000Z",
+      );
     }
   });
 

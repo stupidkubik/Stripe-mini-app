@@ -10,20 +10,27 @@ export const revalidate = 60;
 
 type FeatureIconName = "shield" | "sparkle" | "truck";
 
-const FEATURED_ICONS: ReadonlyArray<{ title: string; description: string; icon: FeatureIconName }> = [
+const FEATURED_ICONS: ReadonlyArray<{
+  title: string;
+  description: string;
+  icon: FeatureIconName;
+}> = [
   {
     title: "Stripe-secured checkout",
-    description: "Run end-to-end payments in test mode, including 3D Secure flows.",
+    description:
+      "Run end-to-end payments in test mode, including 3D Secure flows.",
     icon: "shield",
   },
   {
     title: "Carefully sourced",
-    description: "Small-batch growers and sustainable greenhouses—no mass-market clones.",
+    description:
+      "Small-batch growers and sustainable greenhouses—no mass-market clones.",
     icon: "sparkle",
   },
   {
     title: "Delivered thriving",
-    description: "Climate-controlled packaging keeps foliage lush from nursery to doorstep.",
+    description:
+      "Climate-controlled packaging keeps foliage lush from nursery to doorstep.",
     icon: "truck",
   },
 ];
@@ -93,8 +100,9 @@ export default async function HomePage() {
               Bring calm, living greenery into any room
             </h1>
             <p className={styles.heroText}>
-              Verdant Lane curates resilient indoor plants, pots, and care kits. Explore the collection,
-              add favorites to your cart, and experience a production-grade Stripe checkout in minutes.
+              Verdant Lane curates resilient indoor plants, pots, and care kits.
+              Explore the collection, add favorites to your cart, and experience
+              a production-grade Stripe checkout in minutes.
             </p>
           </div>
 
@@ -102,22 +110,14 @@ export default async function HomePage() {
             <Button asChild size="lg" className={styles.primaryAction}>
               <Link href="/products">Explore catalog</Link>
             </Button>
-            <Button asChild variant="outline" className={styles.secondaryAction}>
+            <Button
+              asChild
+              variant="outline"
+              className={styles.secondaryAction}
+            >
               <Link href="/cart">View cart</Link>
             </Button>
           </div>
-
-          <dl className={styles.features}>
-            {FEATURED_ICONS.map((feature) => (
-              <div key={feature.title} className={styles.featureCard}>
-                <div className={styles.featureHeader}>
-                  <FeatureIcon icon={feature.icon} />
-                  <dt className={styles.featureTitle}>{feature.title}</dt>
-                </div>
-                <dd className={styles.featureDescription}>{feature.description}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
 
         <div className={styles.heroImage}>
@@ -130,9 +130,26 @@ export default async function HomePage() {
           />
           <div className={styles.heroCaption}>
             <strong>Real checkout, gentle onboarding</strong>
-            <p>Add a plant to your cart, use Stripe test cards, and see the full fulfillment loop in action.</p>
+            <p>
+              Add a plant to your cart, use Stripe test cards, and see the full
+              fulfillment loop in action.
+            </p>
           </div>
         </div>
+
+        <dl className={styles.features}>
+          {FEATURED_ICONS.map((feature) => (
+            <div key={feature.title} className={styles.featureCard}>
+              <div className={styles.featureHeader}>
+                <FeatureIcon icon={feature.icon} />
+                <dt className={styles.featureTitle}>{feature.title}</dt>
+              </div>
+              <dd className={styles.featureDescription}>
+                {feature.description}
+              </dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <section className={styles.featuredSection}>
@@ -140,7 +157,8 @@ export default async function HomePage() {
           <div>
             <h2 className={styles.sectionTitle}>Featured foliage</h2>
             <p className={styles.sectionText}>
-              Pulled straight from Stripe Products & Prices; refreshed every minute via ISR.
+              Pulled straight from Stripe Products & Prices; refreshed every
+              minute via ISR.
             </p>
           </div>
           <Button asChild variant="ghost">
@@ -152,7 +170,8 @@ export default async function HomePage() {
           <ProductGrid products={featuredProducts} />
         ) : (
           <div className={styles.emptyCard}>
-            No plants available yet. Seed your Stripe account and refresh to grow the collection.
+            No plants available yet. Seed your Stripe account and refresh to
+            grow the collection.
           </div>
         )}
       </section>

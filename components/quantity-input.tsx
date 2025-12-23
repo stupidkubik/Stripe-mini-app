@@ -14,7 +14,7 @@ type QuantityInputProps = {
   max?: number;
   disabled?: boolean;
   id?: string;
-  "aria-label"?: string;
+  ariaLabel?: string;
   size?: "sm" | "md" | "lg";
 };
 
@@ -25,11 +25,12 @@ export function QuantityInput({
   max = 10,
   disabled,
   id,
-  "aria-label": ariaLabel = "Quantity",
+  ariaLabel = "Quantity",
   size = "md",
 }: QuantityInputProps) {
   const clamp = React.useCallback(
-    (next: number) => Math.max(min, Math.min(max, Number.isNaN(next) ? min : next)),
+    (next: number) =>
+      Math.max(min, Math.min(max, Number.isNaN(next) ? min : next)),
     [min, max],
   );
 

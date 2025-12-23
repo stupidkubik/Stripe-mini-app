@@ -23,12 +23,8 @@ export default function CartStickySummary() {
     <div className={styles.bar}>
       <div className={cn("page-container", styles.inner)}>
         <div className={styles.meta}>
-          <div className={styles.label}>
-            Total
-          </div>
-          <div className={styles.total}>
-            {formatPrice(total, currency)}
-          </div>
+          <div className={styles.label}>Total</div>
+          <div className={styles.total}>{formatPrice(total, currency)}</div>
           <div className={styles.count}>
             {count} item{count === 1 ? "" : "s"} in cart
           </div>

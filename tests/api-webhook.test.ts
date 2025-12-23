@@ -48,7 +48,10 @@ describe("POST /api/stripe/webhook", () => {
 
   it("returns 400 when signature header is missing", async () => {
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -66,12 +69,17 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
     expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({ error: "Invalid signature" });
+    await expect(response.json()).resolves.toEqual({
+      error: "Invalid signature",
+    });
   });
 
   it("returns 400 for unexpected verification errors", async () => {
@@ -81,7 +89,10 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -109,7 +120,10 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -143,11 +157,16 @@ describe("POST /api/stripe/webhook", () => {
         },
       },
     });
-    stripeMock.checkout.sessions.list.mockResolvedValue({ data: [{ id: "cs_456" }] });
+    stripeMock.checkout.sessions.list.mockResolvedValue({
+      data: [{ id: "cs_456" }],
+    });
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 

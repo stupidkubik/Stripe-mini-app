@@ -89,9 +89,21 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background-image:
-    radial-gradient(600px circle at 15% 20%, color-mix(in oklab, var(--primary) 35%, transparent), transparent 62%),
-    radial-gradient(480px circle at 85% 10%, color-mix(in oklab, var(--accent) 30%, transparent), transparent 65%),
-    radial-gradient(420px circle at 20% 85%, color-mix(in oklab, var(--muted) 15%, transparent), transparent 66%);
+    radial-gradient(
+      600px circle at 15% 20%,
+      color-mix(in oklab, var(--primary) 35%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      480px circle at 85% 10%,
+      color-mix(in oklab, var(--accent) 30%, transparent),
+      transparent 65%
+    ),
+    radial-gradient(
+      420px circle at 20% 85%,
+      color-mix(in oklab, var(--muted) 15%, transparent),
+      transparent 66%
+    );
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
@@ -126,19 +138,20 @@ select {
 
 code,
 pre {
-  font-family: var(--font-geist-mono), SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-    "Courier New", monospace;
+  font-family:
+    var(--font-geist-mono), SFMono-Regular, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 .page-container {
   width: 100%;
-  max-width: 375px;
+  max-width: 100%;
   margin: 0 auto;
   padding: 0 var(--container-padding);
 }
 
 .main-content {
-  padding: var(--main-padding) 0;
+  padding-block: var(--main-padding);
 }
 
 .sr-only {
@@ -153,24 +166,30 @@ pre {
   border: 0;
 }
 
-@media (min-width: 640px) {
+@media (max-width: 359px) {
+  :root {
+    --container-padding: 12px;
+    --main-padding: 24px;
+  }
+}
+
+@media (min-width: 576px) {
   :root {
     --container-padding: 20px;
-    --main-padding: 40px;
+    --main-padding: 36px;
   }
+}
 
-  .page-container {
-    max-width: 640px;
+@media (min-width: 640px) {
+  :root {
+    --container-padding: 24px;
+    --main-padding: 40px;
   }
 }
 
 @media (min-width: 768px) {
   :root {
     --container-padding: 24px;
-  }
-
-  .page-container {
-    max-width: 768px;
   }
 }
 
@@ -179,19 +198,11 @@ pre {
     --container-padding: 28px;
     --main-padding: 48px;
   }
-
-  .page-container {
-    max-width: 1024px;
-  }
 }
 
 @media (min-width: 1280px) {
   :root {
     --container-padding: 32px;
-  }
-
-  .page-container {
-    max-width: 1280px;
   }
 }
 
@@ -199,8 +210,16 @@ pre {
   :root {
     --container-padding: 36px;
   }
+}
 
-  .page-container {
-    max-width: 1536px;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

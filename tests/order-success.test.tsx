@@ -45,7 +45,9 @@ describe("OrderSuccess", () => {
       />,
     );
 
-    expect(screen.getByRole("heading", { name: /payment successful/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: /payment successful/i }),
+    ).toBeInTheDocument();
     expect(screen.getByText(/receipt sent to/i)).toBeInTheDocument();
     expect(screen.getByText("buyer@example.com")).toBeInTheDocument();
     expect(screen.getByText("Aloe Vera")).toBeInTheDocument();

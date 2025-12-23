@@ -36,10 +36,7 @@ export default function CartPageClient() {
 
         <div className={styles.emptyCard}>
           <p className={styles.emptyText}>Your cart is empty.</p>
-          <Link
-            href="/products"
-            className={styles.emptyLink}
-          >
+          <Link href="/products" className={styles.emptyLink}>
             Browse products
           </Link>
         </div>
@@ -59,24 +56,14 @@ export default function CartPageClient() {
       <div className={styles.layout}>
         <div className={styles.items}>
           {items.map((item) => (
-            <div
-              key={item.productId}
-              className={styles.itemCard}
-            >
+            <div key={item.productId} className={styles.itemCard}>
               <div className={styles.itemImage}>
-                <Image
-                  src={item.image}
-                  alt={item.name}
-                  fill
-                  sizes="128px"
-                />
+                <Image src={item.image} alt={item.name} fill sizes="128px" />
               </div>
 
               <div className={styles.itemContent}>
                 <div>
-                  <h2 className={styles.itemName}>
-                    {item.name}
-                  </h2>
+                  <h2 className={styles.itemName}>{item.name}</h2>
                   <p className={styles.itemPrice}>
                     {formatPrice(item.unitAmount, item.currency)}
                   </p>
@@ -86,7 +73,7 @@ export default function CartPageClient() {
                   <QuantityInput
                     value={item.quantity}
                     onChange={(qty) => updateQty(item.productId, qty)}
-                    aria-label={`Quantity for ${item.name}`}
+                    ariaLabel={`Quantity for ${item.name}`}
                     size="lg"
                   />
 

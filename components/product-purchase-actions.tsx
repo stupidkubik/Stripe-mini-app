@@ -25,7 +25,7 @@ export function ProductPurchaseActions({
         value={quantity}
         onChange={setQuantity}
         max={MAX_QUANTITY}
-        aria-label={`Quantity for ${product.name}`}
+        ariaLabel={`Quantity for ${product.name}`}
       />
       <AddToCartButton
         product={product}

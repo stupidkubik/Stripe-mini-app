@@ -32,11 +32,16 @@ export default function SiteFooter() {
               Verdant Lane
             </Link>
             <p className={styles.muted}>
-              A Stripe-powered greenhouse for your living room. Discover curated plants, manage your cart, and run the full checkout loop in minutes.
+              A Stripe-powered greenhouse for your living room. Discover curated
+              plants, manage your cart, and run the full checkout loop in
+              minutes.
             </p>
             <div className={styles.muted}>
               Have a question? Email{" "}
-              <a className={styles.contactLink} href="mailto:support@verdantlane.dev">
+              <a
+                className={styles.contactLink}
+                href="mailto:support@verdantlane.dev"
+              >
                 support@verdantlane.dev
               </a>
             </div>
@@ -45,9 +50,7 @@ export default function SiteFooter() {
           <nav className={styles.nav} aria-label="Footer">
             {FOOTER_LINK_GROUPS.map((group) => (
               <div key={group.heading} className={styles.group}>
-                <div className={styles.groupTitle}>
-                  {group.heading}
-                </div>
+                <div className={styles.groupTitle}>{group.heading}</div>
                 <ul className={styles.linkList}>
                   {group.links.map((link) => (
                     <li key={link.href}>
@@ -66,7 +69,12 @@ export default function SiteFooter() {
           <p>© {currentYear} Verdant Lane. All rights reserved.</p>
           <p>
             Built with Next.js & Stripe •{" "}
-            <Link className={styles.bottomLink} href="https://vercel.com" target="_blank" rel="noreferrer">
+            <Link
+              className={styles.bottomLink}
+              href="https://vercel.com"
+              target="_blank"
+              rel="noreferrer"
+            >
               Deployed on Vercel
             </Link>
           </p>

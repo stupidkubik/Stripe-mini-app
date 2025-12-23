@@ -15,7 +15,8 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/app/store/cart", () => ({
-  useCart: <T,>(selector: (state: typeof mockState) => T) => selector(mockState),
+  useCart: <T,>(selector: (state: typeof mockState) => T) =>
+    selector(mockState),
 }));
 
 vi.mock("@/components/ui/sheet", () => ({
@@ -47,10 +48,18 @@ describe("SiteHeader", () => {
     render(<SiteHeader />);
 
     const mainNav = screen.getByRole("navigation", { name: "Main" });
-    expect(within(mainNav).getByRole("link", { name: /home/i })).toBeInTheDocument();
-    expect(within(mainNav).getByRole("link", { name: /products/i })).toBeInTheDocument();
-    expect(within(mainNav).getByRole("link", { name: /cart/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /skip to content/i })).toBeInTheDocument();
+    expect(
+      within(mainNav).getByRole("link", { name: /home/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mainNav).getByRole("link", { name: /products/i }),
+    ).toBeInTheDocument();
+    expect(
+      within(mainNav).getByRole("link", { name: /cart/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /skip to content/i }),
+    ).toBeInTheDocument();
 
     const cartLink = screen.getByRole("link", { name: /open cart/i });
     expect(cartLink).toHaveAttribute("href", "/cart");

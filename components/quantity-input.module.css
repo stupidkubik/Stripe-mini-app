@@ -4,13 +4,17 @@
   border-radius: 999px;
   border: 1px solid color-mix(in oklab, var(--border) 65%, transparent);
   background: color-mix(in oklab, var(--background) 80%, transparent);
-  box-shadow: 0 10px 20px -18px color-mix(in oklab, var(--foreground) 25%, transparent);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 10px 20px -18px
+    color-mix(in oklab, var(--foreground) 25%, transparent);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .wrapper:hover {
   border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
-  box-shadow: 0 12px 20px -16px color-mix(in oklab, var(--foreground) 25%, transparent);
+  box-shadow: 0 12px 20px -16px
+    color-mix(in oklab, var(--foreground) 25%, transparent);
 }
 
 .sizeSm {

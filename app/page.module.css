@@ -7,12 +7,18 @@
 .hero {
   display: grid;
   gap: 32px;
+  grid-template-areas:
+    "content"
+    "image"
+    "features";
 }
 
 .heroContent {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  grid-area: content;
+  animation: heroFadeUp 0.6s ease both;
 }
 
 .badge {
@@ -68,6 +74,8 @@
   display: grid;
   gap: 16px;
   margin: 0;
+  grid-area: features;
+  animation: heroFadeUp 0.6s ease 0.16s both;
 }
 
 .featureCard {
@@ -109,6 +117,8 @@
   border-radius: 24px;
   border: 1px solid var(--border);
   background: var(--muted);
+  grid-area: image;
+  animation: heroImageIn 0.7s ease 0.08s both;
 }
 
 .heroImage img {
@@ -200,10 +210,35 @@
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   .hero {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    align-items: center;
+    grid-template-areas:
+      "content image"
+      "features features";
+    align-items: start;
+  }
+}
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes heroImageIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

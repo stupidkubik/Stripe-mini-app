@@ -13,7 +13,10 @@ export class MockIntersectionObserver implements IntersectionObserver {
   private callback: IntersectionObserverCallback;
   private elements = new Set<Element>();
 
-  constructor(callback: IntersectionObserverCallback, options: IntersectionObserverInit = {}) {
+  constructor(
+    callback: IntersectionObserverCallback,
+    options: IntersectionObserverInit = {},
+  ) {
     this.callback = callback;
     this.root = options.root ?? null;
     this.rootMargin = options.rootMargin ?? "0px";
@@ -64,7 +67,8 @@ export class MockIntersectionObserver implements IntersectionObserver {
 }
 
 export function setupIntersectionObserverMock() {
-  globalThis.IntersectionObserver = MockIntersectionObserver as unknown as typeof IntersectionObserver;
+  globalThis.IntersectionObserver =
+    MockIntersectionObserver as unknown as typeof IntersectionObserver;
 }
 
 export function resetIntersectionObservers() {

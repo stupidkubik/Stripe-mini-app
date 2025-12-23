@@ -28,9 +28,10 @@ const redirectToCheckoutMock = vi.fn(() => Promise.resolve({}));
 let fetchMock: ReturnType<typeof vi.fn>;
 
 vi.mock("@/lib/stripe-client", () => ({
-  getStripePromise: () => Promise.resolve({
-    redirectToCheckout: redirectToCheckoutMock,
-  }),
+  getStripePromise: () =>
+    Promise.resolve({
+      redirectToCheckout: redirectToCheckoutMock,
+    }),
 }));
 
 describe("CartPageClient", () => {
@@ -116,11 +117,11 @@ describe("CartPageClient", () => {
 
     const user = userEvent.setup();
 
-    await user.click(screen.getByRole("button", { name: /proceed to checkout/i }));
+    await user.click(
+      screen.getByRole("button", { name: /proceed to checkout/i }),
+    );
 
-    expect(
-      await screen.findByText(/email is required/i),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -146,8 +147,13 @@ describe("CartPageClient", () => {
 
     render(<CartPageClient />);
 
-    await user.type(screen.getByLabelText(/email for receipts/i), "user@test.com");
-    await user.click(screen.getByRole("button", { name: /proceed to checkout/i }));
+    await user.type(
+      screen.getByLabelText(/email for receipts/i),
+      "user@test.com",
+    );
+    await user.click(
+      screen.getByRole("button", { name: /proceed to checkout/i }),
+    );
 
     expect(fetchMock).toHaveBeenCalledWith(
       "/api/checkout",

@@ -91,7 +91,9 @@ describe("Sheet UI", () => {
 
     expect(screen.getByText("Header")).toBeInTheDocument();
     expect(screen.getByText("Footer")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /dismiss/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /dismiss/i }),
+    ).toBeInTheDocument();
     expect(document.querySelector('[data-slot="sheet-header"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="sheet-footer"]')).toBeTruthy();
     expect(document.querySelector('[data-slot="sheet-close"]')).toBeTruthy();
@@ -109,8 +111,12 @@ describe("Sheet UI", () => {
       );
 
       expect(screen.getByText(`Panel ${side}`)).toBeInTheDocument();
-      expect(document.querySelector('[data-slot="sheet-content"]')).toBeTruthy();
-      expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
+      expect(
+        document.querySelector('[data-slot="sheet-content"]'),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: /close/i }),
+      ).toBeInTheDocument();
 
       unmount();
     },

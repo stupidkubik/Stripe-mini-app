@@ -10,19 +10,22 @@ const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
 export const metadata: Metadata = {
   title: "Catalog | Mini Shop",
-  description: "Browse the full Verdant Lane catalog pulled live from Stripe Products and Prices.",
+  description:
+    "Browse the full Verdant Lane catalog pulled live from Stripe Products and Prices.",
   alternates: {
     canonical: "/products",
   },
   openGraph: {
     title: "Catalog | Mini Shop",
-    description: "Explore every plant and accessory available in the Verdant Lane mini shop.",
+    description:
+      "Explore every plant and accessory available in the Verdant Lane mini shop.",
     url: `${baseUrl}/products`,
   },
   twitter: {
     card: "summary_large_image",
     title: "Catalog | Mini Shop",
-    description: "Explore every plant and accessory available in the Verdant Lane mini shop.",
+    description:
+      "Explore every plant and accessory available in the Verdant Lane mini shop.",
   },
 };
 
