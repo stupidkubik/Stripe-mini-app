@@ -1,7 +1,7 @@
 # Stripe Mini Shop
 
-![Unit Tests](https://img.shields.io/badge/tests-unit%20%E2%9C%85-0f172a?style=flat&logo=vitest)
-![Coverage](https://img.shields.io/badge/coverage-18%25-f59e0b?style=flat&logo=vitest)
+![Unit Tests](./badges/unit-tests.svg)
+![Coverage](./badges/coverage.svg)
 ![E2E](https://img.shields.io/badge/tests-e2e%20ready-2b825d?style=flat&logo=playwright)
 
 Verdant Lane is a compact e-commerce demo that connects a polished Next.js App Router UI to real Stripe data. It covers the full journey from catalog browsing and an accessible cart to promo-code aware Checkout, webhooks, and a success timeline.
