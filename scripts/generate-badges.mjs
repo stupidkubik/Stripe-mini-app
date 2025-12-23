@@ -9,11 +9,13 @@ const getArg = (flag, fallback) => {
 };
 
 const unitStatus = getArg("--unit-status", "success");
+const e2eStatus = getArg("--e2e-status", "success");
 const coverageFile = getArg(
   "--coverage-file",
   path.resolve("coverage", "coverage-summary.json"),
 );
 const outputDir = getArg("--out-dir", path.resolve("badges"));
+const hasE2eFlag = args.includes("--e2e-status");
 
 const escapeHtml = (value) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -30,19 +32,22 @@ const makeBadge = ({ label, message, color }) => {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="20" role="img" aria-label="${safeLabel}: ${safeMessage}">\n  <linearGradient id="s" x2="0" y2="100%">\n    <stop offset="0" stop-color="#fff" stop-opacity=".7"/>\n    <stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>\n    <stop offset=".9" stop-color="#000" stop-opacity=".3"/>\n    <stop offset="1" stop-color="#000" stop-opacity=".5"/>\n  </linearGradient>\n  <mask id="m">\n    <rect width="${totalWidth}" height="20" rx="3" fill="#fff"/>\n  </mask>\n  <g mask="url(#m)">\n    <rect width="${labelWidth}" height="20" fill="#555"/>\n    <rect x="${labelWidth}" width="${messageWidth}" height="20" fill="#${color}"/>\n    <rect width="${totalWidth}" height="20" fill="url(#s)"/>\n  </g>\n  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">\n    <text x="${labelWidth / 2}" y="14">${safeLabel}</text>\n    <text x="${labelWidth + messageWidth / 2}" y="14">${safeMessage}</text>\n  </g>\n</svg>\n`;
 };
 
-const unitBadge = (() => {
-  const status = unitStatus.toLowerCase();
+const statusBadge = (label, statusValue) => {
+  const status = statusValue.toLowerCase();
   if (status === "success") {
-    return { label: "unit tests", message: "passing", color: "22c55e" };
+    return { label, message: "passing", color: "22c55e" };
   }
   if (status === "failure") {
-    return { label: "unit tests", message: "failing", color: "ef4444" };
+    return { label, message: "failing", color: "ef4444" };
   }
   if (status === "cancelled") {
-    return { label: "unit tests", message: "cancelled", color: "9ca3af" };
+    return { label, message: "cancelled", color: "9ca3af" };
   }
-  return { label: "unit tests", message: "unknown", color: "9ca3af" };
-})();
+  return { label, message: "unknown", color: "9ca3af" };
+};
+
+const unitBadge = statusBadge("unit tests", unitStatus);
+const e2eBadge = statusBadge("e2e tests", e2eStatus);
 
 const coverageBadge = async () => {
   try {
@@ -74,10 +79,17 @@ const coverageBadge = async () => {
 
 await fs.mkdir(outputDir, { recursive: true });
 
-const unitPath = path.join(outputDir, "unit-tests.svg");
-const coveragePath = path.join(outputDir, "coverage.svg");
+if (!hasE2eFlag) {
+  const unitPath = path.join(outputDir, "unit-tests.svg");
+  const coveragePath = path.join(outputDir, "coverage.svg");
 
-await fs.writeFile(unitPath, makeBadge(unitBadge));
-await fs.writeFile(coveragePath, makeBadge(await coverageBadge()));
+  await fs.writeFile(unitPath, makeBadge(unitBadge));
+  await fs.writeFile(coveragePath, makeBadge(await coverageBadge()));
+}
+
+if (hasE2eFlag) {
+  const e2ePath = path.join(outputDir, "e2e-tests.svg");
+  await fs.writeFile(e2ePath, makeBadge(e2eBadge));
+}
 
 console.log(`Badges written to ${outputDir}`);
