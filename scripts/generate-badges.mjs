@@ -18,7 +18,12 @@ const outputDir = getArg("--out-dir", path.resolve("badges"));
 const hasE2eFlag = args.includes("--e2e-status");
 
 const escapeHtml = (value) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const textWidth = (text) => Math.max(30, text.length * 6 + 10);
 
