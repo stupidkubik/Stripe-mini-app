@@ -221,7 +221,9 @@ async function fetchStripeProductBySlug(
 
   try {
     const results = await stripe.products.search({
-      query: `metadata['slug']:'${trimmedSlug.replace(/'/g, "\\'")}'`,
+      query: `metadata['slug']:'${trimmedSlug
+        .replace(/\\/g, "\\\\")
+        .replace(/'/g, "\\'")}'`,
       limit: 1,
       expand: ["data.default_price"],
     });
