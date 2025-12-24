@@ -11,6 +11,7 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    environment: .env.github
     env:
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}

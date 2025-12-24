@@ -40,7 +40,7 @@ Create `.env.local` (Next.js loads it automatically):
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_...
-STRIPE_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_DEMO_SUCCESS=true
@@ -52,7 +52,7 @@ NEXT_PUBLIC_DEMO_SUCCESS=true
 Optional: seed test products via the helper script.
 
 ```bash
-npx ts-node scripts/seed-stripe.ts
+npx tsx scripts/seed-stripe.ts
 ```
 
 ### 3. Run the app
@@ -79,13 +79,17 @@ Create active promotion codes in your Stripe dashboard. Visitors can enter them 
 
 ### 6. Preview the success page (demo helper)
 
-In dev, you can bypass the paid check with:
+Algorithm for viewing a successful payment flow:
+
+1. Complete a Stripe Checkout in test mode and grab the `session_id` from the redirect URL.
+2. Open `/success?session_id=YOUR_SESSION_ID&preview=1`.
+3. Preview mode is allowed in dev automatically. In prod/staging, set `NEXT_PUBLIC_DEMO_SUCCESS=true`.
 
 ```
 /success?session_id=cs_test_...&preview=1
 ```
 
-Outside dev, set `NEXT_PUBLIC_DEMO_SUCCESS=true` and include `preview=1` to allow the same flow. A valid `session_id` is still required.
+Without `preview=1`, the session must be paid or you will be redirected to `/cart`.
 
 ## ✅ Testing
 
@@ -121,7 +125,7 @@ Coverage targets and the list of critical modules are documented in `TESTING.md`
 
 ## 📦 Deployment
 
-Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`).
+Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`). Add `NEXT_PUBLIC_DEMO_SUCCESS` if you want preview mode outside dev.
 
 Use the Stripe CLI or dashboard to point webhooks at the deployed URL (e.g., `https://yourdomain.com/api/stripe/webhook`).
 
