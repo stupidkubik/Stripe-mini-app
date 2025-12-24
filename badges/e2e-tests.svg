@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="116" height="20" role="img" aria-label="e2e tests: failing">
+<svg xmlns="http://www.w3.org/2000/svg" width="116" height="20" role="img" aria-label="e2e tests: passing">
   <linearGradient id="s" x2="0" y2="100%">
     <stop offset="0" stop-color="#fff" stop-opacity=".7"/>
     <stop offset=".1" stop-color="#aaa" stop-opacity=".1"/>
@@ -11,11 +11,11 @@
   </mask>
   <g mask="url(#m)">
     <rect width="64" height="20" fill="#555"/>
-    <rect x="64" width="52" height="20" fill="#ef4444"/>
+    <rect x="64" width="52" height="20" fill="#22c55e"/>
     <rect width="116" height="20" fill="url(#s)"/>
   </g>
   <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
     <text x="32" y="14">e2e tests</text>
-    <text x="90" y="14">failing</text>
+    <text x="90" y="14">passing</text>
   </g>
 </svg>
