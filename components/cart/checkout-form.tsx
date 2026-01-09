@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -21,6 +21,8 @@ const checkoutSchema = z.object({
     .email("Enter a valid email address"),
   promoCode: z.string().trim().max(64, "Promo code is too long").optional(),
 });
+
+const PROMO_STORAGE_KEY = "stripe-mini-shop.promo-code";
 
 const CHECKOUT_ERROR_COPY: Record<string, string> = {
   cart_empty: "Your cart is empty. Add an item before checking out.",
@@ -98,6 +100,8 @@ export function CheckoutForm({
     handleSubmit,
     setError,
     clearErrors,
+    setValue,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -106,6 +110,48 @@ export function CheckoutForm({
       promoCode: "",
     },
   });
+
+  const [promoHydrated, setPromoHydrated] = React.useState(false);
+  const promoCode = useWatch({ control, name: "promoCode" });
+
+  React.useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      const stored = window.localStorage.getItem(PROMO_STORAGE_KEY);
+      if (stored) {
+        setValue("promoCode", stored, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        });
+      }
+    } catch (error) {
+      console.warn("Unable to read stored promo code", error);
+    } finally {
+      setPromoHydrated(true);
+    }
+  }, [setValue]);
+
+  React.useEffect(() => {
+    if (!promoHydrated || typeof window === "undefined") {
+      return;
+    }
+
+    const normalized = promoCode?.trim();
+
+    try {
+      if (normalized) {
+        window.localStorage.setItem(PROMO_STORAGE_KEY, normalized);
+      } else {
+        window.localStorage.removeItem(PROMO_STORAGE_KEY);
+      }
+    } catch (error) {
+      console.warn("Unable to persist promo code", error);
+    }
+  }, [promoCode, promoHydrated]);
 
   const handleCheckoutError = React.useCallback(
     (payload?: CheckoutErrorPayload | null) => {

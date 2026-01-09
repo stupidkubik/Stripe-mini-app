@@ -10,6 +10,8 @@ import {
   formatCategory,
   formatLight,
   formatWatering,
+  getRatingPlaceholder,
+  getShowcaseTag,
 } from "@/lib/product-metadata";
 import { formatPrice } from "@/lib/pricing";
 import { QuantityInput } from "@/components/quantity-input";
@@ -26,6 +28,15 @@ export function ProductCard({ product }: Props) {
   const descriptionId = `${idPrefix}-description`;
   const productSlug = product.metadata?.slug ?? product.id;
   const productHref = `/products/${encodeURIComponent(productSlug)}`;
+  const showcaseTag = getShowcaseTag(product.id, product.metadata?.slug);
+  const rating = getRatingPlaceholder(product.id, product.metadata?.slug);
+  const ratingLabel = `Rating ${rating.value.toFixed(1)} out of 5`;
+  const showcaseLabel =
+    showcaseTag === "new"
+      ? "Новинка"
+      : showcaseTag === "hit"
+        ? "Хит"
+        : undefined;
 
   const cartItem = useCart((state) =>
     state.items.find((item) => item.productId === product.id),
@@ -76,6 +87,26 @@ export function ProductCard({ product }: Props) {
         <p className={styles.price}>
           {formatPrice(product.unitAmount, product.currency)}
         </p>
+        <div className={styles.showcaseRow}>
+          {showcaseLabel && (
+            <span
+              className={`${styles.highlightBadge} ${
+                showcaseTag === "new"
+                  ? styles.highlightBadgeNew
+                  : styles.highlightBadgeHit
+              }`}
+            >
+              {showcaseLabel}
+            </span>
+          )}
+          <span className={styles.rating} aria-label={ratingLabel}>
+            <span className={styles.ratingIcon} aria-hidden="true">
+              ★
+            </span>
+            <span>{rating.value.toFixed(1)}</span>
+            <span className={styles.ratingCount}>({rating.count})</span>
+          </span>
+        </div>
         {metaBadges.length > 0 && (
           <div className={styles.metaBadges}>
             {metaBadges.map((badge, index) => (

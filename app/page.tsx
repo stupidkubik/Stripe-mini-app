@@ -35,6 +35,47 @@ const FEATURED_ICONS: ReadonlyArray<{
   },
 ];
 
+const TECH_HIGHLIGHTS = [
+  {
+    title: "Stripe-first data layer",
+    description:
+      "Products and prices sync from Stripe, with promo codes validated server-side before Checkout.",
+  },
+  {
+    title: "Next.js App Router + ISR",
+    description:
+      "Catalog pages cache via ISR, with dynamic Open Graph, sitemap, and robots endpoints.",
+  },
+  {
+    title: "Testing + CI feedback loops",
+    description:
+      "Vitest and Playwright suites ship with coverage and workflow badges for quick QA.",
+  },
+];
+
+const LEARNING_NOTES = [
+  {
+    title: "Checkout UX under real constraints",
+    description:
+      "Handling promo errors, empty carts, and Stripe redirects without breaking the flow.",
+  },
+  {
+    title: "Clear server/client boundaries",
+    description:
+      "Keeping Stripe logic server-only while the cart stays fast and responsive in the browser.",
+  },
+  {
+    title: "Production-minded edge cases",
+    description:
+      "Validating price IDs, throttling quantities, and surfacing webhook outcomes on success.",
+  },
+  {
+    title: "Storytelling for demos",
+    description:
+      "Combining feature highlights with friendly copy to make the build portfolio-ready.",
+  },
+];
+
 function FeatureIcon({ icon }: { icon: FeatureIconName }) {
   const className = styles.featureIcon;
   switch (icon) {
@@ -174,6 +215,49 @@ export default async function HomePage() {
             grow the collection.
           </div>
         )}
+      </section>
+
+      <section className={styles.portfolioSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>Tech highlights</h2>
+            <p className={styles.sectionText}>
+              Quick snapshots of the engineering focus areas behind the demo.
+            </p>
+          </div>
+        </div>
+        <div className={styles.portfolioGrid}>
+          {TECH_HIGHLIGHTS.map((item) => (
+            <article key={item.title} className={styles.portfolioCard}>
+              <h3 className={styles.portfolioTitle}>{item.title}</h3>
+              <p className={styles.portfolioText}>{item.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className={styles.learningSection}>
+        <div className={styles.sectionHeader}>
+          <div>
+            <h2 className={styles.sectionTitle}>What I learned</h2>
+            <p className={styles.sectionText}>
+              The takeaways that shaped how this build came together.
+            </p>
+          </div>
+        </div>
+        <div className={styles.learningGrid}>
+          {LEARNING_NOTES.map((item, index) => (
+            <article key={item.title} className={styles.learningCard}>
+              <span className={styles.learningIndex}>
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <div>
+                <h3 className={styles.learningTitle}>{item.title}</h3>
+                <p className={styles.learningText}>{item.description}</p>
+              </div>
+            </article>
+          ))}
+        </div>
       </section>
     </div>
   );

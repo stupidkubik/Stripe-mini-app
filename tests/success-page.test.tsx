@@ -9,7 +9,7 @@ class RedirectError extends Error {
   }
 }
 
-const { stripeMock, getPaymentEventsMock, redirectMock } = vi.hoisted(() => ({
+const { stripeMock, redirectMock } = vi.hoisted(() => ({
   stripeMock: {
     checkout: {
       sessions: {
@@ -17,7 +17,6 @@ const { stripeMock, getPaymentEventsMock, redirectMock } = vi.hoisted(() => ({
       },
     },
   },
-  getPaymentEventsMock: vi.fn(),
   redirectMock: vi.fn((url: string) => {
     throw new RedirectError(url);
   }),
@@ -29,10 +28,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib/stripe", () => ({
   stripe: stripeMock,
-}));
-
-vi.mock("@/lib/payment-events", () => ({
-  getPaymentEvents: getPaymentEventsMock,
 }));
 
 vi.mock("@/components/cart/order-success", () => ({
@@ -52,7 +47,10 @@ const baseSession = {
   total_details: { amount_discount: 500 },
   customer_details: { email: "buyer@example.com" },
   payment_intent: "pi_123",
-  metadata: { promotion_code: "META20" },
+  metadata: {
+    promotion_code: "META20",
+    payment_confirmed_at: "1700000200000",
+  },
   discounts: [{ promotion_code: { code: "PROMO20" } }],
   line_items: {
     data: [
@@ -79,7 +77,6 @@ const baseSession = {
 describe("Success page", () => {
   beforeEach(() => {
     stripeMock.checkout.sessions.retrieve.mockReset();
-    getPaymentEventsMock.mockReset();
     redirectMock.mockClear();
     delete process.env.NEXT_PUBLIC_DEMO_SUCCESS;
   });
@@ -113,9 +110,6 @@ describe("Success page", () => {
 
   it("returns order summary with derived props", async () => {
     stripeMock.checkout.sessions.retrieve.mockResolvedValue(baseSession);
-    getPaymentEventsMock.mockReturnValue([
-      { id: "evt_1", type: "payment_succeeded", createdAt: 1700000200000 },
-    ]);
 
     const { default: SuccessPage } = await loadPage();
 
@@ -151,11 +145,6 @@ describe("Success page", () => {
       { label: "Payment confirmed", timestamp: 1700000200000 },
       { label: "Receipt emailed" },
     ]);
-
-    expect(getPaymentEventsMock).toHaveBeenCalledWith({
-      sessionId: "cs_123",
-      paymentIntentId: "pi_123",
-    });
   });
 
   it("uses discount promo code when metadata is missing", async () => {
@@ -164,7 +153,6 @@ describe("Success page", () => {
       metadata: {},
       discounts: [{ promotion_code: { code: "PROMO20" } }],
     });
-    getPaymentEventsMock.mockReturnValue([]);
 
     const { default: SuccessPage } = await loadPage();
 
@@ -196,7 +184,6 @@ describe("Success page", () => {
         ],
       },
     });
-    getPaymentEventsMock.mockReturnValue([]);
 
     const { default: SuccessPage } = await loadPage();
 
@@ -218,10 +205,6 @@ describe("Success page", () => {
         image: null,
       },
     ]);
-    expect(getPaymentEventsMock).toHaveBeenCalledWith({
-      sessionId: "cs_123",
-      paymentIntentId: "pi_obj",
-    });
   });
 
   it("allows preview when demo mode is enabled", async () => {
@@ -230,7 +213,6 @@ describe("Success page", () => {
       ...baseSession,
       payment_status: "unpaid",
     });
-    getPaymentEventsMock.mockReturnValue([]);
 
     const { default: SuccessPage } = await loadPage();
 

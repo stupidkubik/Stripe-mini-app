@@ -152,6 +152,84 @@
   gap: 20px;
 }
 
+.portfolioSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.portfolioGrid {
+  display: grid;
+  gap: 16px;
+}
+
+.portfolioCard {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 18px;
+  box-shadow: 0 12px 24px -22px rgba(15, 23, 42, 0.3);
+}
+
+.portfolioTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.portfolioText {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.learningSection {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.learningGrid {
+  display: grid;
+  gap: 12px;
+}
+
+.learningCard {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  border-radius: 16px;
+  border: 1px solid color-mix(in oklab, var(--primary) 20%, var(--border));
+  background: color-mix(in oklab, var(--primary) 5%, var(--card));
+  padding: 16px;
+}
+
+.learningIndex {
+  min-width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) 15%, transparent);
+  border: 1px solid color-mix(in oklab, var(--primary) 35%, transparent);
+}
+
+.learningTitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.learningText {
+  margin: 6px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
 .sectionHeader {
   display: flex;
   flex-wrap: wrap;
@@ -207,6 +285,16 @@
   .features {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 24px;
+  }
+
+  .portfolioGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .learningGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 

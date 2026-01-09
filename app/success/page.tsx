@@ -4,7 +4,6 @@ import { z } from "zod";
 import type Stripe from "stripe";
 
 import OrderSuccess from "@/components/cart/order-success";
-import { getPaymentEvents } from "@/lib/payment-events";
 import { stripe } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
@@ -82,6 +81,49 @@ function resolvePromotionCode(session: Stripe.Checkout.Session) {
   return promotion?.code ?? null;
 }
 
+function parseMetadataTimestamp(
+  metadata: Stripe.Metadata | null | undefined,
+  key: string,
+) {
+  const raw = metadata?.[key];
+  if (typeof raw !== "string") {
+    return undefined;
+  }
+
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function resolvePaymentConfirmedAt(session: Stripe.Checkout.Session) {
+  const fromMetadata = parseMetadataTimestamp(
+    session.metadata ?? undefined,
+    "payment_confirmed_at",
+  );
+  if (typeof fromMetadata === "number") {
+    return fromMetadata;
+  }
+
+  const paymentIntent =
+    session.payment_intent && typeof session.payment_intent === "object"
+      ? session.payment_intent
+      : null;
+  const latestCharge =
+    paymentIntent?.latest_charge &&
+    typeof paymentIntent.latest_charge === "object"
+      ? paymentIntent.latest_charge
+      : null;
+
+  if (typeof latestCharge?.created === "number") {
+    return latestCharge.created * 1000;
+  }
+
+  if (typeof paymentIntent?.created === "number") {
+    return paymentIntent.created * 1000;
+  }
+
+  return session.created ? session.created * 1000 : undefined;
+}
+
 export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const parsed = searchParamsSchema.safeParse(await searchParams);
 
@@ -98,6 +140,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
           "line_items.data.price.product",
           "discounts",
           "discounts.promotion_code",
+          "payment_intent",
+          "payment_intent.latest_charge",
         ],
       },
     );
@@ -112,19 +156,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     }
 
     const lineItems = normalizeLineItems(session);
-    const paymentIntentId =
-      typeof session.payment_intent === "string"
-        ? session.payment_intent
-        : session.payment_intent?.id;
-    const paymentEvents = getPaymentEvents({
-      sessionId: session.id,
-      paymentIntentId,
-    });
-    const paymentSuccessEvent = paymentEvents.find(
-      (event) => event.type === "payment_succeeded",
-    );
     const orderPlacedAt = session.created ? session.created * 1000 : undefined;
-    const paymentConfirmedAt = paymentSuccessEvent?.createdAt ?? orderPlacedAt;
+    const paymentConfirmedAt = resolvePaymentConfirmedAt(session);
     const receiptSentAt = session.customer_details?.email
       ? paymentConfirmedAt
       : undefined;
