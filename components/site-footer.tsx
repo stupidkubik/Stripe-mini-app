@@ -40,9 +40,9 @@ export default function SiteFooter() {
               Have a question? Email{" "}
               <a
                 className={styles.contactLink}
-                href="mailto:support@verdantlane.dev"
+                href="mailto:stupidkubik@gmail.com"
               >
-                support@verdantlane.dev
+                stupidkubik@gmail.com
               </a>
             </div>
           </div>
