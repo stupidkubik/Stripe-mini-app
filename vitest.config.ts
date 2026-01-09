@@ -10,7 +10,7 @@ export default defineConfig({
     exclude: [...configDefaults.exclude, "tests/e2e/**"],
     coverage: {
       provider: "v8",
-      reporter: ["text", "text-summary", "html", "json-summary"],
+      reporter: ["text", "text-summary", "html", "json-summary", "lcov"],
       reportsDirectory: path.resolve(__dirname, "coverage"),
       include: [
         "app/**/*.{ts,tsx}",
