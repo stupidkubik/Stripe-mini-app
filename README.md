@@ -11,6 +11,8 @@
 
 Verdant Lane is a compact e-commerce demo that connects a polished Next.js App Router UI to real Stripe data. It covers the full journey from catalog browsing and an accessible cart to promo-code aware Checkout, webhooks, and a success timeline.
 
+![ScreenRecording2026-01-09at18 58 30-ezgif com-video-to-gif-converter](https://github.com/user-attachments/assets/89378fd6-0a43-4745-8eaa-ed066c32d2a9)
+
 ---
 
 ## ✨ Features
