@@ -33,6 +33,11 @@ jobs:
       - name: Generate badges
         run: node scripts/generate-badges.mjs --unit-status ${{ steps.unit.outcome }}
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Commit badge updates
         if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
         run: |
