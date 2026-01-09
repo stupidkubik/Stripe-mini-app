@@ -3,7 +3,7 @@
 ![Unit Tests](./badges/unit-tests.svg)
 [![codecov](https://codecov.io/gh/stupidkubik/Stripe-mini-app/branch/main/graph/badge.svg)](https://codecov.io/gh/stupidkubik/Stripe-mini-app)
 ![E2E Tests](./badges/e2e-tests.svg)
-[![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop-argbouoze-evgeniis-projects-0daccd9a.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop-argbouoze-evgeniis-projects-0daccd9a.vercel.app/)
+[![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop-argbouoze-evgeniis-projects-0daccd9a.vercel.app/)
 ![Node](https://img.shields.io/badge/node-20.x-3c873a?logo=node.js&logoColor=white)
 ![Next.js](https://img.shields.io/badge/next.js-16.0.10-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19.2.3-61dafb?logo=react&logoColor=000)
