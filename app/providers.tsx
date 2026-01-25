@@ -3,7 +3,6 @@
 import * as React from "react";
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 
-import RenderProfiler from "@/components/dev/render-profiler";
 import { Toaster } from "@/components/ui/sonner";
 
 type ProvidersProps = {
@@ -18,7 +17,7 @@ export default function Providers({ children }: ProvidersProps) {
       enableSystem
       disableTransitionOnChange
     >
-      <RenderProfiler id="App">{children}</RenderProfiler>
+      {children}
       {/* Глобальные тосты для уведомлений */}
       <Toaster />
     </NextThemesProvider>

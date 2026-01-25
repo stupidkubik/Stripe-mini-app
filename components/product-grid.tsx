@@ -3,7 +3,6 @@
 import * as React from "react";
 
 import { ProductDTO } from "../app/types/product";
-import RenderProfiler from "@/components/dev/render-profiler";
 import { ProductCard, ProductCardSkeleton } from "./product-card";
 import styles from "./product-grid.module.css";
 
@@ -63,23 +62,21 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
   const hasMore = visibleCount < products.length;
 
   return (
-    <RenderProfiler id="ProductGrid">
-      <ul className={styles.grid} role="list">
-        {displayedProducts.map((p) => (
-          <li key={p.id} className={styles.item}>
-            <ProductCard product={p} />
-          </li>
-        ))}
-        {hasMore && (
-          <li
-            key="sentinel"
-            ref={setSentinelRef}
-            aria-hidden
-            className={styles.sentinel}
-          />
-        )}
-      </ul>
-    </RenderProfiler>
+    <ul className={styles.grid} role="list">
+      {displayedProducts.map((p) => (
+        <li key={p.id} className={styles.item}>
+          <ProductCard product={p} />
+        </li>
+      ))}
+      {hasMore && (
+        <li
+          key="sentinel"
+          ref={setSentinelRef}
+          aria-hidden
+          className={styles.sentinel}
+        />
+      )}
+    </ul>
   );
 }
 

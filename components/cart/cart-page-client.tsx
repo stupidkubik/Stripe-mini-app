@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Trash2 } from "lucide-react";
 import { useShallow } from "zustand/react/shallow";
 
-import RenderProfiler from "@/components/dev/render-profiler";
 import { useCart, type CartItem } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,64 +91,60 @@ export default function CartPageClient() {
 
   if (items.length === 0) {
     return (
-      <RenderProfiler id="CartPageClient">
-        <section className={`${styles.page} ${styles.pageEmpty}`}>
-          <header className={styles.header}>
-            <h1 className={styles.title}>Your cart</h1>
-            <p className={styles.subtitle}>
-              You haven&apos;t added anything yet. Discover products and come
-              back when you&apos;re ready.
-            </p>
-          </header>
+      <section className={`${styles.page} ${styles.pageEmpty}`}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>Your cart</h1>
+          <p className={styles.subtitle}>
+            You haven&apos;t added anything yet. Discover products and come back
+            when you&apos;re ready.
+          </p>
+        </header>
 
-          <div className={styles.emptyCard}>
-            <p className={styles.emptyText}>Your cart is empty.</p>
-            <Link href="/products" className={styles.emptyLink}>
-              Browse products
-            </Link>
-          </div>
-        </section>
-      </RenderProfiler>
+        <div className={styles.emptyCard}>
+          <p className={styles.emptyText}>Your cart is empty.</p>
+          <Link href="/products" className={styles.emptyLink}>
+            Browse products
+          </Link>
+        </div>
+      </section>
     );
   }
 
   return (
-    <RenderProfiler id="CartPageClient">
-      <section className={styles.page}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Your cart</h1>
-          <p className={styles.subtitle}>
-            {count} item{count === 1 ? "" : "s"} ready for checkout.
-          </p>
-        </header>
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Your cart</h1>
+        <p className={styles.subtitle}>
+          {count} item{count === 1 ? "" : "s"} ready for checkout.
+        </p>
+      </header>
 
-        <div className={styles.layout}>
-          <div className={styles.items}>
-            {items.map((item) => (
-              <CartItemRow
-                key={item.productId}
-                item={item}
-                updateQty={updateQty}
-                removeItem={removeItem}
-              />
-            ))}
-          </div>
-
-          <div className={styles.checkoutColumn}>
-            <div id="cart-checkout" className={styles.checkoutAnchor}>
-              <CheckoutForm
-                items={items}
-                currency={currency}
-                total={total}
-                onClear={clear}
-              />
-            </div>
-          </div>
+      <div className={styles.layout}>
+        <div className={styles.items}>
+          {items.map((item) => (
+            <CartItemRow
+              key={item.productId}
+              item={item}
+              updateQty={updateQty}
+              removeItem={removeItem}
+            />
+          ))}
         </div>
 
-        <CartStickySummary />
-      </section>
-    </RenderProfiler>
+        <div className={styles.checkoutColumn}>
+          <div id="cart-checkout" className={styles.checkoutAnchor}>
+            <CheckoutForm
+              items={items}
+              currency={currency}
+              total={total}
+              onClear={clear}
+            />
+          </div>
+        </div>
+      </div>
+
+      <CartStickySummary />
+    </section>
   );
 }
 

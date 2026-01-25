@@ -67,9 +67,9 @@ const ProductCardDetails = React.memo(function ProductCardDetails({
   const ratingLabel = `Rating ${rating.value.toFixed(1)} out of 5`;
   const showcaseLabel =
     showcaseTag === "new"
-      ? "Новинка"
+      ? "New"
       : showcaseTag === "hit"
-        ? "Хит"
+        ? "Hit"
         : undefined;
 
   const metaBadges = [
