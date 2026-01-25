@@ -124,13 +124,13 @@ Coverage targets and the list of critical modules are documented in `TESTING.md`
 
 ## 🗒️ Changelog
 
-### 1.1 (Performance & UX polish) — 2025-01-10
+### 1.1 (Performance & UX polish) — 2026-01-25
 
 - Reduced cart re-renders by caching totals/counts in the store.
 - Smoothed catalog rendering with smaller initial batches and stable observer wiring.
 - Cached pricing formatter and product metadata helpers to cut repeated work.
 
-### 1.0 (Initial release) — 2025-01-09
+### 1.0 (Initial release) — 2025-12-24
 
 - Stripe-powered catalog, product pages, and checkout flow.
 - Persisted cart with quantity controls, theme toggle, and toasts.
