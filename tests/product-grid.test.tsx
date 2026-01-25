@@ -27,13 +27,23 @@ describe("ProductGrid", () => {
     const products = makeProducts(20);
     const { container } = render(<ProductGrid products={products} />);
 
-    expect(screen.getAllByTestId("product-card")).toHaveLength(12);
+    expect(screen.getAllByTestId("product-card")).toHaveLength(8);
 
     const sentinel = container.querySelector("li[aria-hidden]");
     expect(sentinel).not.toBeNull();
 
     const observers = getIntersectionObservers();
     expect(observers.length).toBeGreaterThan(0);
+
+    act(() => {
+      observers[0].trigger({
+        target: sentinel as Element,
+        isIntersecting: true,
+      });
+    });
+
+    expect(screen.getAllByTestId("product-card")).toHaveLength(16);
+    expect(container.querySelector("li[aria-hidden]")).not.toBeNull();
 
     act(() => {
       observers[0].trigger({

@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useShallow } from "zustand/react/shallow";
 
 import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
@@ -9,12 +10,16 @@ import { formatPrice } from "@/lib/pricing";
 import styles from "./cancel-cart-summary.module.css";
 
 export default function CancelCartSummary() {
-  const items = useCart((state) => state.items);
-  const total = useCart((state) => state.total());
-  const count = useCart((state) => state.count());
-  const currency = items[0]?.currency ?? "USD";
+  const { items, total, count, currency } = useCart(
+    useShallow((state) => ({
+      items: state.items,
+      total: state.total(),
+      count: state.count(),
+      currency: state.items[0]?.currency ?? "USD",
+    })),
+  );
 
-  if (items.length === 0) {
+  if (count === 0) {
     return (
       <section className={styles.emptyCard}>
         <h2 className={styles.emptyTitle}>Your cart is empty</h2>

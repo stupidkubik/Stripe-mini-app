@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useShallow } from "zustand/react/shallow";
 
 import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
@@ -9,15 +10,17 @@ import { cn } from "@/lib/utils";
 import styles from "./cart-sticky-summary.module.css";
 
 export default function CartStickySummary() {
-  const items = useCart((state) => state.items);
-  const total = useCart((state) => state.total());
-  const count = useCart((state) => state.count());
+  const { count, total, currency } = useCart(
+    useShallow((state) => ({
+      count: state.count(),
+      total: state.total(),
+      currency: state.items[0]?.currency ?? "USD",
+    })),
+  );
 
-  if (items.length === 0) {
+  if (count === 0) {
     return null;
   }
-
-  const currency = items[0]?.currency ?? "USD";
 
   return (
     <div className={styles.bar}>

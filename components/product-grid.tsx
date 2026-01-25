@@ -3,25 +3,36 @@
 import * as React from "react";
 
 import { ProductDTO } from "../app/types/product";
+import RenderProfiler from "@/components/dev/render-profiler";
 import { ProductCard, ProductCardSkeleton } from "./product-card";
 import styles from "./product-grid.module.css";
 
-const INITIAL_VISIBLE = 12;
+const INITIAL_VISIBLE = 8;
 const LOAD_BATCH = 8;
 
 export function ProductGrid({ products }: { products: ProductDTO[] }) {
   const [visibleCount, setVisibleCount] = React.useState(() =>
     Math.min(products.length, INITIAL_VISIBLE),
   );
-  const sentinelRef = React.useRef<HTMLLIElement | null>(null);
+  const [sentinel, setSentinel] = React.useState<HTMLLIElement | null>(null);
+  const productsLengthRef = React.useRef(products.length);
+  const setSentinelRef = React.useCallback(
+    (node: HTMLLIElement | null) => {
+      setSentinel(node);
+    },
+    [],
+  );
 
   React.useEffect(() => {
     setVisibleCount(Math.min(products.length, INITIAL_VISIBLE));
   }, [products]);
 
   React.useEffect(() => {
-    const sentinel = sentinelRef.current;
-    if (!sentinel || visibleCount >= products.length) {
+    productsLengthRef.current = products.length;
+  }, [products.length]);
+
+  React.useEffect(() => {
+    if (!sentinel) {
       return undefined;
     }
 
@@ -30,7 +41,9 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
         const [entry] = entries;
         if (entry.isIntersecting) {
           setVisibleCount((prev) =>
-            Math.min(products.length, prev + LOAD_BATCH),
+            prev >= productsLengthRef.current
+              ? prev
+              : Math.min(productsLengthRef.current, prev + LOAD_BATCH),
           );
         }
       },
@@ -40,7 +53,7 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
     observer.observe(sentinel);
 
     return () => observer.disconnect();
-  }, [visibleCount, products.length]);
+  }, [sentinel]);
 
   const displayedProducts = React.useMemo(
     () => products.slice(0, visibleCount),
@@ -50,21 +63,23 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
   const hasMore = visibleCount < products.length;
 
   return (
-    <ul className={styles.grid} role="list">
-      {displayedProducts.map((p) => (
-        <li key={p.id} className={styles.item}>
-          <ProductCard product={p} />
-        </li>
-      ))}
-      {hasMore && (
-        <li
-          key="sentinel"
-          ref={sentinelRef}
-          aria-hidden
-          className={styles.sentinel}
-        />
-      )}
-    </ul>
+    <RenderProfiler id="ProductGrid">
+      <ul className={styles.grid} role="list">
+        {displayedProducts.map((p) => (
+          <li key={p.id} className={styles.item}>
+            <ProductCard product={p} />
+          </li>
+        ))}
+        {hasMore && (
+          <li
+            key="sentinel"
+            ref={setSentinelRef}
+            aria-hidden
+            className={styles.sentinel}
+          />
+        )}
+      </ul>
+    </RenderProfiler>
   );
 }
 

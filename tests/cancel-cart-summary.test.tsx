@@ -28,6 +28,8 @@ describe("CancelCartSummary", () => {
     mockState.items = [];
     mockState.total.mockReset();
     mockState.count.mockReset();
+    mockState.total.mockReturnValue(0);
+    mockState.count.mockReturnValue(0);
   });
 
   it("renders empty state when cart is empty", () => {

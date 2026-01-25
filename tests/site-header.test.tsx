@@ -6,6 +6,7 @@ import SiteHeader from "@/components/site-header";
 const { mockState, mockPathname } = vi.hoisted(() => ({
   mockState: {
     items: [] as Array<{ quantity: number }>,
+    count: vi.fn(),
   },
   mockPathname: vi.fn(),
 }));
@@ -41,6 +42,9 @@ vi.mock("@/components/theme-toggle", () => ({
 describe("SiteHeader", () => {
   beforeEach(() => {
     mockState.items = [];
+    mockState.count.mockImplementation(
+      () => mockState.items.reduce((total, item) => total + item.quantity, 0),
+    );
     mockPathname.mockReturnValue("/");
   });
 

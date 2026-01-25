@@ -22,7 +22,7 @@ const secondItem = {
 
 function resetCart() {
   localStorage.clear();
-  useCart.setState({ items: [] });
+  useCart.setState({ items: [], countValue: 0, totalValue: 0 });
 }
 
 describe("useCart store", () => {

@@ -18,6 +18,24 @@ type QuantityInputProps = {
   size?: "sm" | "md" | "lg";
 };
 
+const SIZE_STYLES = {
+  sm: {
+    wrapper: styles.sizeSm,
+    button: styles.buttonSm,
+    input: styles.inputSm,
+  },
+  md: {
+    wrapper: styles.sizeMd,
+    button: styles.buttonMd,
+    input: styles.inputMd,
+  },
+  lg: {
+    wrapper: styles.sizeLg,
+    button: styles.buttonLg,
+    input: styles.inputLg,
+  },
+};
+
 export function QuantityInput({
   value,
   onChange,
@@ -54,25 +72,7 @@ export function QuantityInput({
     handleSet(value);
   };
 
-  const sizeStyles = {
-    sm: {
-      wrapper: styles.sizeSm,
-      button: styles.buttonSm,
-      input: styles.inputSm,
-    },
-    md: {
-      wrapper: styles.sizeMd,
-      button: styles.buttonMd,
-      input: styles.inputMd,
-    },
-    lg: {
-      wrapper: styles.sizeLg,
-      button: styles.buttonLg,
-      input: styles.inputLg,
-    },
-  };
-
-  const sizeClass = sizeStyles[size];
+  const sizeClass = SIZE_STYLES[size];
 
   return (
     <div className={cn(styles.wrapper, sizeClass.wrapper)}>

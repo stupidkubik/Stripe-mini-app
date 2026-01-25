@@ -35,9 +35,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
 }
 
 export default function SiteHeader() {
-  const cartCount = useCart((state) =>
-    state.items.reduce((total, item) => total + item.quantity, 0),
-  );
+  const cartCount = useCart((state) => state.count());
   const cartLabel =
     cartCount > 0
       ? `Open cart, ${cartCount} item${cartCount === 1 ? "" : "s"}`

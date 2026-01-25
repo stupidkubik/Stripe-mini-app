@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -101,7 +101,7 @@ export function CheckoutForm({
     setError,
     clearErrors,
     setValue,
-    control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
@@ -111,8 +111,7 @@ export function CheckoutForm({
     },
   });
 
-  const [promoHydrated, setPromoHydrated] = React.useState(false);
-  const promoCode = useWatch({ control, name: "promoCode" });
+  const promoHydratedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (typeof window === "undefined") {
@@ -131,27 +130,35 @@ export function CheckoutForm({
     } catch (error) {
       console.warn("Unable to read stored promo code", error);
     } finally {
-      setPromoHydrated(true);
+      promoHydratedRef.current = true;
     }
   }, [setValue]);
 
   React.useEffect(() => {
-    if (!promoHydrated || typeof window === "undefined") {
+    if (typeof window === "undefined") {
       return;
     }
 
-    const normalized = promoCode?.trim();
-
-    try {
-      if (normalized) {
-        window.localStorage.setItem(PROMO_STORAGE_KEY, normalized);
-      } else {
-        window.localStorage.removeItem(PROMO_STORAGE_KEY);
+    const subscription = watch((values, info) => {
+      if (info.name !== "promoCode" || !promoHydratedRef.current) {
+        return;
       }
-    } catch (error) {
-      console.warn("Unable to persist promo code", error);
-    }
-  }, [promoCode, promoHydrated]);
+
+      const normalized = values.promoCode?.trim();
+
+      try {
+        if (normalized) {
+          window.localStorage.setItem(PROMO_STORAGE_KEY, normalized);
+        } else {
+          window.localStorage.removeItem(PROMO_STORAGE_KEY);
+        }
+      } catch (error) {
+        console.warn("Unable to persist promo code", error);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const handleCheckoutError = React.useCallback(
     (payload?: CheckoutErrorPayload | null) => {
