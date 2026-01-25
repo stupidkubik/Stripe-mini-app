@@ -122,6 +122,21 @@ Coverage targets and the list of critical modules are documented in `TESTING.md`
 | `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data                       |
 | `components/cart/**/*`             | Cart UI, checkout form, and success summary                     |
 
+## 🗒️ Changelog
+
+### 1.1 (Performance & UX polish) — 2025-01-10
+
+- Reduced cart re-renders by caching totals/counts in the store.
+- Smoothed catalog rendering with smaller initial batches and stable observer wiring.
+- Cached pricing formatter and product metadata helpers to cut repeated work.
+
+### 1.0 (Initial release) — 2025-01-09
+
+- Stripe-powered catalog, product pages, and checkout flow.
+- Persisted cart with quantity controls, theme toggle, and toasts.
+- Webhooks + success timeline with order summary and promo support.
+- SEO metadata with Open Graph, sitemap, and robots endpoints.
+
 ## ⚠️ Limitations & Notes
 
 - The payment event log is in-memory; it resets on server restarts and is intended as a demo.
