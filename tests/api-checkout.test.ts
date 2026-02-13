@@ -3,9 +3,11 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createJsonRequest, createTextRequest } from "./test-utils/next-api";
 import { setMockHeaders } from "./test-utils/next-headers";
 
-const { listProductsMock, stripeMock } = vi.hoisted(() => ({
-  listProductsMock: vi.fn(),
+const { stripeMock } = vi.hoisted(() => ({
   stripeMock: {
+    prices: {
+      retrieve: vi.fn(),
+    },
     promotionCodes: {
       list: vi.fn(),
     },
@@ -18,7 +20,6 @@ const { listProductsMock, stripeMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/stripe", () => ({
-  listProducts: listProductsMock,
   stripe: stripeMock,
 }));
 
@@ -29,14 +30,14 @@ const ORIGINAL_CHECKOUT_RATE_LIMIT_MAX = process.env.RATE_LIMIT_CHECKOUT_MAX;
 const ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW =
   process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
 
-const product = {
-  id: "prod_1",
-  name: "Fern",
-  description: "",
-  image: "https://example.com/fern.png",
-  priceId: "price_1",
-  currency: "USD",
-  unitAmount: 1500,
+const validPrice = {
+  id: "price_1",
+  active: true,
+  type: "one_time",
+  product: {
+    id: "prod_1",
+    active: true,
+  },
 };
 
 describe("POST /api/checkout", () => {
@@ -48,7 +49,7 @@ describe("POST /api/checkout", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
     delete process.env.RATE_LIMIT_CHECKOUT_MAX;
     delete process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
-    listProductsMock.mockReset();
+    stripeMock.prices.retrieve.mockReset();
     stripeMock.promotionCodes.list.mockReset();
     stripeMock.checkout.sessions.create.mockReset();
     setMockHeaders();
@@ -97,11 +98,14 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toMatchObject({
       code: "invalid_payload",
     });
-    expect(listProductsMock).not.toHaveBeenCalled();
+    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
   });
 
   it("returns 400 when item is unavailable", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue({
+      ...validPrice,
+      active: false,
+    });
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
@@ -118,12 +122,12 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 400 when promo code is invalid", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockResolvedValue({ data: [] });
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 1 }],
+      items: [{ priceId: validPrice.id, quantity: 1 }],
       promotionCode: "SUMMER25",
     });
 
@@ -136,14 +140,14 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 500 when promo lookup fails", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockRejectedValue(
       new Error("lookup failed"),
     );
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 1 }],
+      items: [{ priceId: validPrice.id, quantity: 1 }],
       promotionCode: "SUMMER25",
     });
 
@@ -156,7 +160,7 @@ describe("POST /api/checkout", () => {
   });
 
   it("creates a Stripe session with discounts", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockResolvedValue({
       data: [{ id: "promo_1" }],
     });
@@ -167,7 +171,7 @@ describe("POST /api/checkout", () => {
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 2 }],
+      items: [{ priceId: validPrice.id, quantity: 2 }],
       promotionCode: "SUMMER25",
       customerEmail: "buyer@example.com",
     });
@@ -199,7 +203,7 @@ describe("POST /api/checkout", () => {
   });
 
   it("ignores spoofed origin/referer headers when building redirect urls", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_456",
     });
@@ -210,7 +214,7 @@ describe("POST /api/checkout", () => {
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 1 }],
+      items: [{ priceId: validPrice.id, quantity: 1 }],
     });
 
     const response = await POST(request);
@@ -227,14 +231,14 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 500 when Stripe session creation fails", async () => {
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockRejectedValue(
       new Error("Stripe down"),
     );
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 1 }],
+      items: [{ priceId: validPrice.id, quantity: 1 }],
     });
 
     const response = await POST(request);
@@ -249,7 +253,7 @@ describe("POST /api/checkout", () => {
     process.env.RATE_LIMIT_CHECKOUT_MAX = "1";
     process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS = "60000";
 
-    listProductsMock.mockResolvedValue([product]);
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_limit",
     });
@@ -257,7 +261,7 @@ describe("POST /api/checkout", () => {
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: [{ priceId: product.priceId, quantity: 1 }],
+      items: [{ priceId: validPrice.id, quantity: 1 }],
     });
 
     const firstResponse = await POST(request);
@@ -271,5 +275,42 @@ describe("POST /api/checkout", () => {
     });
 
     expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps checkout metadata compact for large carts", async () => {
+    stripeMock.prices.retrieve.mockImplementation(async (priceId: string) => ({
+      ...validPrice,
+      id: priceId,
+      product: {
+        id: `prod_${priceId}`,
+        active: true,
+      },
+    }));
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_large_cart",
+    });
+
+    const { POST } = await loadRoute();
+    const request = createJsonRequest("http://localhost:3000/api/checkout", {
+      items: Array.from({ length: 30 }, (_, index) => ({
+        priceId: `price_${index + 1}`,
+        quantity: 1,
+      })),
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          cart_item_count: "30",
+          cart_unique_items: "30",
+        }),
+      }),
+    );
+
+    const createCallArg = stripeMock.checkout.sessions.create.mock.calls[0]?.[0];
+    expect(createCallArg?.metadata).not.toHaveProperty("cart");
   });
 });

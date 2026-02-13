@@ -13,7 +13,8 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: "2025-08-27.basil",
+  // Keep runtime API version aligned with dashboard even if SDK typing lags behind.
+  apiVersion: "2026-01-28.clover" as Stripe.LatestApiVersion,
 });
 
 type PlantSeed = {

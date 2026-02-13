@@ -10,7 +10,7 @@ import type {
   ProductWatering,
 } from "@/app/types/product";
 
-const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2025-08-27.basil";
+const STRIPE_API_VERSION = "2026-01-28.clover";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
 if (!STRIPE_SECRET_KEY) {
@@ -20,7 +20,8 @@ if (!STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: STRIPE_API_VERSION,
+  // Keep runtime API version aligned with dashboard even if SDK typing lags behind.
+  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
   typescript: true,
 });
 

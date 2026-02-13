@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
+import Stripe from "stripe";
 
 import { z } from "zod";
 
 import { getSiteOrigin } from "@/lib/config/server";
 import { checkRouteRateLimit } from "@/lib/rate-limit";
-import { listProducts, stripe } from "@/lib/stripe";
+import { stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
   priceId: z.string().min(1, "Price ID is missing for one of the items."),
@@ -32,6 +33,7 @@ const CHECKOUT_ERROR_CODES = {
   rateLimited: "rate_limited",
   checkoutFailed: "checkout_failed",
 } as const;
+const STRIPE_METADATA_VALUE_LIMIT = 500;
 
 async function lookupPromotionCode(code: string) {
   try {
@@ -46,6 +48,50 @@ async function lookupPromotionCode(code: string) {
     console.error(`Failed to lookup promotion code ${code}`, error);
     throw error;
   }
+}
+
+function isActiveProduct(
+  product: Stripe.Price["product"],
+): product is Stripe.Product {
+  if (!product || typeof product === "string") {
+    return false;
+  }
+
+  if ("deleted" in product && product.deleted) {
+    return false;
+  }
+
+  return product.active;
+}
+
+async function validateCheckoutPrice(priceId: string): Promise<boolean> {
+  try {
+    const price = await stripe.prices.retrieve(priceId, {
+      expand: ["product"],
+    });
+
+    return price.active && price.type === "one_time" && isActiveProduct(price.product);
+  } catch (error) {
+    if (
+      error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.code === "resource_missing"
+    ) {
+      return false;
+    }
+
+    throw error;
+  }
+}
+
+function normalizeMetadata(
+  metadata: Record<string, string>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(metadata).map(([key, value]) => [
+      key,
+      value.slice(0, STRIPE_METADATA_VALUE_LIMIT),
+    ]),
+  );
 }
 
 export async function POST(request: Request) {
@@ -81,16 +127,31 @@ export async function POST(request: Request) {
       );
     }
 
-    const products = await listProducts();
-    const allowedPrices = new Map(
-      products.map((product) => [product.priceId, product]),
+    const uniquePriceIds = Array.from(
+      new Set(parsed.data.items.map((item) => item.priceId)),
     );
+    const validPriceIds = new Set<string>();
+
+    for (const priceId of uniquePriceIds) {
+      const isValid = await validateCheckoutPrice(priceId);
+
+      if (!isValid) {
+        return NextResponse.json(
+          {
+            error: "One of the items in your cart is no longer available.",
+            code: CHECKOUT_ERROR_CODES.itemUnavailable,
+          },
+          { status: 400 },
+        );
+      }
+
+      validPriceIds.add(priceId);
+    }
 
     const lineItemsMap = new Map<string, number>();
 
     for (const item of parsed.data.items) {
-      const product = allowedPrices.get(item.priceId);
-      if (!product) {
+      if (!validPriceIds.has(item.priceId)) {
         return NextResponse.json(
           {
             error: "One of the items in your cart is no longer available.",
@@ -155,13 +216,13 @@ export async function POST(request: Request) {
       }
     }
 
+    const totalItemsInCart = Array.from(lineItemsMap.values()).reduce(
+      (sum, quantity) => sum + quantity,
+      0,
+    );
     const metadata: Record<string, string> = {
-      cart: JSON.stringify(
-        Array.from(lineItemsMap.entries()).map(([priceId, quantity]) => ({
-          priceId,
-          quantity,
-        })),
-      ),
+      cart_item_count: String(totalItemsInCart),
+      cart_unique_items: String(lineItemsMap.size),
     };
 
     if (parsed.data.promotionCode) {
@@ -179,7 +240,7 @@ export async function POST(request: Request) {
       customer_email: parsed.data.customerEmail,
       success_url: `${origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/cancel?session_id={CHECKOUT_SESSION_ID}`,
-      metadata,
+      metadata: normalizeMetadata(metadata),
     });
 
     return NextResponse.json({ sessionId: session.id });
