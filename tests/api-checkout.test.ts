@@ -26,6 +26,9 @@ vi.mock("@/lib/stripe", () => ({
 const loadRoute = async () => await import("@/app/api/checkout/route");
 const ORIGINAL_SITE_URL = process.env.SITE_URL;
 const ORIGINAL_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+const ORIGINAL_VERCEL_PROJECT_PRODUCTION_URL =
+  process.env.VERCEL_PROJECT_PRODUCTION_URL;
+const ORIGINAL_VERCEL_URL = process.env.VERCEL_URL;
 const ORIGINAL_CHECKOUT_RATE_LIMIT_MAX = process.env.RATE_LIMIT_CHECKOUT_MAX;
 const ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW =
   process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
@@ -47,6 +50,8 @@ describe("POST /api/checkout", () => {
 
     process.env.SITE_URL = "https://shop.example.com";
     delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    delete process.env.VERCEL_URL;
     delete process.env.RATE_LIMIT_CHECKOUT_MAX;
     delete process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
     stripeMock.prices.retrieve.mockReset();
@@ -66,6 +71,19 @@ describe("POST /api/checkout", () => {
       delete process.env.NEXT_PUBLIC_SITE_URL;
     } else {
       process.env.NEXT_PUBLIC_SITE_URL = ORIGINAL_PUBLIC_SITE_URL;
+    }
+
+    if (ORIGINAL_VERCEL_PROJECT_PRODUCTION_URL === undefined) {
+      delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    } else {
+      process.env.VERCEL_PROJECT_PRODUCTION_URL =
+        ORIGINAL_VERCEL_PROJECT_PRODUCTION_URL;
+    }
+
+    if (ORIGINAL_VERCEL_URL === undefined) {
+      delete process.env.VERCEL_URL;
+    } else {
+      process.env.VERCEL_URL = ORIGINAL_VERCEL_URL;
     }
 
     if (ORIGINAL_CHECKOUT_RATE_LIMIT_MAX === undefined) {
@@ -226,6 +244,37 @@ describe("POST /api/checkout", () => {
           "https://shop.example.com/success?session_id={CHECKOUT_SESSION_ID}",
         cancel_url:
           "https://shop.example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
+      }),
+    );
+  });
+
+  it("uses Vercel production URL fallback when SITE_URL is missing", async () => {
+    delete process.env.SITE_URL;
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = "shop-live.vercel.app";
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_vercel_fallback",
+    });
+    setMockHeaders({
+      origin: "https://evil.example",
+      referer: "https://evil.example/phishing",
+    });
+
+    const { POST } = await loadRoute();
+    const request = createJsonRequest("http://localhost:3000/api/checkout", {
+      items: [{ priceId: validPrice.id, quantity: 1 }],
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success_url:
+          "https://shop-live.vercel.app/success?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url:
+          "https://shop-live.vercel.app/cancel?session_id={CHECKOUT_SESSION_ID}",
       }),
     );
   });

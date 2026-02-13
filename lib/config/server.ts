@@ -18,10 +18,29 @@ function normalizeOrigin(value: string | undefined): string | null {
   }
 }
 
+function normalizeHostOrigin(value: string | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return null;
+  }
+
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return normalizeOrigin(trimmed);
+  }
+
+  return normalizeOrigin(`https://${trimmed}`);
+}
+
 export function getSiteOrigin(): string {
   return (
-    normalizeOrigin(process.env.SITE_URL) ??
-    normalizeOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
+    normalizeHostOrigin(process.env.SITE_URL) ??
+    normalizeHostOrigin(process.env.NEXT_PUBLIC_SITE_URL) ??
+    normalizeHostOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL) ??
+    normalizeHostOrigin(process.env.VERCEL_URL) ??
     LOCAL_ORIGIN
   );
 }
