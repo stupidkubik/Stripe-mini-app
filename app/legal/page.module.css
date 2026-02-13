@@ -1,0 +1,39 @@
+.section {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2rem, 2.5vw, 2.6rem);
+  line-height: 1.1;
+}
+
+.lead {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.content {
+  display: grid;
+  gap: 1rem;
+}
+
+.content h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.content p {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+.content ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--muted-foreground);
+}

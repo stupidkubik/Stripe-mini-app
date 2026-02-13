@@ -6,9 +6,9 @@ const FOOTER_LINK_GROUPS = [
   {
     heading: "Shop",
     links: [
+      { href: "/", label: "Home" },
       { href: "/products", label: "Catalog" },
       { href: "/cart", label: "Cart" },
-      { href: "/success", label: "Order success" },
     ],
   },
   {

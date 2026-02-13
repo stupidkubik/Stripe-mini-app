@@ -112,6 +112,64 @@ describe("stripe server helpers", () => {
     expect(products[1].image).toBe(FALLBACK_IMAGE);
   });
 
+  it("paginates through all Stripe product pages", async () => {
+    stripeState.products.list
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "prod_1",
+            name: "Page One",
+            description: null,
+            images: [],
+            default_price: {
+              id: "price_1",
+              unit_amount: 1100,
+              currency: "usd",
+            },
+          },
+        ],
+        has_more: true,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "prod_2",
+            name: "Page Two",
+            description: null,
+            images: [],
+            default_price: {
+              id: "price_2",
+              unit_amount: 1200,
+              currency: "usd",
+            },
+          },
+        ],
+        has_more: false,
+      });
+
+    const { listProducts } = await loadStripeModule();
+    const products = await listProducts();
+
+    expect(products.map((entry) => entry.id)).toEqual(["prod_1", "prod_2"]);
+    expect(stripeState.products.list).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        active: true,
+        expand: ["data.default_price"],
+        limit: 100,
+      }),
+    );
+    expect(stripeState.products.list).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        active: true,
+        expand: ["data.default_price"],
+        limit: 100,
+        starting_after: "prod_1",
+      }),
+    );
+  });
+
   it("filters products without valid prices", async () => {
     stripeState.products.list.mockResolvedValue({
       data: [
@@ -301,6 +359,18 @@ describe("stripe server helpers", () => {
       expand: ["default_price"],
     });
     expect(product?.id).toBe("prod_1");
+  });
+
+  it("does not lookup product id for regular slugs", async () => {
+    stripeState.products.search.mockResolvedValue({ data: [] });
+    stripeState.products.list.mockResolvedValue({
+      data: [],
+    });
+
+    const { getProductBySlug } = await loadStripeModule();
+
+    await expect(getProductBySlug("fern-deluxe")).resolves.toBeNull();
+    expect(stripeState.products.retrieve).not.toHaveBeenCalled();
   });
 
   it("returns null for blank slugs", async () => {

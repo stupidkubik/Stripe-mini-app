@@ -150,14 +150,31 @@ async function resolvePrice(
 }
 
 async function fetchStripeProducts(): Promise<ProductDTO[]> {
-  const products = await stripe.products.list({
-    active: true,
-    expand: ["data.default_price"],
-    limit: 100,
-  });
+  const products: Stripe.Product[] = [];
+  let startingAfter: string | undefined;
+
+  while (true) {
+    const page = await stripe.products.list({
+      active: true,
+      expand: ["data.default_price"],
+      limit: 100,
+      ...(startingAfter ? { starting_after: startingAfter } : {}),
+    });
+
+    products.push(...page.data);
+
+    if (!page.has_more || page.data.length === 0) {
+      break;
+    }
+
+    startingAfter = page.data[page.data.length - 1]?.id;
+    if (!startingAfter) {
+      break;
+    }
+  }
 
   const normalized = await Promise.all(
-    products.data.map(async (product) => {
+    products.map(async (product) => {
       const price = await resolvePrice(product);
       if (!price) {
         return null;
@@ -249,7 +266,11 @@ async function fetchStripeProductBySlug(
     return match;
   }
 
-  return getProduct(normalizedSlug);
+  if (normalizedSlug.startsWith("prod_")) {
+    return getProduct(normalizedSlug);
+  }
+
+  return null;
 }
 
 export const getProductBySlug = fetchStripeProductBySlug;

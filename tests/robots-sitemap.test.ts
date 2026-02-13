@@ -79,8 +79,8 @@ describe("Robots and sitemap", () => {
       "https://example.com",
       "https://example.com/products",
       "https://example.com/cart",
-      "https://example.com/success",
-      "https://example.com/cancel",
+      "https://example.com/legal/terms",
+      "https://example.com/legal/privacy",
     ]);
   });
 });
