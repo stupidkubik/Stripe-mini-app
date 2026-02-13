@@ -27,7 +27,8 @@ afterEach(() => {
 
 describe("getStripePromise", () => {
   it("loads Stripe.js when a publishable key exists", async () => {
-    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY = "pk_test_123";
+    process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY =
+      "publishable_key_test_value";
     loadStripeMock.mockResolvedValue({});
 
     const { getStripePromise } = await loadModule();
@@ -36,7 +37,7 @@ describe("getStripePromise", () => {
     const second = getStripePromise();
 
     expect(loadStripeMock).toHaveBeenCalledTimes(1);
-    expect(loadStripeMock).toHaveBeenCalledWith("pk_test_123");
+    expect(loadStripeMock).toHaveBeenCalledWith("publishable_key_test_value");
     expect(first).toBe(second);
     await expect(first).resolves.toEqual({});
   });

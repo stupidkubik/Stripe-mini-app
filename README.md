@@ -46,15 +46,27 @@ npm install
 Create `.env.local` (Next.js loads it automatically):
 
 ```bash
+cp .env.example .env.local
+```
+
+Then adjust values for your Stripe workspace:
+
+```bash
 STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-NEXT_PUBLIC_DEMO_SUCCESS=true
+DEMO_SUCCESS=true
+RATE_LIMIT_CHECKOUT_MAX=30
+RATE_LIMIT_CHECKOUT_WINDOW_MS=60000
+RATE_LIMIT_WEBHOOK_MAX=120
+RATE_LIMIT_WEBHOOK_WINDOW_MS=60000
 ```
 
-> `NEXT_PUBLIC_SITE_URL` is also used as the fallback origin when creating Stripe Checkout sessions.
-> `NEXT_PUBLIC_DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
+> `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
+> `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
+> `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
 
 Optional: seed test products via the helper script.
 
@@ -90,7 +102,7 @@ Algorithm for viewing a successful payment flow:
 
 1. Complete a Stripe Checkout in test mode and grab the `session_id` from the redirect URL.
 2. Open `/success?session_id=YOUR_SESSION_ID&preview=1`.
-3. Preview mode is allowed in dev automatically. In prod/staging, set `NEXT_PUBLIC_DEMO_SUCCESS=true`.
+3. Preview mode is allowed in dev automatically. In prod/staging, set `DEMO_SUCCESS=true`.
 
 ```
 /success?session_id=cs_test_...&preview=1
@@ -105,11 +117,28 @@ Without `preview=1`, the session must be paid or you will be redirected to `/car
 | `npm run lint`               | ESLint rules (TypeScript-aware)                                               |
 | `npm run test:unit`          | Vitest + React Testing Library                                                |
 | `npm run test:unit:coverage` | Vitest with v8 coverage reports                                               |
+| `npm run test:e2e:smoke`     | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)      |
 | `npm run test:e2e`           | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
 Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
 
 Coverage targets and the list of critical modules are documented in `TESTING.md`.
+
+## 🔐 CI Security Troubleshooting
+
+The CI runs both `npm audit --omit=dev --audit-level=high` and gitleaks scans.
+
+If `npm audit` fails:
+
+1. Confirm whether it affects runtime deps (`--omit=dev` already filters dev tools).
+2. Update the vulnerable package and lockfile.
+3. Re-run `npm audit --omit=dev --audit-level=high` locally before pushing.
+
+If gitleaks reports a false positive:
+
+1. Verify the value is not a real secret.
+2. Replace placeholder-like values with safer non-secret text when possible.
+3. If suppression is still needed, add a narrowly scoped allowlist entry in a repository gitleaks config (path + reason), then re-run CI.
 
 ## 📁 Key Paths
 
@@ -147,7 +176,7 @@ Coverage targets and the list of critical modules are documented in `TESTING.md`
 
 ## 📦 Deployment
 
-Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_SITE_URL`). Add `NEXT_PUBLIC_DEMO_SUCCESS` if you want preview mode outside dev.
+Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`, `NEXT_PUBLIC_SITE_URL`). Add `DEMO_SUCCESS` if you want preview mode outside dev.
 
 Use the Stripe CLI or dashboard to point webhooks at the deployed URL (e.g., `https://yourdomain.com/api/stripe/webhook`).
 

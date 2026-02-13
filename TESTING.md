@@ -27,5 +27,13 @@
 
 - Quick check (unit only): `npm run test:unit`
 - Coverage gate: `npm run test:unit:coverage`
+- E2E smoke (fast): `npm run test:e2e:smoke`
 - Full local verification: `npm run lint && npm run test:unit && npm run test:unit:coverage && npm run test:e2e`
 - E2E setup (once): `npx playwright install`
+- Security gate (CI): `npm audit --omit=dev --audit-level=high` + gitleaks scan
+
+## Security Gate Notes
+
+- `npm audit` in CI checks production dependencies only (`--omit=dev`).
+- For audit failures, prefer package updates over temporary ignores.
+- For gitleaks false positives, verify first, then suppress only with narrow path-based allowlists and a reason in repo config.
