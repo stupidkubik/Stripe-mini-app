@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 
 import { z } from "zod";
 
+import { getSiteOrigin } from "@/lib/config/server";
+import { checkRouteRateLimit } from "@/lib/rate-limit";
 import { listProducts, stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
@@ -27,6 +29,7 @@ const CHECKOUT_ERROR_CODES = {
   itemUnavailable: "item_unavailable",
   promoInvalid: "promo_invalid",
   promoApplyFailed: "promo_apply_failed",
+  rateLimited: "rate_limited",
   checkoutFailed: "checkout_failed",
 } as const;
 
@@ -45,18 +48,25 @@ async function lookupPromotionCode(code: string) {
   }
 }
 
-async function getOriginFromHeaders() {
-  const headerList = await Promise.resolve(headers());
-  return (
-    headerList.get("origin") ??
-    headerList.get("referer") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    "http://localhost:3000"
-  );
-}
-
 export async function POST(request: Request) {
   try {
+    const headerList = await Promise.resolve(headers());
+    const rateLimit = checkRouteRateLimit("checkout", headerList);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "Too many checkout attempts. Please wait a moment and try again.",
+          code: CHECKOUT_ERROR_CODES.rateLimited,
+        },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        },
+      );
+    }
+
     const json = await request.json().catch(() => null);
     const parsed = requestSchema.safeParse(json);
 
@@ -113,7 +123,7 @@ export async function POST(request: Request) {
       }),
     );
 
-    const origin = await getOriginFromHeaders();
+    const origin = getSiteOrigin();
 
     let promotionCodeId: string | undefined;
 

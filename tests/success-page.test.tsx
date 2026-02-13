@@ -78,6 +78,7 @@ describe("Success page", () => {
   beforeEach(() => {
     stripeMock.checkout.sessions.retrieve.mockReset();
     redirectMock.mockClear();
+    delete process.env.DEMO_SUCCESS;
     delete process.env.NEXT_PUBLIC_DEMO_SUCCESS;
   });
 
@@ -208,7 +209,7 @@ describe("Success page", () => {
   });
 
   it("allows preview when demo mode is enabled", async () => {
-    process.env.NEXT_PUBLIC_DEMO_SUCCESS = "true";
+    process.env.DEMO_SUCCESS = "true";
     stripeMock.checkout.sessions.retrieve.mockResolvedValue({
       ...baseSession,
       payment_status: "unpaid",
@@ -223,5 +224,23 @@ describe("Success page", () => {
     expect(redirectMock).not.toHaveBeenCalled();
     const props = (element as { props: Record<string, unknown> }).props;
     expect(props.sessionId).toBe("cs_123");
+  });
+
+  it("does not allow preview from public env flag alone", async () => {
+    process.env.NEXT_PUBLIC_DEMO_SUCCESS = "true";
+    stripeMock.checkout.sessions.retrieve.mockResolvedValue({
+      ...baseSession,
+      payment_status: "unpaid",
+    });
+
+    const { default: SuccessPage } = await loadPage();
+
+    await expect(
+      SuccessPage({
+        searchParams: Promise.resolve({ session_id: "cs_123", preview: "1" }),
+      }),
+    ).rejects.toBeInstanceOf(RedirectError);
+
+    expect(redirectMock).toHaveBeenCalledWith("/cart");
   });
 });

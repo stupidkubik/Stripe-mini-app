@@ -4,6 +4,7 @@ import { z } from "zod";
 import type Stripe from "stripe";
 
 import OrderSuccess from "@/components/cart/order-success";
+import { isSuccessPreviewEnabled } from "@/lib/config/server";
 import { stripe } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
@@ -148,8 +149,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
 
     const allowPreview =
       parsed.data.preview === "1" &&
-      (process.env.NEXT_PUBLIC_DEMO_SUCCESS === "true" ||
-        process.env.NODE_ENV === "development");
+      (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
 
     if (!session || (session.payment_status !== "paid" && !allowPreview)) {
       redirect("/cart");

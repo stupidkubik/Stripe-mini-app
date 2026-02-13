@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { recordPaymentEvent } from "@/lib/payment-events";
+import { checkRouteRateLimit } from "@/lib/rate-limit";
 import { stripe } from "@/lib/stripe";
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -28,8 +29,20 @@ function resolvePaymentIntentId(
 }
 
 export async function POST(request: Request) {
-  const body = await request.text();
   const headerList = await Promise.resolve(headers());
+  const rateLimit = checkRouteRateLimit("webhook", headerList);
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many webhook requests" },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+      },
+    );
+  }
+
+  const body = await request.text();
   const signature = headerList.get("stripe-signature");
 
   if (!signature) {

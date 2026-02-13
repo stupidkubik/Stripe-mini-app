@@ -25,6 +25,94 @@ type CartState = {
   total: () => number; // minor units
 };
 
+type PersistedCartState = {
+  items?: unknown;
+};
+
+const MIN_QUANTITY = 1;
+const MAX_QUANTITY = 10;
+const CART_PERSIST_VERSION = 1;
+const FALLBACK_CART_IMAGE = "/globe.svg";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function normalizeString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function normalizeCurrency(value: unknown) {
+  const normalized = normalizeString(value).toUpperCase();
+  return /^[A-Z]{3}$/.test(normalized) ? normalized : "USD";
+}
+
+function normalizeUnitAmount(value: unknown) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return null;
+  }
+
+  const rounded = Math.round(value);
+  return rounded >= 0 ? rounded : null;
+}
+
+function clampQuantity(value: unknown) {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return MIN_QUANTITY;
+  }
+
+  return Math.max(MIN_QUANTITY, Math.min(MAX_QUANTITY, Math.round(value)));
+}
+
+function sanitizePersistedItems(rawItems: unknown): CartItem[] {
+  if (!Array.isArray(rawItems)) {
+    return [];
+  }
+
+  const deduped = new Map<string, CartItem>();
+
+  for (const rawItem of rawItems) {
+    if (!isRecord(rawItem)) {
+      continue;
+    }
+
+    const productId = normalizeString(rawItem.productId);
+    const priceId = normalizeString(rawItem.priceId);
+
+    if (!productId || !priceId) {
+      continue;
+    }
+
+    const unitAmount = normalizeUnitAmount(rawItem.unitAmount);
+    if (unitAmount === null) {
+      continue;
+    }
+
+    const safeItem: CartItem = {
+      productId,
+      priceId,
+      name: normalizeString(rawItem.name) || "Product",
+      image: normalizeString(rawItem.image) || FALLBACK_CART_IMAGE,
+      unitAmount,
+      currency: normalizeCurrency(rawItem.currency),
+      quantity: clampQuantity(rawItem.quantity),
+    };
+
+    const existing = deduped.get(productId);
+    if (!existing) {
+      deduped.set(productId, safeItem);
+      continue;
+    }
+
+    deduped.set(productId, {
+      ...safeItem,
+      quantity: Math.min(MAX_QUANTITY, existing.quantity + safeItem.quantity),
+    });
+  }
+
+  return Array.from(deduped.values());
+}
+
 const deriveTotals = (items: CartItem[]) => {
   let countValue = 0;
   let totalValue = 0;
@@ -45,12 +133,16 @@ export const useCart = create<CartState>()(
       totalValue: 0,
       addItem: (item, qty = 1) =>
         set((state) => {
+          const quantityToAdd = clampQuantity(qty);
           const i = state.items.findIndex(
             (x) => x.productId === item.productId,
           );
           if (i >= 0) {
             const items = [...state.items];
-            const nextQuantity = Math.min(items[i].quantity + qty, 10);
+            const nextQuantity = Math.min(
+              items[i].quantity + quantityToAdd,
+              MAX_QUANTITY,
+            );
             if (nextQuantity === items[i].quantity) {
               return state;
             }
@@ -62,7 +154,7 @@ export const useCart = create<CartState>()(
           }
           const items = [
             ...state.items,
-            { ...item, quantity: Math.min(qty, 10) },
+            { ...item, quantity: quantityToAdd },
           ];
           return { items, ...deriveTotals(items) };
         }),
@@ -76,7 +168,7 @@ export const useCart = create<CartState>()(
         }),
       updateQty: (productId, qty) =>
         set((state) => {
-          const nextQuantity = Math.max(1, Math.min(qty, 10));
+          const nextQuantity = clampQuantity(qty);
           let changed = false;
           const items = state.items.map((x) => {
             if (x.productId !== productId) {
@@ -105,19 +197,31 @@ export const useCart = create<CartState>()(
     }),
     {
       name: "cart",
+      version: CART_PERSIST_VERSION,
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ items: state.items }),
+      migrate: (persistedState, version) => {
+        const safePersisted = isRecord(persistedState)
+          ? (persistedState as PersistedCartState)
+          : {};
+        const items = sanitizePersistedItems(safePersisted.items);
+
+        if (version < CART_PERSIST_VERSION) {
+          return { items };
+        }
+
+        return { ...safePersisted, items };
+      },
       merge: (persistedState, currentState) => {
-        const safePersisted =
-          persistedState && typeof persistedState === "object"
-            ? (persistedState as Partial<CartState>)
-            : {};
-        const items = safePersisted.items ?? currentState.items;
+        const safePersisted = isRecord(persistedState)
+          ? (persistedState as PersistedCartState)
+          : {};
+        const items = sanitizePersistedItems(safePersisted.items);
 
         return {
           ...currentState,
-          ...safePersisted,
-          ...deriveTotals(items ?? []),
+          items,
+          ...deriveTotals(items),
         };
       },
     },

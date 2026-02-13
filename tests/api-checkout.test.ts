@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createJsonRequest, createTextRequest } from "./test-utils/next-api";
 import { setMockHeaders } from "./test-utils/next-headers";
@@ -23,6 +23,11 @@ vi.mock("@/lib/stripe", () => ({
 }));
 
 const loadRoute = async () => await import("@/app/api/checkout/route");
+const ORIGINAL_SITE_URL = process.env.SITE_URL;
+const ORIGINAL_PUBLIC_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
+const ORIGINAL_CHECKOUT_RATE_LIMIT_MAX = process.env.RATE_LIMIT_CHECKOUT_MAX;
+const ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW =
+  process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
 
 const product = {
   id: "prod_1",
@@ -35,11 +40,45 @@ const product = {
 };
 
 describe("POST /api/checkout", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { clearRateLimitStore } = await import("@/lib/rate-limit");
+    clearRateLimitStore();
+
+    process.env.SITE_URL = "https://shop.example.com";
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    delete process.env.RATE_LIMIT_CHECKOUT_MAX;
+    delete process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
     listProductsMock.mockReset();
     stripeMock.promotionCodes.list.mockReset();
     stripeMock.checkout.sessions.create.mockReset();
     setMockHeaders();
+  });
+
+  afterAll(() => {
+    if (ORIGINAL_SITE_URL === undefined) {
+      delete process.env.SITE_URL;
+    } else {
+      process.env.SITE_URL = ORIGINAL_SITE_URL;
+    }
+
+    if (ORIGINAL_PUBLIC_SITE_URL === undefined) {
+      delete process.env.NEXT_PUBLIC_SITE_URL;
+    } else {
+      process.env.NEXT_PUBLIC_SITE_URL = ORIGINAL_PUBLIC_SITE_URL;
+    }
+
+    if (ORIGINAL_CHECKOUT_RATE_LIMIT_MAX === undefined) {
+      delete process.env.RATE_LIMIT_CHECKOUT_MAX;
+    } else {
+      process.env.RATE_LIMIT_CHECKOUT_MAX = ORIGINAL_CHECKOUT_RATE_LIMIT_MAX;
+    }
+
+    if (ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW === undefined) {
+      delete process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
+    } else {
+      process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS =
+        ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW;
+    }
   });
 
   it("returns 400 for invalid payload", async () => {
@@ -149,12 +188,40 @@ describe("POST /api/checkout", () => {
         discounts: [{ promotion_code: "promo_1" }],
         customer_email: "buyer@example.com",
         success_url:
-          "https://example.com/success?session_id={CHECKOUT_SESSION_ID}",
+          "https://shop.example.com/success?session_id={CHECKOUT_SESSION_ID}",
         cancel_url:
-          "https://example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
+          "https://shop.example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
         metadata: expect.objectContaining({
           promotion_code: "SUMMER25",
         }),
+      }),
+    );
+  });
+
+  it("ignores spoofed origin/referer headers when building redirect urls", async () => {
+    listProductsMock.mockResolvedValue([product]);
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_456",
+    });
+    setMockHeaders({
+      origin: "https://evil.example",
+      referer: "https://evil.example/phishing",
+    });
+
+    const { POST } = await loadRoute();
+    const request = createJsonRequest("http://localhost:3000/api/checkout", {
+      items: [{ priceId: product.priceId, quantity: 1 }],
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(200);
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success_url:
+          "https://shop.example.com/success?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url:
+          "https://shop.example.com/cancel?session_id={CHECKOUT_SESSION_ID}",
       }),
     );
   });
@@ -176,5 +243,33 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toMatchObject({
       code: "checkout_failed",
     });
+  });
+
+  it("returns 429 when checkout rate limit is exceeded", async () => {
+    process.env.RATE_LIMIT_CHECKOUT_MAX = "1";
+    process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS = "60000";
+
+    listProductsMock.mockResolvedValue([product]);
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_limit",
+    });
+    setMockHeaders({ "x-forwarded-for": "203.0.113.7", "user-agent": "test" });
+
+    const { POST } = await loadRoute();
+    const request = createJsonRequest("http://localhost:3000/api/checkout", {
+      items: [{ priceId: product.priceId, quantity: 1 }],
+    });
+
+    const firstResponse = await POST(request);
+    expect(firstResponse.status).toBe(200);
+
+    const secondResponse = await POST(request);
+    expect(secondResponse.status).toBe(429);
+    expect(secondResponse.headers.get("Retry-After")).toBe("60");
+    await expect(secondResponse.json()).resolves.toMatchObject({
+      code: "rate_limited",
+    });
+
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
   });
 });
