@@ -13,6 +13,8 @@ const { mockState } = vi.hoisted(() => ({
       currency: string;
       quantity: number;
     }>,
+    totalValue: 0,
+    countValue: 0,
     total: vi.fn(),
     count: vi.fn(),
   },
@@ -26,10 +28,12 @@ vi.mock("@/app/store/cart", () => ({
 describe("CancelCartSummary", () => {
   beforeEach(() => {
     mockState.items = [];
+    mockState.totalValue = 0;
+    mockState.countValue = 0;
     mockState.total.mockReset();
     mockState.count.mockReset();
-    mockState.total.mockReturnValue(0);
-    mockState.count.mockReturnValue(0);
+    mockState.total.mockReturnValue(mockState.totalValue);
+    mockState.count.mockReturnValue(mockState.countValue);
   });
 
   it("renders empty state when cart is empty", () => {
@@ -54,8 +58,8 @@ describe("CancelCartSummary", () => {
         quantity: 2,
       },
     ];
-    mockState.total.mockReturnValue(5000);
-    mockState.count.mockReturnValue(2);
+    mockState.totalValue = 5000;
+    mockState.countValue = 2;
 
     render(<CancelCartSummary />);
 

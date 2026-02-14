@@ -13,8 +13,8 @@ export default function CancelCartSummary() {
   const { items, total, count, currency } = useCart(
     useShallow((state) => ({
       items: state.items,
-      total: state.total(),
-      count: state.count(),
+      total: state.totalValue,
+      count: state.countValue,
       currency: state.items[0]?.currency ?? "USD",
     })),
   );

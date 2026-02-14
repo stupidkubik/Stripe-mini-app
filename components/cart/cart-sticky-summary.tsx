@@ -12,8 +12,8 @@ import styles from "./cart-sticky-summary.module.css";
 export default function CartStickySummary() {
   const { count, total, currency } = useCart(
     useShallow((state) => ({
-      count: state.count(),
-      total: state.total(),
+      count: state.countValue,
+      total: state.totalValue,
       currency: state.items[0]?.currency ?? "USD",
     })),
   );

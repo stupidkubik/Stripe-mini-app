@@ -6,6 +6,7 @@ import SiteHeader from "@/components/site-header";
 const { mockState, mockPathname } = vi.hoisted(() => ({
   mockState: {
     items: [] as Array<{ quantity: number }>,
+    countValue: 0,
     count: vi.fn(),
   },
   mockPathname: vi.fn(),
@@ -42,6 +43,7 @@ vi.mock("@/components/theme-toggle", () => ({
 describe("SiteHeader", () => {
   beforeEach(() => {
     mockState.items = [];
+    mockState.countValue = 0;
     mockState.count.mockImplementation(
       () => mockState.items.reduce((total, item) => total + item.quantity, 0),
     );
@@ -72,6 +74,7 @@ describe("SiteHeader", () => {
 
   it("shows cart badge and count in label", () => {
     mockState.items = [{ quantity: 2 }, { quantity: 1 }];
+    mockState.countValue = 3;
 
     render(<SiteHeader />);
 

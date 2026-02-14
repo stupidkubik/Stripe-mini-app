@@ -82,8 +82,8 @@ export default function CartPageClient() {
       removeItem: state.removeItem,
       updateQty: state.updateQty,
       clear: state.clear,
-      total: state.total(),
-      count: state.count(),
+      total: state.totalValue,
+      count: state.countValue,
     })),
   );
 

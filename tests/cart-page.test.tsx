@@ -11,6 +11,15 @@ const mockState = {
   removeItem: vi.fn(),
   updateQty: vi.fn(),
   clear: vi.fn(),
+  get countValue() {
+    return mockState.items.reduce((acc, item) => acc + item.quantity, 0);
+  },
+  get totalValue() {
+    return mockState.items.reduce(
+      (acc, item) => acc + item.unitAmount * item.quantity,
+      0,
+    );
+  },
   count: () => mockState.items.reduce((acc, item) => acc + item.quantity, 0),
   total: () =>
     mockState.items.reduce(
