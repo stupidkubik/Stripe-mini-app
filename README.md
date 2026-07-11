@@ -5,7 +5,7 @@
 ![E2E Tests](./badges/e2e-tests.svg)
 [![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop-argbouoze-evgeniis-projects-0daccd9a.vercel.app/)
 ![Node](https://img.shields.io/badge/node-20.x-3c873a?logo=node.js&logoColor=white)
-![Next.js](https://img.shields.io/badge/next.js-16.0.10-000000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/next.js-16.2.10-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19.2.3-61dafb?logo=react&logoColor=000)
 ![TypeScript](https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white)
 
@@ -19,9 +19,9 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 
 - Live product catalog and detail pages rendered from Stripe Products/Prices with ISR caching.
 - Persisted cart (Zustand) with quantity controls, toast feedback, theme toggle, and keyboard-friendly interactions.
-- Stripe Checkout session creator that validates price IDs, enforces quantity limits, and applies promotion codes server-side.
-- Webhook handler that verifies Stripe signatures, records `payment_succeeded` / `payment_failed` events, and surfaces them on the `/success` page.
-- Success page includes a timeline plus an itemized order summary (images, quantities, totals, promo code).
+- Stripe Checkout session creator that accepts only each active product's default price, enforces cart/quantity limits, and applies approved promotion codes server-side.
+- Webhook handler that verifies Stripe signatures and records privacy-minimal payment status events for operational logs.
+- Success page includes a receipt-token protected timeline and itemized order summary (images, quantities, totals, promo code).
 - SEO upgrades: dynamic Open Graph image generator, canonical metadata, Twitter cards, and auto-generated `sitemap.xml` + `robots.txt`.
 - Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
 
@@ -30,7 +30,7 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 - **Framework**: Next.js 16 App Router, React 19, TypeScript.
 - **Styling/UI**: CSS Modules (modern CSS), shadcn/ui primitives, lucide icons.
 - **State & Forms**: Zustand (persisted cart), React Hook Form + Zod validation.
-- **Payments**: Stripe Node SDK, Stripe.js, Stripe Webhooks (Edge friendly).
+- **Payments**: Stripe Node SDK, Stripe.js, Stripe Webhooks (Node.js runtime).
 - **Tooling**: ESLint, Prettier, Vitest, React Testing Library, Playwright, Stripe CLI (for webhooks/seed scripts).
 
 ## 🚀 Getting Started
@@ -67,6 +67,7 @@ RATE_LIMIT_WEBHOOK_WINDOW_MS=60000
 > `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
 > `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
 > `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
+> On Vercel or Cloudflare Pages, the platform sets the source-IP environment flag used by the local rate limiter. Use a shared edge/WAF or shared rate-limit store for multi-instance production deployments.
 
 Optional: seed test products via the helper script.
 
@@ -94,7 +95,7 @@ Copy the printed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`.
 
 ### 5. Promotion codes
 
-Create active promotion codes in your Stripe dashboard. Visitors can enter them in the cart; the API verifies the code before attaching it to the Checkout session, while still letting Stripe’s hosted page accept additional codes.
+Create active promotion codes in your Stripe dashboard. Visitors can enter them in the cart; the API verifies a code before attaching it to the Checkout session. Stripe Checkout itself does not accept additional, unapproved codes.
 
 ### 6. Preview the success page (demo helper)
 
@@ -108,7 +109,7 @@ Algorithm for viewing a successful payment flow:
 /success?session_id=cs_test_...&preview=1
 ```
 
-Without `preview=1`, the session must be paid or you will be redirected to `/cart`.
+Without `preview=1`, the session must be paid and the browser must hold the matching receipt token created when it started Checkout; otherwise the app redirects to `/cart`.
 
 ## ✅ Testing
 
@@ -117,6 +118,7 @@ Without `preview=1`, the session must be paid or you will be redirected to `/car
 | `npm run lint`               | ESLint rules (TypeScript-aware)                                               |
 | `npm run test:unit`          | Vitest + React Testing Library                                                |
 | `npm run test:unit:coverage` | Vitest with v8 coverage reports                                               |
+| `npm run build`              | Production build and TypeScript verification                                  |
 | `npm run test:e2e:smoke`     | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)      |
 | `npm run test:e2e`           | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
@@ -146,7 +148,7 @@ If gitleaks reports a false positive:
 | ---------------------------------- | --------------------------------------------------------------- |
 | `app/api/checkout/route.ts`        | Creates Checkout sessions, validates carts, applies promo codes |
 | `app/api/stripe/webhook/route.ts`  | Verifies webhook signatures and logs payment status events      |
-| `lib/payment-events.ts`            | In-memory store for payment timeline data used on `/success`    |
+| `lib/payment-events.ts`            | Privacy-minimal in-memory operational event log                |
 | `app/opengraph-image.tsx`          | Dynamic Open Graph preview generator                            |
 | `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data                       |
 | `components/cart/**/*`             | Cart UI, checkout form, and success summary                     |
@@ -168,11 +170,13 @@ If gitleaks reports a false positive:
 
 ## ⚠️ Limitations & Notes
 
-- The payment event log is in-memory; it resets on server restarts and is intended as a demo.
+- The payment event log is in-memory, resets on server restarts, and is not used as an order-fulfillment system.
 - There is no dedicated database—order metadata lives in Stripe, and cart state persists in the browser via localStorage.
 - Product data is cached via Next.js ISR; adding/removing Stripe products may require revalidation or a redeploy to appear instantly.
 - Ensure your Stripe test mode has products, prices, and promotion codes before running E2E flows.
-- Preview mode only bypasses the paid check; it still fetches the Stripe Checkout session by `session_id`.
+- Preview mode bypasses paid-status and receipt-token checks only for demo/development use; it still fetches the Stripe Checkout session by `session_id`.
+- Product availability requires an active Stripe Product with an active `default_price`.
+- Follow-up work is tracked in [PROJECT_IMPROVEMENT_PLAN.md](./PROJECT_IMPROVEMENT_PLAN.md).
 
 ## 📦 Deployment
 
