@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type Stripe from "stripe";
@@ -11,6 +12,7 @@ const searchParamsSchema = z.object({
   session_id: z.string().min(1, "session_id is required"),
   preview: z.string().optional(),
 });
+const RECEIPT_TOKEN_COOKIE = "checkout_receipt_token";
 
 type SuccessPageProps = {
   searchParams: Promise<{ session_id?: string }>;
@@ -133,6 +135,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   }
 
   try {
+    const cookieStore = await Promise.resolve(cookies());
+    const receiptToken = cookieStore.get(RECEIPT_TOKEN_COOKIE)?.value;
     const session = await stripe.checkout.sessions.retrieve(
       parsed.data.session_id,
       {
@@ -151,7 +155,14 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
       parsed.data.preview === "1" &&
       (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
 
-    if (!session || (session.payment_status !== "paid" && !allowPreview)) {
+    const hasReceiptProof =
+      receiptToken !== undefined && receiptToken === session?.metadata?.receipt_token;
+
+    if (
+      !session ||
+      (!hasReceiptProof && !allowPreview) ||
+      (session.payment_status !== "paid" && !allowPreview)
+    ) {
       redirect("/cart");
     }
 

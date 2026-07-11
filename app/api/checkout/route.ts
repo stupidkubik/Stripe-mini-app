@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { randomUUID } from "crypto";
 
 import { z } from "zod";
 
@@ -20,7 +21,10 @@ const checkoutItemSchema = z.object({
 
 const requestSchema = z.object({
   customerEmail: z.string().email().optional(),
-  items: z.array(checkoutItemSchema).min(1, "Your cart is empty."),
+  items: z
+    .array(checkoutItemSchema)
+    .min(1, "Your cart is empty.")
+    .max(10, "Your cart has too many different items."),
   promotionCode: z.string().trim().max(64).optional(),
 });
 
@@ -34,6 +38,8 @@ const CHECKOUT_ERROR_CODES = {
   checkoutFailed: "checkout_failed",
 } as const;
 const STRIPE_METADATA_VALUE_LIMIT = 500;
+const RECEIPT_TOKEN_COOKIE = "checkout_receipt_token";
+const RECEIPT_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 async function lookupPromotionCode(code: string) {
   try {
@@ -70,7 +76,17 @@ async function validateCheckoutPrice(priceId: string): Promise<boolean> {
       expand: ["product"],
     });
 
-    return price.active && price.type === "one_time" && isActiveProduct(price.product);
+    if (!price.active || price.type !== "one_time" || !isActiveProduct(price.product)) {
+      return false;
+    }
+
+    const defaultPrice = price.product.default_price;
+    const defaultPriceId =
+      typeof defaultPrice === "string" ? defaultPrice : defaultPrice?.id;
+
+    // The client may only purchase the default price of an active catalogue
+    // product. This blocks old/internal active prices from being submitted.
+    return defaultPriceId === price.id;
   } catch (error) {
     if (
       error instanceof Stripe.errors.StripeInvalidRequestError &&
@@ -224,6 +240,8 @@ export async function POST(request: Request) {
       cart_item_count: String(totalItemsInCart),
       cart_unique_items: String(lineItemsMap.size),
     };
+    const receiptToken = randomUUID();
+    metadata.receipt_token = receiptToken;
 
     if (parsed.data.promotionCode) {
       metadata.promotion_code = parsed.data.promotionCode;
@@ -233,7 +251,7 @@ export async function POST(request: Request) {
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: true },
-      allow_promotion_codes: true,
+      allow_promotion_codes: false,
       ...(promotionCodeId
         ? { discounts: [{ promotion_code: promotionCodeId }] }
         : {}),
@@ -243,7 +261,14 @@ export async function POST(request: Request) {
       metadata: normalizeMetadata(metadata),
     });
 
-    return NextResponse.json({ sessionId: session.id });
+    const response = NextResponse.json({ sessionId: session.id });
+    response.headers.append(
+      "Set-Cookie",
+      `${RECEIPT_TOKEN_COOKIE}=${receiptToken}; Max-Age=${RECEIPT_TOKEN_MAX_AGE_SECONDS}; Path=/success; HttpOnly; SameSite=Lax${
+        process.env.NODE_ENV === "production" ? "; Secure" : ""
+      }`,
+    );
+    return response;
   } catch (error) {
     console.error("Failed to create Stripe Checkout session", error);
     return NextResponse.json(

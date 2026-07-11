@@ -90,7 +90,6 @@ export async function POST(request: Request) {
           ),
           amount: session.amount_total,
           currency: session.currency,
-          customerEmail: session.customer_details?.email ?? null,
         });
         break;
       }
@@ -123,12 +122,6 @@ export async function POST(request: Request) {
           paymentIntentId: paymentIntent.id,
           amount: paymentIntent.amount,
           currency: paymentIntent.currency,
-          customerEmail:
-            paymentIntent.receipt_email ??
-            paymentIntent.last_payment_error?.payment_method?.billing_details
-              ?.email ??
-            null,
-          errorMessage: paymentIntent.last_payment_error?.message ?? null,
         });
         break;
       }

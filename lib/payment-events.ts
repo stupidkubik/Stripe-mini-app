@@ -10,8 +10,6 @@ export type PaymentEventLog = {
   paymentIntentId?: string;
   amount?: number | null;
   currency?: string | null;
-  customerEmail?: string | null;
-  errorMessage?: string | null;
 };
 
 const MAX_EVENTS_PER_KEY = 10;
@@ -48,8 +46,6 @@ export function recordPaymentEvent(entry: PaymentEventLog) {
     paymentIntentId: normalized.paymentIntentId,
     amount: normalized.amount,
     currency: normalized.currency,
-    customerEmail: normalized.customerEmail,
-    errorMessage: normalized.errorMessage,
   };
 
   if (normalized.type === "payment_succeeded") {

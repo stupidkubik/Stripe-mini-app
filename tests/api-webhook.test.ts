@@ -160,7 +160,6 @@ describe("POST /api/stripe/webhook", () => {
         paymentIntentId: "pi_123",
         amount: 5000,
         currency: "usd",
-        customerEmail: "buyer@example.com",
       }),
     );
   });
@@ -201,7 +200,6 @@ describe("POST /api/stripe/webhook", () => {
         type: "payment_failed",
         sessionId: "cs_456",
         paymentIntentId: "pi_456",
-        errorMessage: "Card declined",
       }),
     );
   });
@@ -237,7 +235,6 @@ describe("POST /api/stripe/webhook", () => {
         id: "evt_meta",
         type: "payment_failed",
         sessionId: "cs_meta",
-        customerEmail: "buyer@example.com",
       }),
     );
   });

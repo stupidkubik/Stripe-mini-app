@@ -32,8 +32,6 @@ describe("payment events", () => {
       paymentIntentId,
       amount: 2500,
       currency: "USD",
-      customerEmail: "buyer@example.com",
-      errorMessage: null,
     });
 
     expect(getPaymentEvents({ sessionId })).toHaveLength(1);
@@ -52,8 +50,6 @@ describe("payment events", () => {
       paymentIntentId,
       amount: 2500,
       currency: "USD",
-      customerEmail: "buyer@example.com",
-      errorMessage: null,
     });
 
     recordPaymentEvent({
@@ -63,8 +59,6 @@ describe("payment events", () => {
       paymentIntentId,
       amount: 2500,
       currency: "USD",
-      customerEmail: "buyer@example.com",
-      errorMessage: "Card declined",
     });
 
     recordPaymentEvent({
@@ -74,8 +68,6 @@ describe("payment events", () => {
       sessionId,
       amount: 2500,
       currency: "USD",
-      customerEmail: "buyer@example.com",
-      errorMessage: null,
     });
 
     const events = getPaymentEvents({ sessionId, paymentIntentId });
@@ -97,8 +89,6 @@ describe("payment events", () => {
         sessionId,
         amount: 1000,
         currency: "USD",
-        customerEmail: "buyer@example.com",
-        errorMessage: null,
       });
     }
 

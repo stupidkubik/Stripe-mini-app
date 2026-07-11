@@ -19,6 +19,7 @@ type RouteRateLimitConfig = {
 };
 
 const LOCAL_CLIENT = "local";
+const MAX_TRACKED_CLIENTS = 10_000;
 const rateLimitStore = new Map<string, RateLimitBucket>();
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
@@ -50,15 +51,17 @@ function getRouteConfig(routeName: RouteName): RouteRateLimitConfig {
 }
 
 function getClientAddress(headerList: Headers): string {
-  const xForwardedFor = headerList.get("x-forwarded-for");
-  const forwardedClient = xForwardedFor?.split(",")[0]?.trim();
+  // Only consume a provider-controlled source-IP header. Generic forwarding
+  // headers are client controlled when the app is reachable directly.
+  if (process.env.VERCEL === "1") {
+    return headerList.get("x-vercel-forwarded-for")?.trim() ?? LOCAL_CLIENT;
+  }
 
-  return (
-    headerList.get("cf-connecting-ip")?.trim() ??
-    headerList.get("x-real-ip")?.trim() ??
-    forwardedClient ??
-    LOCAL_CLIENT
-  );
+  if (process.env.CF_PAGES === "1") {
+    return headerList.get("cf-connecting-ip")?.trim() ?? LOCAL_CLIENT;
+  }
+
+  return LOCAL_CLIENT;
 }
 
 function getClientKey(headerList: Headers) {
@@ -75,6 +78,20 @@ export function checkRouteRateLimit(
   const now = Date.now();
   const key = `${config.keyPrefix}:${getClientKey(headerList)}`;
   const existing = rateLimitStore.get(key);
+
+  if (rateLimitStore.size >= MAX_TRACKED_CLIENTS) {
+    for (const [storedKey, bucket] of rateLimitStore) {
+      if (now >= bucket.resetAt) {
+        rateLimitStore.delete(storedKey);
+      }
+    }
+
+    // Do not let spoofed client keys turn the in-memory limiter into an
+    // unbounded memory allocation. A full store fails closed for new keys.
+    if (rateLimitStore.size >= MAX_TRACKED_CLIENTS && !existing) {
+      return { allowed: false, retryAfterSeconds: Math.ceil(config.windowMs / 1000) };
+    }
+  }
 
   if (!existing || now >= existing.resetAt) {
     rateLimitStore.set(key, {

@@ -40,6 +40,7 @@ const validPrice = {
   product: {
     id: "prod_1",
     active: true,
+    default_price: "price_1",
   },
 };
 
@@ -216,6 +217,7 @@ describe("POST /api/checkout", () => {
         metadata: expect.objectContaining({
           promotion_code: "SUMMER25",
         }),
+        allow_promotion_codes: false,
       }),
     );
   });
@@ -326,7 +328,7 @@ describe("POST /api/checkout", () => {
     expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
   });
 
-  it("keeps checkout metadata compact for large carts", async () => {
+  it("rejects carts with more than ten distinct items before contacting Stripe", async () => {
     stripeMock.prices.retrieve.mockImplementation(async (priceId: string) => ({
       ...validPrice,
       id: priceId,
@@ -341,7 +343,7 @@ describe("POST /api/checkout", () => {
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
-      items: Array.from({ length: 30 }, (_, index) => ({
+      items: Array.from({ length: 11 }, (_, index) => ({
         priceId: `price_${index + 1}`,
         quantity: 1,
       })),
@@ -349,17 +351,27 @@ describe("POST /api/checkout", () => {
 
     const response = await POST(request);
 
-    expect(response.status).toBe(200);
-    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        metadata: expect.objectContaining({
-          cart_item_count: "30",
-          cart_unique_items: "30",
-        }),
+    expect(response.status).toBe(400);
+    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+    expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+
+  it("rejects an active non-default price", async () => {
+    stripeMock.prices.retrieve.mockResolvedValue({
+      ...validPrice,
+      id: "price_legacy",
+    });
+
+    const { POST } = await loadRoute();
+    const response = await POST(
+      createJsonRequest("http://localhost:3000/api/checkout", {
+        items: [{ priceId: "price_legacy", quantity: 1 }],
       }),
     );
 
-    const createCallArg = stripeMock.checkout.sessions.create.mock.calls[0]?.[0];
-    expect(createCallArg?.metadata).not.toHaveProperty("cart");
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "item_unavailable",
+    });
   });
 });

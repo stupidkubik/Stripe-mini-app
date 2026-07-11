@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { setMockCookies } from "./test-utils/next-headers";
 
 class RedirectError extends Error {
   url: string;
@@ -50,6 +51,7 @@ const baseSession = {
   metadata: {
     promotion_code: "META20",
     payment_confirmed_at: "1700000200000",
+    receipt_token: "receipt-token",
   },
   discounts: [{ promotion_code: { code: "PROMO20" } }],
   line_items: {
@@ -80,6 +82,7 @@ describe("Success page", () => {
     redirectMock.mockClear();
     delete process.env.DEMO_SUCCESS;
     delete process.env.NEXT_PUBLIC_DEMO_SUCCESS;
+    setMockCookies({ checkout_receipt_token: "receipt-token" });
   });
 
   it("redirects when session_id is missing", async () => {
@@ -106,6 +109,18 @@ describe("Success page", () => {
       }),
     ).rejects.toBeInstanceOf(RedirectError);
 
+    expect(redirectMock).toHaveBeenCalledWith("/cart");
+  });
+
+  it("redirects when the browser does not have the matching receipt token", async () => {
+    setMockCookies({ checkout_receipt_token: "another-browser" });
+    stripeMock.checkout.sessions.retrieve.mockResolvedValue(baseSession);
+
+    const { default: SuccessPage } = await loadPage();
+
+    await expect(
+      SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_123" }) }),
+    ).rejects.toBeInstanceOf(RedirectError);
     expect(redirectMock).toHaveBeenCalledWith("/cart");
   });
 
@@ -151,7 +166,7 @@ describe("Success page", () => {
   it("uses discount promo code when metadata is missing", async () => {
     stripeMock.checkout.sessions.retrieve.mockResolvedValue({
       ...baseSession,
-      metadata: {},
+      metadata: { receipt_token: "receipt-token" },
       discounts: [{ promotion_code: { code: "PROMO20" } }],
     });
 
@@ -169,7 +184,7 @@ describe("Success page", () => {
     stripeMock.checkout.sessions.retrieve.mockResolvedValue({
       ...baseSession,
       payment_intent: { id: "pi_obj" },
-      metadata: {},
+      metadata: { receipt_token: "receipt-token" },
       discounts: [],
       amount_subtotal: undefined,
       currency: "eur",
