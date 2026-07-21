@@ -63,6 +63,17 @@ describe("useCart store", () => {
     expect(useCart.getState().items[0].quantity).toBe(10);
   });
 
+  it("rejects items from another storefront currency", () => {
+    const added = useCart.getState().addItem({
+      ...secondItem,
+      currency: "EUR",
+    });
+
+    expect(added).toBe(false);
+    expect(useCart.getState().items).toEqual([]);
+    expect(useCart.getState().total()).toBe(0);
+  });
+
   it("clamps updated quantities between 1 and 10", () => {
     useCart.getState().addItem(baseItem, 3);
 
@@ -163,18 +174,9 @@ describe("useCart store", () => {
         currency: "USD",
         quantity: 10,
       },
-      {
-        productId: "prod-3",
-        priceId: "price-3",
-        name: "Third",
-        image: "https://example.com/third.png",
-        unitAmount: 3000,
-        currency: "USD",
-        quantity: 1,
-      },
     ]);
-    expect(state.count()).toBe(11);
-    expect(state.total()).toBe(28000);
+    expect(state.count()).toBe(10);
+    expect(state.total()).toBe(25000);
   });
 
   it("drops invalid persisted state shape", async () => {

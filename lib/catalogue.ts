@@ -9,6 +9,7 @@ import type {
   ProductWatering,
 } from "@/app/types/product";
 import { logServerError } from "@/lib/server-log";
+import { isStorefrontCurrency } from "@/lib/storefront-policy";
 
 export type CatalogueSnapshot = {
   products: SellableProduct[];
@@ -145,6 +146,7 @@ function createSellableProduct(
     price.unit_amount < 0 ||
     !currency ||
     !/^[A-Z]{3}$/.test(currency) ||
+    !isStorefrontCurrency(currency) ||
     name.length === 0
   ) {
     return null;

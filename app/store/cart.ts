@@ -3,6 +3,11 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
+import {
+  isStorefrontCurrency,
+  STOREFRONT_CURRENCY,
+} from "@/lib/storefront-policy";
+
 export type CartItem = {
   productId: string;
   priceId: string;
@@ -17,7 +22,7 @@ type CartState = {
   items: CartItem[];
   countValue: number;
   totalValue: number; // minor units
-  addItem: (item: Omit<CartItem, "quantity">, qty?: number) => void;
+  addItem: (item: Omit<CartItem, "quantity">, qty?: number) => boolean;
   removeItem: (productId: string) => void;
   updateQty: (productId: string, qty: number) => void;
   clear: () => void;
@@ -31,7 +36,7 @@ type PersistedCartState = {
 
 const MIN_QUANTITY = 1;
 const MAX_QUANTITY = 10;
-const CART_PERSIST_VERSION = 1;
+const CART_PERSIST_VERSION = 2;
 const FALLBACK_CART_IMAGE = "/globe.svg";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -44,7 +49,7 @@ function normalizeString(value: unknown) {
 
 function normalizeCurrency(value: unknown) {
   const normalized = normalizeString(value).toUpperCase();
-  return /^[A-Z]{3}$/.test(normalized) ? normalized : "USD";
+  return isStorefrontCurrency(normalized) ? STOREFRONT_CURRENCY : null;
 }
 
 function normalizeUnitAmount(value: unknown) {
@@ -88,13 +93,18 @@ function sanitizePersistedItems(rawItems: unknown): CartItem[] {
       continue;
     }
 
+    const currency = normalizeCurrency(rawItem.currency);
+    if (!currency) {
+      continue;
+    }
+
     const safeItem: CartItem = {
       productId,
       priceId,
       name: normalizeString(rawItem.name) || "Product",
       image: normalizeString(rawItem.image) || FALLBACK_CART_IMAGE,
       unitAmount,
-      currency: normalizeCurrency(rawItem.currency),
+      currency,
       quantity: clampQuantity(rawItem.quantity),
     };
 
@@ -131,7 +141,11 @@ export const useCart = create<CartState>()(
       items: [],
       countValue: 0,
       totalValue: 0,
-      addItem: (item, qty = 1) =>
+      addItem: (item, qty = 1) => {
+        if (!isStorefrontCurrency(item.currency)) {
+          return false;
+        }
+
         set((state) => {
           const quantityToAdd = clampQuantity(qty);
           const i = state.items.findIndex(
@@ -154,10 +168,16 @@ export const useCart = create<CartState>()(
           }
           const items = [
             ...state.items,
-            { ...item, quantity: quantityToAdd },
+            {
+              ...item,
+              currency: STOREFRONT_CURRENCY,
+              quantity: quantityToAdd,
+            },
           ];
           return { items, ...deriveTotals(items) };
-        }),
+        });
+        return true;
+      },
       removeItem: (productId) =>
         set((state) => {
           const items = state.items.filter((x) => x.productId !== productId);

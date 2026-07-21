@@ -39,6 +39,7 @@ const ORIGINAL_VERCEL_FLAG = process.env.VERCEL;
 
 const validPrice = {
   id: "price_1",
+  currency: "USD",
   active: true,
   type: "one_time",
   product: {
@@ -189,6 +190,26 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toMatchObject({
       code: "item_unavailable",
     });
+  });
+
+  it("returns a stable error before Stripe for a different currency", async () => {
+    getProductByPriceIdMock.mockResolvedValue({
+      ...validPrice,
+      currency: "EUR",
+    });
+
+    const { POST } = await loadRoute();
+    const response = await POST(
+      createJsonRequest("http://localhost:3000/api/checkout", {
+        items: [{ priceId: validPrice.id, quantity: 1 }],
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "currency_mismatch",
+    });
+    expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("returns 400 when promo code is invalid", async () => {

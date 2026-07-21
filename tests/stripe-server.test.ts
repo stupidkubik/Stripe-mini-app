@@ -142,7 +142,7 @@ describe("Stripe catalogue snapshot", () => {
               active: true,
               type: "one_time",
               unit_amount: 1500,
-              currency: "eur",
+              currency: "usd",
             },
           }),
         ],
@@ -211,6 +211,10 @@ describe("Stripe catalogue snapshot", () => {
     [
       "malformed currency",
       { default_price: { ...product().default_price, currency: "USDX" } },
+    ],
+    [
+      "different storefront currency",
+      { default_price: { ...product().default_price, currency: "eur" } },
     ],
   ])("filters an %s", async (_case, overrides) => {
     stripeState.products.list.mockResolvedValue({

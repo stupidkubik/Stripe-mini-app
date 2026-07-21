@@ -15,6 +15,7 @@ import {
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
 import { logServerError } from "@/lib/server-log";
+import { isStorefrontCurrency } from "@/lib/storefront-policy";
 import { getProductByPriceId, stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
@@ -40,6 +41,7 @@ const CHECKOUT_ERROR_CODES = {
   invalidPayload: "invalid_payload",
   cartEmpty: "cart_empty",
   itemUnavailable: "item_unavailable",
+  currencyMismatch: "currency_mismatch",
   promoInvalid: "promo_invalid",
   promoApplyFailed: "promo_apply_failed",
   rateLimited: "rate_limited",
@@ -59,10 +61,6 @@ async function lookupPromotionCode(code: string) {
   });
 
   return result.data[0] ?? null;
-}
-
-async function validateCheckoutPrice(priceId: string): Promise<boolean> {
-  return Boolean(await getProductByPriceId(priceId));
 }
 
 function normalizeMetadata(
@@ -158,13 +156,23 @@ export async function POST(request: Request) {
     const validPriceIds = new Set<string>();
 
     for (const priceId of uniquePriceIds) {
-      const isValid = await validateCheckoutPrice(priceId);
+      const product = await getProductByPriceId(priceId);
 
-      if (!isValid) {
+      if (!product) {
         return NextResponse.json(
           {
             error: "One of the items in your cart is no longer available.",
             code: CHECKOUT_ERROR_CODES.itemUnavailable,
+          },
+          { status: 400 },
+        );
+      }
+
+      if (!isStorefrontCurrency(product.currency)) {
+        return NextResponse.json(
+          {
+            error: "Your cart contains an unsupported currency.",
+            code: CHECKOUT_ERROR_CODES.currencyMismatch,
           },
           { status: 400 },
         );

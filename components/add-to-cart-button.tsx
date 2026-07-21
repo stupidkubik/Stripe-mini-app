@@ -35,7 +35,7 @@ export function AddToCartButton({
 
   const handleAdd = () => {
     startTransition(() => {
-      addItem(
+      const added = addItem(
         {
           productId: product.id,
           priceId: product.priceId,
@@ -46,6 +46,15 @@ export function AddToCartButton({
         },
         quantity,
       );
+
+      if (!added) {
+        toast({
+          title: "Currency mismatch",
+          description: "This item cannot be combined with this storefront.",
+          variant: "warning",
+        });
+        return;
+      }
 
       toast({
         title: "Added to cart",

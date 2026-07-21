@@ -28,7 +28,8 @@ vi.mock("@/components/ui/use-toast", () => ({
 
 describe("AddToCartButton", () => {
   beforeEach(() => {
-    mockAddItem.mockClear();
+    mockAddItem.mockReset();
+    mockAddItem.mockReturnValue(true);
     mockToast.mockClear();
   });
 
@@ -73,6 +74,20 @@ describe("AddToCartButton", () => {
     expect(mockToast).toHaveBeenCalledWith({
       title: "Added to cart",
       description: "Custom copy",
+    });
+  });
+
+  it("shows a warning when the cart rejects the currency", async () => {
+    mockAddItem.mockReturnValue(false);
+    const user = userEvent.setup();
+
+    render(<AddToCartButton product={{ ...product, currency: "EUR" }} />);
+    await user.click(screen.getByRole("button", { name: /add to cart/i }));
+
+    expect(mockToast).toHaveBeenCalledWith({
+      title: "Currency mismatch",
+      description: "This item cannot be combined with this storefront.",
+      variant: "warning",
     });
   });
 });

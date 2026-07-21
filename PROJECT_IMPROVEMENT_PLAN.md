@@ -142,7 +142,13 @@ missing, inactive, recurring, replaced, and malformed default prices.
 
 ### 6. Define and enforce the currency policy
 
-**Problem:** The cart sums minor units from every item but formats the total with
+**Status (2026-07-21): Complete.** `NEXT_PUBLIC_STOREFRONT_CURRENCY` defines one
+catalogue/cart/Checkout currency and defaults to USD. The catalogue excludes
+other currencies, cart persistence version 2 removes incompatible legacy
+items, `addItem` rejects mismatches before totals change, and Checkout returns
+the stable `currency_mismatch` domain error before creating a Stripe Session.
+
+**Problem (resolved):** The cart sums minor units from every item but formats the total with
 the first item's currency. Stripe rejects mixed-currency Checkout line items.
 
 **Plan:** Configure one storefront currency, or prevent adding an item whose

@@ -28,6 +28,8 @@ const CHECKOUT_ERROR_COPY: Record<string, string> = {
   cart_empty: "Your cart is empty. Add an item before checking out.",
   item_unavailable:
     "Some items in your cart are no longer available. Remove them and try again.",
+  currency_mismatch:
+    "Your cart contains a currency that this storefront doesn't support.",
   promo_invalid: "That promo code isn't valid or active.",
   promo_apply_failed:
     "We couldn't apply that promo code. Try again or remove it.",
@@ -43,6 +45,7 @@ const PROMO_ERROR_CODES = new Set(["promo_invalid", "promo_apply_failed"]);
 const WARNING_ERROR_CODES = new Set([
   "cart_empty",
   "item_unavailable",
+  "currency_mismatch",
   "promo_invalid",
   "promo_apply_failed",
   "invalid_payload",
