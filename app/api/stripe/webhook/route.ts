@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
+import { readWebhookSecretConfig } from "@/lib/config/env";
 import { getOrderStore, type OrderEventInput } from "@/lib/order-store";
 import {
   parsePositiveInt,
@@ -9,17 +10,7 @@ import {
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
 import { logServerError } from "@/lib/server-log";
-import { stripe } from "@/lib/stripe";
-
-const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
-
-if (!STRIPE_WEBHOOK_SECRET) {
-  throw new Error(
-    "STRIPE_WEBHOOK_SECRET is not set. Add it to your environment before receiving Stripe webhooks.",
-  );
-}
-
-const webhookSecret: string = STRIPE_WEBHOOK_SECRET;
+import { getStripeClient } from "@/lib/stripe";
 const DEFAULT_WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
 
 export const runtime = "nodejs";
@@ -35,6 +26,9 @@ function resolvePaymentIntentId(
 }
 
 export async function POST(request: Request) {
+  const { STRIPE_WEBHOOK_SECRET: webhookSecret } =
+    readWebhookSecretConfig();
+  const stripe = getStripeClient();
   const headerList = await Promise.resolve(headers());
   const signature = headerList.get("stripe-signature");
 

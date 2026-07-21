@@ -28,7 +28,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib/stripe", () => ({
-  stripe: stripeMock,
+  getStripeClient: () => stripeMock,
 }));
 
 vi.mock("@/components/cart/order-success", () => ({

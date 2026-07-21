@@ -30,7 +30,7 @@ vi.mock("stripe", () => {
 });
 
 vi.mock("@/lib/stripe", () => ({
-  stripe: stripeMock,
+  getStripeClient: () => stripeMock,
 }));
 
 vi.mock("@/lib/order-store", () => ({

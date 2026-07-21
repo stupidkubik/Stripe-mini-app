@@ -14,8 +14,8 @@ jobs:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     env:
-      STRIPE_SECRET_KEY: sk_test_placeholder
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+      CATALOGUE_SOURCE: fixture
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
@@ -43,10 +43,10 @@ jobs:
     runs-on: ubuntu-latest
     environment: .env.github
     permissions:
-      contents: write
+      contents: read
     env:
-      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+      CATALOGUE_SOURCE: fixture
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
@@ -74,16 +74,13 @@ jobs:
       - name: Generate badges
         run: node scripts/generate-badges.mjs --e2e-status ${{ steps.e2e.outcome }}
 
-      - name: Commit badge updates
-        if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
-        run: |
-          if [ -n "$(git status --porcelain badges)" ]; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add badges/*.svg
-            git commit -m "chore: update test badges"
-            git push
-          fi
+      - name: Upload badge artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-badges
+          path: badges/*.svg
+          if-no-files-found: error
 
       - name: Fail if e2e tests failed
         if: steps.e2e.outcome == 'failure'

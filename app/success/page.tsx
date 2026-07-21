@@ -8,7 +8,7 @@ import OrderSuccess from "@/components/cart/order-success";
 import { isSuccessPreviewEnabled } from "@/lib/config/server";
 import { getReceiptCookieName, verifyReceiptProof } from "@/lib/receipt-proof";
 import { logServerError } from "@/lib/server-log";
-import { stripe } from "@/lib/stripe";
+import { getStripeClient } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
   session_id: z.string().min(1, "session_id is required").max(255),
@@ -150,7 +150,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   }
 
   try {
-    const session = await stripe.checkout.sessions.retrieve(
+    const session = await getStripeClient().checkout.sessions.retrieve(
       parsed.data.session_id,
       {
         expand: [

@@ -4,13 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "node scripts/build.mjs",
+    "build:stripe": "node scripts/build.mjs --stripe",
     "start": "next start",
     "lint": "eslint",
     "test:e2e": "playwright test",
     "test:e2e:smoke": "playwright test tests/e2e/cart.spec.ts tests/e2e/not-found.spec.ts tests/e2e/success.spec.ts",
     "test:unit": "vitest",
     "test:unit:coverage": "vitest --coverage",
+    "test:integration:stripe": "vitest --config vitest.integration.config.ts --run",
     "format": "prettier -w ."
   },
   "dependencies": {

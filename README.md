@@ -155,11 +155,23 @@ Without `preview=1`, the session must be paid and the browser must hold the matc
 | `npm run lint`               | ESLint rules (TypeScript-aware)                                               |
 | `npm run test:unit`          | Vitest + React Testing Library                                                |
 | `npm run test:unit:coverage` | Vitest with v8 coverage reports                                               |
-| `npm run build`              | Production build and TypeScript verification                                  |
+| `npm run build`              | Secretless deterministic production compilation using the catalogue fixture    |
+| `npm run build:stripe`       | Explicit live-Stripe build (protected integration environment only)            |
+| `npm run test:integration:stripe` | Read-only, one-request Stripe test-account integration check             |
 | `npm run test:e2e:smoke`     | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)       |
 | `npm run test:e2e`           | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
 Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
+
+Unit tests, PR E2E, and ordinary builds never need a Stripe secret. They use the
+versioned catalogue fixture in `lib/catalogue-fixture.ts`. A Vercel production
+deployment selects the live Stripe catalogue explicitly; `build:stripe` is the
+local equivalent. The separately named Stripe integration suite refuses live
+keys and makes at most one read-only catalogue request.
+
+Test workflows have read-only repository permissions. They publish generated
+badge files as workflow artifacts; the manual `Publish Test Badges` workflow is
+the only narrowly scoped workflow allowed to commit badge updates to `main`.
 
 Coverage targets and the list of critical modules are documented in `TESTING.md`.
 
@@ -186,6 +198,8 @@ If gitleaks reports a false positive:
 | `app/api/checkout/route.ts`        | Creates Checkout sessions, validates carts, applies promo codes |
 | `app/api/stripe/webhook/route.ts`  | Verifies webhook signatures and logs payment status events      |
 | `lib/order-store.ts`               | Transactional Stripe event, order state, and outbox persistence |
+| `lib/config/env.ts`                | Typed build, public, runtime, and secret environment profiles   |
+| `lib/catalogue-fixture.ts`         | Deterministic catalogue for build, unit, and PR checks           |
 | `app/opengraph-image.tsx`          | Dynamic Open Graph preview generator                            |
 | `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data                       |
 | `components/cart/**/*`             | Cart UI, checkout form, and success summary                     |
@@ -207,7 +221,6 @@ If gitleaks reports a false positive:
 
 ## ⚠️ Limitations & Notes
 
-- The payment event log is in-memory, resets on server restarts, and is not used as an order-fulfillment system.
 - Order/event state and fulfillment outbox jobs persist in Postgres; cart state remains browser-local in `localStorage`.
 - Product data is cached via Next.js ISR; adding/removing Stripe products may require revalidation or a redeploy to appear instantly.
 - Ensure your Stripe test mode has products, prices, and promotion codes before running E2E flows.

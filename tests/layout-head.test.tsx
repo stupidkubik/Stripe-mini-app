@@ -1,11 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("next/font/google", () => ({
-  Inter: () => ({ variable: "font-inter" }),
-  Geist_Mono: () => ({ variable: "font-mono" }),
-}));
-
 vi.mock("@/components/site-header", () => ({
   __esModule: true,
   default: () => <header data-testid="site-header" />,
@@ -47,8 +42,7 @@ describe("App layout and head", () => {
     expect(element.type).toBe("html");
     expect(element.props.lang).toBe("en");
     expect(body.type).toBe("body");
-    expect(body.props.className).toContain("font-inter");
-    expect(body.props.className).toContain("font-mono");
+    expect(body.props.className).toBeUndefined();
 
     const { container } = render(body.props.children as React.ReactElement);
 

@@ -49,6 +49,38 @@ function normalizeLookupKey(value: string): string {
   return value.trim().toLowerCase();
 }
 
+export function createCatalogueSnapshot(
+  products: SellableProduct[],
+): CatalogueSnapshot {
+  const byId: Record<string, SellableProduct> = {};
+  const bySlug: Record<string, SellableProduct> = {};
+  const byPriceId: Record<string, SellableProduct> = {};
+
+  for (const product of products) {
+    const idKey = normalizeLookupKey(product.id);
+    const slugKey = product.metadata?.slug
+      ? normalizeLookupKey(product.metadata.slug)
+      : undefined;
+
+    if (
+      (byId[idKey] && byId[idKey].id !== product.id) ||
+      (slugKey && bySlug[slugKey] && bySlug[slugKey].id !== product.id) ||
+      (byPriceId[product.priceId] &&
+        byPriceId[product.priceId].id !== product.id)
+    ) {
+      throw new Error("The catalogue contains duplicate lookup keys.");
+    }
+
+    byId[idKey] = product;
+    byPriceId[product.priceId] = product;
+    if (slugKey) {
+      bySlug[slugKey] = product;
+    }
+  }
+
+  return { products, byId, bySlug, byPriceId };
+}
+
 function normalizeMetadataValue(value: string | undefined): string | undefined {
   if (!value) {
     return undefined;
@@ -280,35 +312,7 @@ export class StripeCatalogueRepository implements CatalogueRepository {
   async getSnapshot(): Promise<CatalogueSnapshot> {
     try {
       const products = await this.loadProducts();
-      const byId: Record<string, SellableProduct> = {};
-      const bySlug: Record<string, SellableProduct> = {};
-      const byPriceId: Record<string, SellableProduct> = {};
-
-      for (const product of products) {
-        const idKey = normalizeLookupKey(product.id);
-        const slugKey = product.metadata?.slug
-          ? normalizeLookupKey(product.metadata.slug)
-          : undefined;
-
-        if (
-          (byId[idKey] && byId[idKey].id !== product.id) ||
-          (slugKey && bySlug[slugKey] && bySlug[slugKey].id !== product.id) ||
-          (byPriceId[product.priceId] &&
-            byPriceId[product.priceId].id !== product.id)
-        ) {
-          throw new Error(
-            "The Stripe catalogue contains duplicate lookup keys.",
-          );
-        }
-
-        byId[idKey] = product;
-        byPriceId[product.priceId] = product;
-        if (slugKey) {
-          bySlug[slugKey] = product;
-        }
-      }
-
-      return { products, byId, bySlug, byPriceId };
+      return createCatalogueSnapshot(products);
     } catch (error) {
       logServerError("stripe.catalog.snapshot.load", error);
       throw new CatalogueUnavailableError();

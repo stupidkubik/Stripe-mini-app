@@ -6,28 +6,37 @@ import Stripe from "stripe";
 import {
   StripeCatalogueRepository,
   type CatalogueSnapshot,
+  type CatalogueRepository,
 } from "@/lib/catalogue";
+import { FixtureCatalogueRepository } from "@/lib/catalogue-fixture";
+import {
+  readBuildConfig,
+  readStripeSecretConfig,
+} from "@/lib/config/env";
 
 const STRIPE_API_VERSION = "2026-01-28.clover";
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const CATALOGUE_REVALIDATE_SECONDS = 60;
+let stripeClient: Stripe | undefined;
 
-if (!STRIPE_SECRET_KEY) {
-  throw new Error(
-    "STRIPE_SECRET_KEY is not set. Add it to your environment before calling Stripe helpers.",
-  );
+export function getStripeClient(): Stripe {
+  const { STRIPE_SECRET_KEY: secretKey } = readStripeSecretConfig();
+
+  stripeClient ??= new Stripe(secretKey, {
+    apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
+    typescript: true,
+  });
+  return stripeClient;
 }
 
-export const stripe = new Stripe(STRIPE_SECRET_KEY, {
-  apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
-  typescript: true,
-});
-
-const catalogueRepository = new StripeCatalogueRepository(stripe);
+function getCatalogueRepository(): CatalogueRepository {
+  return readBuildConfig().CATALOGUE_SOURCE === "fixture"
+    ? new FixtureCatalogueRepository()
+    : new StripeCatalogueRepository(getStripeClient());
+}
 
 const getCachedCatalogueSnapshot = unstable_cache(
-  async () => catalogueRepository.getSnapshot(),
-  ["stripe-catalogue-snapshot-v1"],
+  async () => getCatalogueRepository().getSnapshot(),
+  ["catalogue-snapshot-v2"],
   {
     revalidate: CATALOGUE_REVALIDATE_SECONDS,
     tags: ["stripe-catalogue"],

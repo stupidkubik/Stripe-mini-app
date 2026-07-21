@@ -18,7 +18,7 @@ const { stripeMock, getProductByPriceIdMock } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/stripe", () => ({
-  stripe: stripeMock,
+  getStripeClient: () => stripeMock,
   getProductByPriceId: getProductByPriceIdMock,
 }));
 

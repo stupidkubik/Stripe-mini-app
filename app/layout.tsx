@@ -1,20 +1,8 @@
 import type { Metadata } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
 import Providers from "./providers";
 import SiteHeader from "@/components/site-header";
 import SiteFooter from "@/components/site-footer";
 import "./globals.css";
-
-const inter = Inter({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Verdant Lane",
@@ -59,7 +47,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${geistMono.variable}`}>
+      <body>
         <Providers>
           <SiteHeader />
           <main id="content" className="page-container main-content">

@@ -7,7 +7,11 @@ export default defineConfig({
     setupFiles: [path.resolve(__dirname, "tests/setup.tsx")],
     globals: true,
     css: false,
-    exclude: [...configDefaults.exclude, "tests/e2e/**"],
+    exclude: [
+      ...configDefaults.exclude,
+      "tests/e2e/**",
+      "tests/integration/**",
+    ],
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "json-summary", "lcov"],

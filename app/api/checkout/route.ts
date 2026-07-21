@@ -15,7 +15,7 @@ import {
 import { createReceiptProof, getReceiptCookieName } from "@/lib/receipt-proof";
 import { logServerError } from "@/lib/server-log";
 import { isStorefrontCurrency } from "@/lib/storefront-policy";
-import { getProductByPriceId, stripe } from "@/lib/stripe";
+import { getProductByPriceId, getStripeClient } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
   priceId: z.string().min(1, "Price ID is missing for one of the items."),
@@ -52,7 +52,7 @@ const RECEIPT_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
 const DEFAULT_CHECKOUT_BODY_LIMIT_BYTES = 16 * 1024;
 
 async function lookupPromotionCode(code: string) {
-  const result = await stripe.promotionCodes.list({
+  const result = await getStripeClient().promotionCodes.list({
     code,
     active: true,
     limit: 1,
@@ -259,7 +259,7 @@ export async function POST(request: Request) {
       metadata.promotion_code = parsed.data.promotionCode;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripeClient().checkout.sessions.create({
       mode: "payment",
       line_items: lineItems,
       automatic_tax: { enabled: true },

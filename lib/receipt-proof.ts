@@ -1,22 +1,13 @@
 import "server-only";
 
 import { createHash, createHmac, timingSafeEqual } from "crypto";
+import { readReceiptSigningSecret } from "@/lib/config/env";
 
 const RECEIPT_COOKIE_PREFIX = "checkout_receipt_";
 const RECEIPT_PROOF_VERSION = "v1";
 
 function getSigningSecret(): string {
-  const secret =
-    process.env.RECEIPT_SIGNING_SECRET?.trim() ||
-    process.env.STRIPE_SECRET_KEY?.trim();
-
-  if (!secret) {
-    throw new Error(
-      "RECEIPT_SIGNING_SECRET or STRIPE_SECRET_KEY is required for receipt proofs.",
-    );
-  }
-
-  return secret;
+  return readReceiptSigningSecret();
 }
 
 export function getReceiptCookieName(sessionId: string): string {

@@ -47,6 +47,7 @@ vi.mock("stripe", () => {
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1470163395405-d2b80e7450ed?auto=format&fit=crop&w=1200&q=80";
 const ORIGINAL_KEY = process.env.STRIPE_SECRET_KEY;
+const ORIGINAL_CATALOGUE_SOURCE = process.env.CATALOGUE_SOURCE;
 
 const loadStripeModule = async () => {
   vi.resetModules();
@@ -88,6 +89,22 @@ describe("Stripe catalogue snapshot", () => {
     } else {
       process.env.STRIPE_SECRET_KEY = ORIGINAL_KEY;
     }
+    if (ORIGINAL_CATALOGUE_SOURCE === undefined) {
+      delete process.env.CATALOGUE_SOURCE;
+    } else {
+      process.env.CATALOGUE_SOURCE = ORIGINAL_CATALOGUE_SOURCE;
+    }
+  });
+
+  it("uses the deterministic fixture without a Stripe secret", async () => {
+    vi.resetModules();
+    delete process.env.STRIPE_SECRET_KEY;
+    process.env.CATALOGUE_SOURCE = "fixture";
+
+    const { listProducts } = await import("@/lib/stripe");
+
+    await expect(listProducts()).resolves.toHaveLength(3);
+    expect(stripeState.products.list).not.toHaveBeenCalled();
   });
 
   it("builds one normalized snapshot reused by every lookup", async () => {

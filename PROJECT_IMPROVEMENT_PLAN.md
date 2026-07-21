@@ -207,6 +207,13 @@ duplicate, or reverse a completed order; concurrency tests cover replay.
 
 ### 9. Decouple tests and builds from live Stripe
 
+**Status (2026-07-21): Complete.** Stripe clients are created lazily only by
+runtime operations. Unit tests, both PR/full E2E workflows, and ordinary builds
+use a versioned three-product catalogue fixture and require no Stripe secret.
+The build no longer downloads Google fonts. Live Stripe is isolated behind
+`build:stripe`, Vercel's production build context, and a separately named,
+test-key-only integration check limited to one read request.
+
 **Problem:** Pull-request smoke tests use placeholder keys while application
 pages use the Stripe SDK, and local/CI builds can call the live test account.
 
@@ -220,6 +227,11 @@ integration failures are isolated and actionable.
 
 ### 10. Remove write access from test workflows
 
+**Status (2026-07-21): Complete.** Unit and E2E workflows now declare only
+`contents: read`; their generated badges are uploaded as artifacts. The sole
+`contents: write` grant belongs to a manual badge publisher that checks out
+trusted `main`, runs no pull-request revision, and commits only `badges/*.svg`.
+
 **Problem:** unit and full E2E jobs receive `contents: write` only to commit badge
 changes, increasing the impact of a compromised dependency or test command.
 
@@ -231,6 +243,15 @@ bot job that never executes untrusted pull-request code.
 separate minimal permission boundary.
 
 ### 11. Add browser security headers and configuration validation
+
+**Status (2026-07-21): Complete in code.** One all-route rule enforces a
+Stripe-compatible CSP with `frame-ancestors 'none'`, plus nosniff, DENY framing,
+strict referrer and permissions policies, and two-year HSTS. Typed Zod profiles
+now separate build, public, site runtime, Stripe/webhook/receipt secrets, and
+database settings. Runtime-only secrets are validated lazily with one scoped,
+actionable error, so compilation does not require them. Unit tests cover the
+all-route header rule and invalid configuration; production-edge verification
+is performed after deployment.
 
 **Problem:** `next.config.ts` defines image hosts but no explicit CSP,
 frame-ancestor policy, referrer policy, or permissions policy. Environment

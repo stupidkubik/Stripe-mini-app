@@ -1,6 +1,7 @@
 import "server-only";
 
 import { neon, type NeonQueryFunction } from "@neondatabase/serverless";
+import { readDatabaseUrl } from "@/lib/config/env";
 
 export type OrderStatus = "failed" | "paid";
 
@@ -40,13 +41,6 @@ type ProcessRow = {
   order_status: OrderStatus | null;
   outbox_created: boolean;
 };
-
-export class OrderStoreConfigurationError extends Error {
-  constructor() {
-    super("DATABASE_URL is required for durable webhook processing.");
-    this.name = "OrderStoreConfigurationError";
-  }
-}
 
 export class InMemoryOrderStore implements OrderStore {
   private readonly eventIds = new Set<string>();
@@ -258,11 +252,7 @@ export function getOrderStore(): OrderStore {
     return orderStore;
   }
 
-  const connectionString =
-    process.env.DATABASE_URL?.trim() || process.env.POSTGRES_URL?.trim();
-  if (!connectionString) {
-    throw new OrderStoreConfigurationError();
-  }
+  const connectionString = readDatabaseUrl();
 
   orderStore = new NeonOrderStore(connectionString);
   return orderStore;
