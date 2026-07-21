@@ -244,14 +244,16 @@ separate minimal permission boundary.
 
 ### 11. Add browser security headers and configuration validation
 
-**Status (2026-07-21): Complete in code.** One all-route rule enforces a
+**Status (2026-07-21): Complete.** One all-route rule enforces a
 Stripe-compatible CSP with `frame-ancestors 'none'`, plus nosniff, DENY framing,
 strict referrer and permissions policies, and two-year HSTS. Typed Zod profiles
 now separate build, public, site runtime, Stripe/webhook/receipt secrets, and
 database settings. Runtime-only secrets are validated lazily with one scoped,
 actionable error, so compilation does not require them. Unit tests cover the
-all-route header rule and invalid configuration; production-edge verification
-is performed after deployment.
+all-route header rule and invalid configuration. The deployed Vercel origin was
+verified to return the enforced CSP, HSTS, framing, referrer, permissions, and
+content-type headers while serving live Stripe product IDs rather than fixture
+IDs.
 
 **Problem:** `next.config.ts` defines image hosts but no explicit CSP,
 frame-ancestor policy, referrer policy, or permissions policy. Environment
