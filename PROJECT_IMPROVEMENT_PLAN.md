@@ -183,7 +183,15 @@ Stripe lookup, and the cancel page has no external dependency.
 
 ### 8. Persist orders and process webhooks idempotently
 
-**Problem:** `lib/payment-events.ts` stores events in memory. Restarts lose them,
+**Status (2026-07-21): Implementation complete; production database connection
+required before deployment.** The in-memory event log was replaced by a
+Postgres-backed `OrderStore`. One atomic statement inserts each Stripe event
+once, advances order state monotonically from failed to paid, and inserts one
+unique `order.paid` outbox job. Duplicate events return success, unlinked
+failures remain durable, and concurrency/replay tests cover the state machine.
+The schema initializes lazily and ordinary builds make no database connection.
+
+**Problem (resolved in code):** `lib/payment-events.ts` stores events in memory. Restarts lose them,
 multiple instances disagree, and webhook retries have no durable idempotency or
 fulfillment state.
 

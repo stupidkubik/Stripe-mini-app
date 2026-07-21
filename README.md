@@ -20,7 +20,7 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 - Live product catalog and detail pages rendered from Stripe Products/Prices with ISR caching.
 - Persisted cart (Zustand) with quantity controls, toast feedback, theme toggle, and keyboard-friendly interactions.
 - Stripe Checkout session creator that accepts only each active product's default price, enforces cart/quantity limits, and applies approved promotion codes server-side.
-- Webhook handler that verifies Stripe signatures and records privacy-minimal payment status events for operational logs.
+- Webhook handler that verifies Stripe signatures and transactionally records idempotent payment events, monotonic order state, and an outbox job in Postgres.
 - Success page verifies a per-session signed receipt cookie before loading the itemized order summary (images, quantities, totals, promo code).
 - SEO upgrades: dynamic Open Graph image generator, canonical metadata, Twitter cards, and auto-generated `sitemap.xml` + `robots.txt`.
 - Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
@@ -55,6 +55,7 @@ Then adjust values for your Stripe workspace:
 STRIPE_SECRET_KEY=sk_test_...
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+DATABASE_URL=postgresql://user:password@host/database?sslmode=require
 SITE_URL=http://localhost:3000
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_STOREFRONT_CURRENCY=USD
@@ -70,6 +71,7 @@ STRIPE_WEBHOOK_MAX_BODY_BYTES=1048576
 > `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
 > `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
 > `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
+> `DATABASE_URL` is required only when processing payment webhooks; builds do not connect to it.
 > On Vercel or Cloudflare Pages, the platform sets the source-IP environment
 > flag used by the local defense-in-depth limiter. For multi-instance
 > production, enable a shared edge/WAF rate limit on `/api/checkout`; the local
@@ -108,7 +110,17 @@ npm run dev
 
 Visit http://localhost:3000 and add products to your cart.
 
-### 4. Wire up Stripe webhooks
+### 4. Configure durable order storage
+
+Provision a Postgres database through the
+[Vercel Storage Marketplace](https://vercel.com/docs/marketplace-storage) (the
+Neon free plan is sufficient for this demo) and connect it to the project so
+Vercel injects `DATABASE_URL`. For local webhook development, pull or copy that
+connection string into `.env.local`. On the first signed payment webhook, the
+application creates the `stripe_events`, `orders`, and `order_outbox` tables
+with `CREATE TABLE IF NOT EXISTS`.
+
+### 5. Wire up Stripe webhooks
 
 Use the Stripe CLI to forward events and capture the signing secret:
 
@@ -118,11 +130,11 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 
 Copy the printed `whsec_...` value into `STRIPE_WEBHOOK_SECRET`.
 
-### 5. Promotion codes
+### 6. Promotion codes
 
 Create active promotion codes in your Stripe dashboard. Visitors can enter them in the cart; the API verifies a code before attaching it to the Checkout session. Stripe Checkout itself does not accept additional, unapproved codes.
 
-### 6. Preview the success page (demo helper)
+### 7. Preview the success page (demo helper)
 
 Algorithm for viewing a successful payment flow:
 
@@ -173,7 +185,7 @@ If gitleaks reports a false positive:
 | ---------------------------------- | --------------------------------------------------------------- |
 | `app/api/checkout/route.ts`        | Creates Checkout sessions, validates carts, applies promo codes |
 | `app/api/stripe/webhook/route.ts`  | Verifies webhook signatures and logs payment status events      |
-| `lib/payment-events.ts`            | Privacy-minimal in-memory operational event log                 |
+| `lib/order-store.ts`               | Transactional Stripe event, order state, and outbox persistence |
 | `app/opengraph-image.tsx`          | Dynamic Open Graph preview generator                            |
 | `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data                       |
 | `components/cart/**/*`             | Cart UI, checkout form, and success summary                     |
@@ -196,7 +208,7 @@ If gitleaks reports a false positive:
 ## ⚠️ Limitations & Notes
 
 - The payment event log is in-memory, resets on server restarts, and is not used as an order-fulfillment system.
-- There is no dedicated database—order metadata lives in Stripe, and cart state persists in the browser via localStorage.
+- Order/event state and fulfillment outbox jobs persist in Postgres; cart state remains browser-local in `localStorage`.
 - Product data is cached via Next.js ISR; adding/removing Stripe products may require revalidation or a redeploy to appear instantly.
 - Ensure your Stripe test mode has products, prices, and promotion codes before running E2E flows.
 - Preview mode bypasses paid-status and receipt-token checks only for demo/development use; it still fetches the Stripe Checkout session by `session_id`.
@@ -205,7 +217,7 @@ If gitleaks reports a false positive:
 
 ## 📦 Deployment
 
-Deploy to Vercel (or any Next.js-compatible host) and set the same environment variables (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `SITE_URL`, `NEXT_PUBLIC_SITE_URL`). Add `DEMO_SUCCESS` if you want preview mode outside dev.
+Deploy to Vercel (or any Next.js-compatible host), connect a Marketplace Postgres database, and set the same environment variables (`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `DATABASE_URL`, `SITE_URL`, `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_STOREFRONT_CURRENCY`). Add `DEMO_SUCCESS` if you want preview mode outside dev.
 
 Use the Stripe CLI or dashboard to point webhooks at the deployed URL (e.g., `https://yourdomain.com/api/stripe/webhook`).
 

@@ -18,7 +18,7 @@
 - components/product-grid.tsx
 - app/api/checkout/route.ts
 - app/api/stripe/webhook/route.ts
-- lib/payment-events.ts
+- lib/order-store.ts
 - lib/stripe.ts
 - lib/stripe-client.ts
 - app/success/page.tsx

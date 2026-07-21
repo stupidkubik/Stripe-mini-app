@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
-import { recordPaymentEvent } from "@/lib/payment-events";
+import { getOrderStore, type OrderEventInput } from "@/lib/order-store";
 import {
   parsePositiveInt,
   readRequestText,
@@ -86,21 +86,24 @@ export async function POST(request: Request) {
   }
 
   try {
+    let orderEvent: OrderEventInput | undefined;
+
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
 
-        recordPaymentEvent({
-          id: event.id,
-          type: "payment_succeeded",
-          createdAt: event.created * 1000,
+        orderEvent = {
+          eventId: event.id,
+          eventType: event.type,
+          eventCreatedAt: event.created * 1000,
           sessionId: session.id,
           paymentIntentId: resolvePaymentIntentId(
             session.payment_intent ?? undefined,
           ),
           amount: session.amount_total,
           currency: session.currency,
-        });
+          status: "paid",
+        };
         break;
       }
       case "payment_intent.payment_failed": {
@@ -124,20 +127,25 @@ export async function POST(request: Request) {
           }
         }
 
-        recordPaymentEvent({
-          id: event.id,
-          type: "payment_failed",
-          createdAt: event.created * 1000,
+        orderEvent = {
+          eventId: event.id,
+          eventType: event.type,
+          eventCreatedAt: event.created * 1000,
           sessionId: relatedSessionId,
           paymentIntentId: paymentIntent.id,
           amount: paymentIntent.amount,
           currency: paymentIntent.currency,
-        });
+          status: "failed",
+        };
         break;
       }
       default: {
         console.info(`Unhandled Stripe webhook event type: ${event.type}`);
       }
+    }
+
+    if (orderEvent) {
+      await getOrderStore().processEvent(orderEvent);
     }
 
     return NextResponse.json({ received: true });

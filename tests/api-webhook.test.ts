@@ -8,7 +8,7 @@ const ORIGINAL_WEBHOOK_BODY_LIMIT = process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES;
 
 class StripeSignatureVerificationError extends Error {}
 
-const { stripeMock, recordPaymentEventMock } = vi.hoisted(() => ({
+const { stripeMock, processOrderEventMock } = vi.hoisted(() => ({
   stripeMock: {
     webhooks: {
       constructEvent: vi.fn(),
@@ -19,7 +19,7 @@ const { stripeMock, recordPaymentEventMock } = vi.hoisted(() => ({
       },
     },
   },
-  recordPaymentEventMock: vi.fn(),
+  processOrderEventMock: vi.fn(),
 }));
 
 vi.mock("stripe", () => {
@@ -33,8 +33,8 @@ vi.mock("@/lib/stripe", () => ({
   stripe: stripeMock,
 }));
 
-vi.mock("@/lib/payment-events", () => ({
-  recordPaymentEvent: recordPaymentEventMock,
+vi.mock("@/lib/order-store", () => ({
+  getOrderStore: () => ({ processEvent: processOrderEventMock }),
 }));
 
 const loadRoute = async () => await import("@/app/api/stripe/webhook/route");
@@ -44,7 +44,12 @@ describe("POST /api/stripe/webhook", () => {
     delete process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES;
     stripeMock.webhooks.constructEvent.mockReset();
     stripeMock.checkout.sessions.list.mockReset();
-    recordPaymentEventMock.mockReset();
+    processOrderEventMock.mockReset();
+    processOrderEventMock.mockResolvedValue({
+      processed: true,
+      orderStatus: "paid",
+      outboxCreated: true,
+    });
     setMockHeaders();
   });
 
@@ -139,16 +144,48 @@ describe("POST /api/stripe/webhook", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ received: true });
-    expect(recordPaymentEventMock).toHaveBeenCalledWith(
+    expect(processOrderEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "evt_1",
-        type: "payment_succeeded",
+        eventId: "evt_1",
+        eventType: "checkout.session.completed",
         sessionId: "cs_123",
         paymentIntentId: "pi_123",
         amount: 5000,
         currency: "usd",
+        status: "paid",
       }),
     );
+  });
+
+  it("returns success when Stripe replays an already processed event", async () => {
+    processOrderEventMock.mockResolvedValue({
+      processed: false,
+      orderStatus: "paid",
+      outboxCreated: false,
+    });
+    stripeMock.webhooks.constructEvent.mockReturnValue({
+      id: "evt_replayed",
+      type: "checkout.session.completed",
+      created: 1700000000,
+      data: {
+        object: {
+          id: "cs_replayed",
+          payment_intent: "pi_replayed",
+          amount_total: 5000,
+          currency: "usd",
+        },
+      },
+    });
+    setMockHeaders({ "stripe-signature": "sig" });
+
+    const { POST } = await loadRoute();
+    const response = await POST(
+      createTextRequest("http://localhost:3000/api/stripe/webhook", "payload"),
+    );
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ received: true });
+    expect(processOrderEventMock).toHaveBeenCalledTimes(1);
   });
 
   it("records payment_failed events and resolves session id", async () => {
@@ -181,12 +218,13 @@ describe("POST /api/stripe/webhook", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ received: true });
-    expect(recordPaymentEventMock).toHaveBeenCalledWith(
+    expect(processOrderEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "evt_2",
-        type: "payment_failed",
+        eventId: "evt_2",
+        eventType: "payment_intent.payment_failed",
         sessionId: "cs_456",
         paymentIntentId: "pi_456",
+        status: "failed",
       }),
     );
   });
@@ -220,11 +258,11 @@ describe("POST /api/stripe/webhook", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ received: true });
     expect(stripeMock.checkout.sessions.list).not.toHaveBeenCalled();
-    expect(recordPaymentEventMock).toHaveBeenCalledWith(
+    expect(processOrderEventMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: "evt_meta",
-        type: "payment_failed",
+        eventId: "evt_meta",
         sessionId: "cs_meta",
+        status: "failed",
       }),
     );
   });
@@ -248,13 +286,11 @@ describe("POST /api/stripe/webhook", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ received: true });
-    expect(recordPaymentEventMock).not.toHaveBeenCalled();
+    expect(processOrderEventMock).not.toHaveBeenCalled();
   });
 
   it("returns 500 when handler throws", async () => {
-    recordPaymentEventMock.mockImplementation(() => {
-      throw new Error("boom");
-    });
+    processOrderEventMock.mockRejectedValue(new Error("boom"));
     stripeMock.webhooks.constructEvent.mockReturnValue({
       id: "evt_boom",
       type: "checkout.session.completed",
