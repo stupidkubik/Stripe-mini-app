@@ -9,6 +9,7 @@ import type {
   ProductMetadata,
   ProductWatering,
 } from "@/app/types/product";
+import { logServerError } from "@/lib/server-log";
 
 const STRIPE_API_VERSION = "2026-01-28.clover";
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
@@ -131,7 +132,7 @@ async function resolvePrice(
     try {
       return await stripe.prices.retrieve(defaultPrice);
     } catch (error) {
-      console.error(`Failed to retrieve default price ${defaultPrice}`, error);
+      logServerError("stripe.catalog.price.retrieve", error);
       return null;
     }
   }
@@ -145,7 +146,7 @@ async function resolvePrice(
 
     return prices.data[0] ?? null;
   } catch (error) {
-    console.error(`Failed to list prices for product ${product.id}`, error);
+    logServerError("stripe.catalog.price.list", error);
     return null;
   }
 }
@@ -218,7 +219,7 @@ async function fetchStripeProduct(
       return null;
     }
 
-    console.error(`Failed to retrieve product ${productId}`, error);
+    logServerError("stripe.catalog.product.retrieve", error);
     return null;
   }
 }
@@ -248,7 +249,7 @@ async function fetchStripeProductBySlug(
 
     matchedProduct = results.data[0];
   } catch (error) {
-    console.warn(`Failed to search for product slug ${normalizedSlug}`, error);
+    logServerError("stripe.catalog.product.search", error, "warn");
   }
 
   if (matchedProduct && !matchedProduct.deleted) {

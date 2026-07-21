@@ -15,6 +15,7 @@ import {
   readRequestText,
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
+import { logServerError } from "@/lib/server-log";
 import { stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
@@ -52,18 +53,13 @@ const RECEIPT_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
 const DEFAULT_CHECKOUT_BODY_LIMIT_BYTES = 16 * 1024;
 
 async function lookupPromotionCode(code: string) {
-  try {
-    const result = await stripe.promotionCodes.list({
-      code,
-      active: true,
-      limit: 1,
-    });
+  const result = await stripe.promotionCodes.list({
+    code,
+    active: true,
+    limit: 1,
+  });
 
-    return result.data[0] ?? null;
-  } catch (error) {
-    console.error(`Failed to lookup promotion code ${code}`, error);
-    throw error;
-  }
+  return result.data[0] ?? null;
 }
 
 function isActiveProduct(
@@ -277,7 +273,7 @@ export async function POST(request: Request) {
           }
           promotionCodeId = promotion.id;
         } catch (error) {
-          console.error(`Failed to apply promo code ${code}`, error);
+          logServerError("stripe.checkout.promotion.lookup", error);
           return NextResponse.json(
             {
               error: "Unable to apply promo code. Please try again.",
@@ -327,7 +323,7 @@ export async function POST(request: Request) {
     );
     return response;
   } catch (error) {
-    console.error("Failed to create Stripe Checkout session", error);
+    logServerError("stripe.checkout.process", error);
     return NextResponse.json(
       {
         error: "Unable to start checkout. Please try again.",

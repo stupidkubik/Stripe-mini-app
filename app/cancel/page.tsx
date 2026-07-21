@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import CancelCartSummary from "@/components/cart/cancel-cart-summary";
 import { Button } from "@/components/ui/button";
+import { logServerError } from "@/lib/server-log";
 import { stripe } from "@/lib/stripe";
 import styles from "./page.module.css";
 
@@ -33,7 +34,7 @@ export default async function CancelPage({ searchParams }: CancelPageProps) {
   try {
     await stripe.checkout.sessions.retrieve(parsed.data.session_id);
   } catch (error) {
-    console.error("Failed to retrieve cancelled checkout session", error);
+    logServerError("stripe.checkout.session.retrieve.cancel", error);
     redirect("/cart");
   }
 

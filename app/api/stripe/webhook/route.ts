@@ -8,6 +8,7 @@ import {
   readRequestText,
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
+import { logServerError } from "@/lib/server-log";
 import { stripe } from "@/lib/stripe";
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -38,7 +39,6 @@ export async function POST(request: Request) {
   const signature = headerList.get("stripe-signature");
 
   if (!signature) {
-    console.warn("Stripe webhook received without Stripe-Signature header");
     return NextResponse.json(
       { error: "Missing Stripe-Signature header" },
       { status: 400 },
@@ -75,16 +75,10 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
   } catch (error) {
     if (error instanceof Stripe.errors.StripeSignatureVerificationError) {
-      console.error(
-        "Stripe webhook signature verification failed",
-        error.message,
-      );
+      logServerError("stripe.webhook.verify", error, "warn");
       return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
     }
-    console.error(
-      "Unexpected error while verifying Stripe webhook signature",
-      error,
-    );
+    logServerError("stripe.webhook.verify", error);
     return NextResponse.json(
       { error: "Unable to process webhook" },
       { status: 400 },
@@ -123,8 +117,8 @@ export async function POST(request: Request) {
 
             relatedSessionId = sessions.data[0]?.id;
           } catch (lookupError) {
-            console.error(
-              `Failed to lookup Checkout Session for failed payment intent ${paymentIntent.id}`,
+            logServerError(
+              "stripe.webhook.checkout-session.lookup",
               lookupError,
             );
           }
@@ -148,7 +142,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("Failed to process Stripe webhook event", event.type, error);
+    logServerError("stripe.webhook.process", error);
     return NextResponse.json(
       { error: "Webhook handler failure" },
       { status: 500 },

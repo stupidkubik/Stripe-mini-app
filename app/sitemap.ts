@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { logServerError } from "@/lib/server-log";
 import { listProducts } from "@/lib/stripe";
 
 const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -54,7 +55,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...productRoutes];
   } catch (error) {
-    console.error("Failed to generate product entries for sitemap", error);
+    logServerError("stripe.sitemap.generate", error);
     return staticRoutes;
   }
 }

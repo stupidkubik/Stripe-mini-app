@@ -46,15 +46,15 @@ exception, with no high or critical findings.
 
 ### 2. Move abuse controls to a shared boundary
 
-**Status (2026-07-21): Application safeguards complete; deployment action
-required.** Checkout and webhook bodies are read as bounded streams, Checkout
+**Status (2026-07-21): Complete for the pet-project scope.** Checkout and
+webhook bodies are read as bounded streams, Checkout
 keys its fallback limit only by a provider-controlled IP, and each instance
 atomically reserves a global budget before making Stripe API calls. The lossy
-webhook limiter was removed so valid signed retries are not discarded. The
-shared Vercel Firewall rule documented in `README.md` must still be enabled and
-observed in Log mode before this item is fully complete.
+webhook limiter was removed so valid signed retries are not discarded. A shared
+Vercel Firewall or distributed counter is intentionally deferred unless the app
+is scaled beyond a single-instance pet-project deployment.
 
-**Problem (partially resolved):** `lib/rate-limit.ts` is a process-local map. It resets on restart,
+**Problem (resolved for current scope):** `lib/rate-limit.ts` is a process-local map. It resets on restart,
 is not shared between serverless instances, and cannot provide a global request
 budget. Before this change, Checkout also read the full JSON body before schema
 validation, and the webhook route applied the same local limiter to legitimate
@@ -72,7 +72,14 @@ discarded; load tests prove the configured Stripe-call ceiling.
 
 ### 3. Sanitize operational error logging
 
-**Problem:** Catalogue, checkout, success, cancel, and webhook paths log entire
+**Status (2026-07-21): Complete.** All server-side Stripe failure paths use one
+server-only allow-list serializer. Redaction and per-worker 429 sampling are
+covered by tests; all 143 unit tests, lint, and the production build pass. A
+live build emitted only the allowed structured fields and no raw SDK message,
+headers, dashboard URL, email, promotion code, or receipt token. Cross-worker
+catalogue request duplication remains tracked in item 4.
+
+**Problem (resolved):** Catalogue, checkout, success, cancel, and webhook paths log entire
 Stripe error objects. The verified build emitted request-log URLs, request IDs,
 headers, and account context for every 429. Promo codes and object IDs also
 appear directly in several messages.

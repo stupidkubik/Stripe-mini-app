@@ -6,6 +6,7 @@ import type Stripe from "stripe";
 
 import OrderSuccess from "@/components/cart/order-success";
 import { isSuccessPreviewEnabled } from "@/lib/config/server";
+import { logServerError } from "@/lib/server-log";
 import { stripe } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
@@ -156,7 +157,8 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
       (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
 
     const hasReceiptProof =
-      receiptToken !== undefined && receiptToken === session?.metadata?.receipt_token;
+      receiptToken !== undefined &&
+      receiptToken === session?.metadata?.receipt_token;
 
     if (
       !session ||
@@ -219,7 +221,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
       />
     );
   } catch (error) {
-    console.error("Failed to retrieve checkout session", error);
+    logServerError("stripe.checkout.session.retrieve.success", error);
     redirect("/cart");
   }
 }
