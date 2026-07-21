@@ -32,6 +32,11 @@ const ORIGINAL_VERCEL_URL = process.env.VERCEL_URL;
 const ORIGINAL_CHECKOUT_RATE_LIMIT_MAX = process.env.RATE_LIMIT_CHECKOUT_MAX;
 const ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW =
   process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
+const ORIGINAL_CHECKOUT_BODY_LIMIT = process.env.CHECKOUT_MAX_BODY_BYTES;
+const ORIGINAL_STRIPE_API_BUDGET_MAX = process.env.STRIPE_API_BUDGET_MAX;
+const ORIGINAL_STRIPE_API_BUDGET_WINDOW =
+  process.env.STRIPE_API_BUDGET_WINDOW_MS;
+const ORIGINAL_VERCEL_FLAG = process.env.VERCEL;
 
 const validPrice = {
   id: "price_1",
@@ -55,6 +60,10 @@ describe("POST /api/checkout", () => {
     delete process.env.VERCEL_URL;
     delete process.env.RATE_LIMIT_CHECKOUT_MAX;
     delete process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS;
+    delete process.env.CHECKOUT_MAX_BODY_BYTES;
+    delete process.env.STRIPE_API_BUDGET_MAX;
+    delete process.env.STRIPE_API_BUDGET_WINDOW_MS;
+    delete process.env.VERCEL;
     stripeMock.prices.retrieve.mockReset();
     stripeMock.promotionCodes.list.mockReset();
     stripeMock.checkout.sessions.create.mockReset();
@@ -99,6 +108,31 @@ describe("POST /api/checkout", () => {
       process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS =
         ORIGINAL_CHECKOUT_RATE_LIMIT_WINDOW;
     }
+
+    if (ORIGINAL_CHECKOUT_BODY_LIMIT === undefined) {
+      delete process.env.CHECKOUT_MAX_BODY_BYTES;
+    } else {
+      process.env.CHECKOUT_MAX_BODY_BYTES = ORIGINAL_CHECKOUT_BODY_LIMIT;
+    }
+
+    if (ORIGINAL_STRIPE_API_BUDGET_MAX === undefined) {
+      delete process.env.STRIPE_API_BUDGET_MAX;
+    } else {
+      process.env.STRIPE_API_BUDGET_MAX = ORIGINAL_STRIPE_API_BUDGET_MAX;
+    }
+
+    if (ORIGINAL_STRIPE_API_BUDGET_WINDOW === undefined) {
+      delete process.env.STRIPE_API_BUDGET_WINDOW_MS;
+    } else {
+      process.env.STRIPE_API_BUDGET_WINDOW_MS =
+        ORIGINAL_STRIPE_API_BUDGET_WINDOW;
+    }
+
+    if (ORIGINAL_VERCEL_FLAG === undefined) {
+      delete process.env.VERCEL;
+    } else {
+      process.env.VERCEL = ORIGINAL_VERCEL_FLAG;
+    }
   });
 
   it("returns 400 for invalid payload", async () => {
@@ -118,6 +152,26 @@ describe("POST /api/checkout", () => {
       code: "invalid_payload",
     });
     expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+  });
+
+  it("returns 413 before parsing an oversized payload", async () => {
+    process.env.CHECKOUT_MAX_BODY_BYTES = "32";
+
+    const { POST } = await loadRoute();
+    const request = createTextRequest(
+      "http://localhost:3000/api/checkout",
+      JSON.stringify({ items: [], padding: "x".repeat(64) }),
+      { headers: { "content-type": "application/json" } },
+    );
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "payload_too_large",
+    });
+    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+    expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("returns 400 when item is unavailable", async () => {
@@ -303,12 +357,16 @@ describe("POST /api/checkout", () => {
   it("returns 429 when checkout rate limit is exceeded", async () => {
     process.env.RATE_LIMIT_CHECKOUT_MAX = "1";
     process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS = "60000";
+    process.env.VERCEL = "1";
 
     stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_limit",
     });
-    setMockHeaders({ "x-forwarded-for": "203.0.113.7", "user-agent": "test" });
+    setMockHeaders({
+      "x-vercel-forwarded-for": "203.0.113.7",
+      "user-agent": "first-agent",
+    });
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
@@ -318,6 +376,10 @@ describe("POST /api/checkout", () => {
     const firstResponse = await POST(request);
     expect(firstResponse.status).toBe(200);
 
+    setMockHeaders({
+      "x-vercel-forwarded-for": "203.0.113.7",
+      "user-agent": "rotated-agent",
+    });
     const secondResponse = await POST(request);
     expect(secondResponse.status).toBe(429);
     expect(secondResponse.headers.get("Retry-After")).toBe("60");
@@ -325,6 +387,33 @@ describe("POST /api/checkout", () => {
       code: "rate_limited",
     });
 
+    expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("reserves a global per-instance budget before contacting Stripe", async () => {
+    process.env.STRIPE_API_BUDGET_MAX = "2";
+    process.env.STRIPE_API_BUDGET_WINDOW_MS = "60000";
+    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_budget",
+    });
+
+    const { POST } = await loadRoute();
+    const createRequest = () =>
+      createJsonRequest("http://localhost:3000/api/checkout", {
+        items: [{ priceId: validPrice.id, quantity: 1 }],
+      });
+
+    const firstResponse = await POST(createRequest());
+    expect(firstResponse.status).toBe(200);
+
+    const secondResponse = await POST(createRequest());
+    expect(secondResponse.status).toBe(429);
+    expect(secondResponse.headers.get("Retry-After")).toBe("60");
+    await expect(secondResponse.json()).resolves.toMatchObject({
+      code: "rate_limited",
+    });
+    expect(stripeMock.prices.retrieve).toHaveBeenCalledTimes(1);
     expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
   });
 

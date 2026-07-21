@@ -3,7 +3,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 
 import { recordPaymentEvent } from "@/lib/payment-events";
-import { checkRouteRateLimit } from "@/lib/rate-limit";
+import {
+  parsePositiveInt,
+  readRequestText,
+  RequestBodyTooLargeError,
+} from "@/lib/request-body";
 import { stripe } from "@/lib/stripe";
 
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -15,6 +19,7 @@ if (!STRIPE_WEBHOOK_SECRET) {
 }
 
 const webhookSecret: string = STRIPE_WEBHOOK_SECRET;
+const DEFAULT_WEBHOOK_BODY_LIMIT_BYTES = 1024 * 1024;
 
 export const runtime = "nodejs";
 
@@ -30,25 +35,36 @@ function resolvePaymentIntentId(
 
 export async function POST(request: Request) {
   const headerList = await Promise.resolve(headers());
-  const rateLimit = checkRouteRateLimit("webhook", headerList);
-
-  if (!rateLimit.allowed) {
-    return NextResponse.json(
-      { error: "Too many webhook requests" },
-      {
-        status: 429,
-        headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
-      },
-    );
-  }
-
-  const body = await request.text();
   const signature = headerList.get("stripe-signature");
 
   if (!signature) {
     console.warn("Stripe webhook received without Stripe-Signature header");
     return NextResponse.json(
       { error: "Missing Stripe-Signature header" },
+      { status: 400 },
+    );
+  }
+
+  let body: string;
+
+  try {
+    body = await readRequestText(
+      request,
+      parsePositiveInt(
+        process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES,
+        DEFAULT_WEBHOOK_BODY_LIMIT_BYTES,
+      ),
+    );
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json(
+        { error: "Webhook payload is too large" },
+        { status: 413 },
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Unable to read webhook payload" },
       { status: 400 },
     );
   }

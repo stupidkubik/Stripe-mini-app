@@ -32,6 +32,8 @@ const CHECKOUT_ERROR_COPY: Record<string, string> = {
   promo_apply_failed:
     "We couldn't apply that promo code. Try again or remove it.",
   invalid_payload: "Please review your cart details and try again.",
+  payload_too_large:
+    "Your checkout request is too large. Refresh and try again.",
   rate_limited:
     "Too many checkout attempts. Please wait a moment and try again.",
   checkout_failed: "We couldn't start checkout. Please try again.",
@@ -44,6 +46,7 @@ const WARNING_ERROR_CODES = new Set([
   "promo_invalid",
   "promo_apply_failed",
   "invalid_payload",
+  "payload_too_large",
   "rate_limited",
 ]);
 

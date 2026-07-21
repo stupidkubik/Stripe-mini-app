@@ -4,9 +4,7 @@ import { createTextRequest } from "./test-utils/next-api";
 import { setMockHeaders } from "./test-utils/next-headers";
 
 process.env.STRIPE_WEBHOOK_SECRET = "webhook_secret_test_value";
-const ORIGINAL_WEBHOOK_RATE_LIMIT_MAX = process.env.RATE_LIMIT_WEBHOOK_MAX;
-const ORIGINAL_WEBHOOK_RATE_LIMIT_WINDOW =
-  process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS;
+const ORIGINAL_WEBHOOK_BODY_LIMIT = process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES;
 
 class StripeSignatureVerificationError extends Error {}
 
@@ -42,12 +40,8 @@ vi.mock("@/lib/payment-events", () => ({
 const loadRoute = async () => await import("@/app/api/stripe/webhook/route");
 
 describe("POST /api/stripe/webhook", () => {
-  beforeEach(async () => {
-    const { clearRateLimitStore } = await import("@/lib/rate-limit");
-    clearRateLimitStore();
-
-    delete process.env.RATE_LIMIT_WEBHOOK_MAX;
-    delete process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS;
+  beforeEach(() => {
+    delete process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES;
     stripeMock.webhooks.constructEvent.mockReset();
     stripeMock.checkout.sessions.list.mockReset();
     recordPaymentEventMock.mockReset();
@@ -55,17 +49,10 @@ describe("POST /api/stripe/webhook", () => {
   });
 
   afterAll(() => {
-    if (ORIGINAL_WEBHOOK_RATE_LIMIT_MAX === undefined) {
-      delete process.env.RATE_LIMIT_WEBHOOK_MAX;
+    if (ORIGINAL_WEBHOOK_BODY_LIMIT === undefined) {
+      delete process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES;
     } else {
-      process.env.RATE_LIMIT_WEBHOOK_MAX = ORIGINAL_WEBHOOK_RATE_LIMIT_MAX;
-    }
-
-    if (ORIGINAL_WEBHOOK_RATE_LIMIT_WINDOW === undefined) {
-      delete process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS;
-    } else {
-      process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS =
-        ORIGINAL_WEBHOOK_RATE_LIMIT_WINDOW;
+      process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES = ORIGINAL_WEBHOOK_BODY_LIMIT;
     }
   });
 
@@ -223,7 +210,10 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -249,7 +239,10 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -279,7 +272,10 @@ describe("POST /api/stripe/webhook", () => {
     setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const request = createTextRequest("http://localhost:3000/api/stripe/webhook", "payload");
+    const request = createTextRequest(
+      "http://localhost:3000/api/stripe/webhook",
+      "payload",
+    );
 
     const response = await POST(request);
 
@@ -289,35 +285,22 @@ describe("POST /api/stripe/webhook", () => {
     });
   });
 
-  it("returns 429 when webhook rate limit is exceeded", async () => {
-    process.env.RATE_LIMIT_WEBHOOK_MAX = "1";
-    process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS = "60000";
-
-    stripeMock.webhooks.constructEvent.mockReturnValue({
-      id: "evt_limit",
-      type: "customer.created",
-      created: 1700000000,
-      data: { object: {} },
-    });
-    setMockHeaders({
-      "stripe-signature": "sig",
-      "x-forwarded-for": "198.51.100.55",
-      "user-agent": "stripe-test",
-    });
+  it("returns 413 before verifying an oversized webhook payload", async () => {
+    process.env.STRIPE_WEBHOOK_MAX_BODY_BYTES = "8";
+    setMockHeaders({ "stripe-signature": "sig" });
 
     const { POST } = await loadRoute();
-    const firstResponse = await POST(
-      createTextRequest("http://localhost:3000/api/stripe/webhook", "payload"),
+    const response = await POST(
+      createTextRequest(
+        "http://localhost:3000/api/stripe/webhook",
+        "payload-too-large",
+      ),
     );
-    expect(firstResponse.status).toBe(200);
 
-    const secondResponse = await POST(
-      createTextRequest("http://localhost:3000/api/stripe/webhook", "payload"),
-    );
-    expect(secondResponse.status).toBe(429);
-    expect(secondResponse.headers.get("Retry-After")).toBe("60");
-    await expect(secondResponse.json()).resolves.toEqual({
-      error: "Too many webhook requests",
+    expect(response.status).toBe(413);
+    await expect(response.json()).resolves.toEqual({
+      error: "Webhook payload is too large",
     });
+    expect(stripeMock.webhooks.constructEvent).not.toHaveBeenCalled();
   });
 });

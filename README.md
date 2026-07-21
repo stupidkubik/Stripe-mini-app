@@ -60,14 +60,38 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 DEMO_SUCCESS=true
 RATE_LIMIT_CHECKOUT_MAX=30
 RATE_LIMIT_CHECKOUT_WINDOW_MS=60000
-RATE_LIMIT_WEBHOOK_MAX=120
-RATE_LIMIT_WEBHOOK_WINDOW_MS=60000
+STRIPE_API_BUDGET_MAX=300
+STRIPE_API_BUDGET_WINDOW_MS=60000
+CHECKOUT_MAX_BODY_BYTES=16384
+STRIPE_WEBHOOK_MAX_BODY_BYTES=1048576
 ```
 
 > `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
 > `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
 > `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
-> On Vercel or Cloudflare Pages, the platform sets the source-IP environment flag used by the local rate limiter. Use a shared edge/WAF or shared rate-limit store for multi-instance production deployments.
+> On Vercel or Cloudflare Pages, the platform sets the source-IP environment
+> flag used by the local defense-in-depth limiter. For multi-instance
+> production, enable a shared edge/WAF rate limit on `/api/checkout`; the local
+> limiter and Stripe API budget do not replace that shared boundary.
+
+### Production abuse controls on Vercel
+
+The deployed project uses Vercel. Following the
+[Vercel WAF rate-limiting guide](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting),
+open **Project → Firewall** and create a rule for
+`POST /api/checkout`, keyed by IP, starting in Log mode and then enforcing a
+fixed-window 429 after traffic has been observed. Start with 10 requests per
+minute per IP and tune from production metrics. Keep Vercel's system DDoS
+mitigation enabled.
+
+Do not apply the Checkout's strict per-IP rule to `/api/stripe/webhook`: Stripe
+deliveries are authenticated by their raw-body signature and can arrive in
+bursts or retries. Stripe requires the
+[unmodified raw body](https://docs.stripe.com/webhooks/signature?lang=node) for
+signature verification. The route rejects missing signatures before reading the body
+and caps signed payloads at `STRIPE_WEBHOOK_MAX_BODY_BYTES`. If a separate
+webhook WAF rule is added, first run it in Log mode and use a limit high enough
+not to discard legitimate deliveries.
 
 Optional: seed test products via the helper script.
 
@@ -119,7 +143,7 @@ Without `preview=1`, the session must be paid and the browser must hold the matc
 | `npm run test:unit`          | Vitest + React Testing Library                                                |
 | `npm run test:unit:coverage` | Vitest with v8 coverage reports                                               |
 | `npm run build`              | Production build and TypeScript verification                                  |
-| `npm run test:e2e:smoke`     | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)      |
+| `npm run test:e2e:smoke`     | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)       |
 | `npm run test:e2e`           | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
 Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
@@ -148,7 +172,7 @@ If gitleaks reports a false positive:
 | ---------------------------------- | --------------------------------------------------------------- |
 | `app/api/checkout/route.ts`        | Creates Checkout sessions, validates carts, applies promo codes |
 | `app/api/stripe/webhook/route.ts`  | Verifies webhook signatures and logs payment status events      |
-| `lib/payment-events.ts`            | Privacy-minimal in-memory operational event log                |
+| `lib/payment-events.ts`            | Privacy-minimal in-memory operational event log                 |
 | `app/opengraph-image.tsx`          | Dynamic Open Graph preview generator                            |
 | `app/sitemap.ts` / `app/robots.ts` | SEO endpoints powered by live Stripe data                       |
 | `components/cart/**/*`             | Cart UI, checkout form, and success summary                     |

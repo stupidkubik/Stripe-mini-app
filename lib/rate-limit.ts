@@ -1,117 +1,142 @@
 import "server-only";
 
+import { parsePositiveInt } from "@/lib/request-body";
+
 type RateLimitBucket = {
   count: number;
   resetAt: number;
 };
 
-type RateLimitCheckResult = {
+export type RateLimitCheckResult = {
   allowed: boolean;
   retryAfterSeconds: number;
 };
 
-type RouteName = "checkout" | "webhook";
-
-type RouteRateLimitConfig = {
+type RateLimitConfig = {
   max: number;
   windowMs: number;
-  keyPrefix: string;
 };
 
 const LOCAL_CLIENT = "local";
-const MAX_TRACKED_CLIENTS = 10_000;
+const MAX_TRACKED_BUCKETS = 10_001;
 const rateLimitStore = new Map<string, RateLimitBucket>();
 
-function parsePositiveInt(value: string | undefined, fallback: number): number {
-  if (!value) {
-    return fallback;
-  }
-
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
-
-function getRouteConfig(routeName: RouteName): RouteRateLimitConfig {
-  if (routeName === "checkout") {
-    return {
-      max: parsePositiveInt(process.env.RATE_LIMIT_CHECKOUT_MAX, 30),
-      windowMs: parsePositiveInt(
-        process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS,
-        60_000,
-      ),
-      keyPrefix: "checkout",
-    };
-  }
-
+function checkoutConfig(): RateLimitConfig {
   return {
-    max: parsePositiveInt(process.env.RATE_LIMIT_WEBHOOK_MAX, 120),
-    windowMs: parsePositiveInt(process.env.RATE_LIMIT_WEBHOOK_WINDOW_MS, 60_000),
-    keyPrefix: "webhook",
+    max: parsePositiveInt(process.env.RATE_LIMIT_CHECKOUT_MAX, 30),
+    windowMs: parsePositiveInt(
+      process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS,
+      60_000,
+    ),
   };
 }
 
+function stripeApiBudgetConfig(): RateLimitConfig {
+  return {
+    max: parsePositiveInt(process.env.STRIPE_API_BUDGET_MAX, 300),
+    windowMs: parsePositiveInt(process.env.STRIPE_API_BUDGET_WINDOW_MS, 60_000),
+  };
+}
+
+function normalizeProviderAddress(value: string | null): string | null {
+  const address = value?.split(",", 1)[0]?.trim();
+  return address ? address.slice(0, 64) : null;
+}
+
 function getClientAddress(headerList: Headers): string {
-  // Only consume a provider-controlled source-IP header. Generic forwarding
-  // headers are client controlled when the app is reachable directly.
+  // These headers are trusted only when the corresponding platform flag is
+  // injected by the host. Never use generic x-forwarded-for directly.
   if (process.env.VERCEL === "1") {
-    return headerList.get("x-vercel-forwarded-for")?.trim() ?? LOCAL_CLIENT;
+    return (
+      normalizeProviderAddress(headerList.get("x-vercel-forwarded-for")) ??
+      LOCAL_CLIENT
+    );
   }
 
   if (process.env.CF_PAGES === "1") {
-    return headerList.get("cf-connecting-ip")?.trim() ?? LOCAL_CLIENT;
+    return (
+      normalizeProviderAddress(headerList.get("cf-connecting-ip")) ??
+      LOCAL_CLIENT
+    );
   }
 
   return LOCAL_CLIENT;
 }
 
-function getClientKey(headerList: Headers) {
-  const ip = getClientAddress(headerList);
-  const userAgent = headerList.get("user-agent")?.trim() ?? "unknown";
-  return `${ip}|${userAgent.slice(0, 120)}`;
+function cleanupExpiredBuckets(now: number) {
+  if (rateLimitStore.size < MAX_TRACKED_BUCKETS) {
+    return;
+  }
+
+  for (const [storedKey, bucket] of rateLimitStore) {
+    if (now >= bucket.resetAt) {
+      rateLimitStore.delete(storedKey);
+    }
+  }
 }
 
-export function checkRouteRateLimit(
-  routeName: RouteName,
-  headerList: Headers,
+function consumeFixedWindow(
+  key: string,
+  config: RateLimitConfig,
+  cost = 1,
 ): RateLimitCheckResult {
-  const config = getRouteConfig(routeName);
   const now = Date.now();
-  const key = `${config.keyPrefix}:${getClientKey(headerList)}`;
+  cleanupExpiredBuckets(now);
+
   const existing = rateLimitStore.get(key);
-
-  if (rateLimitStore.size >= MAX_TRACKED_CLIENTS) {
-    for (const [storedKey, bucket] of rateLimitStore) {
-      if (now >= bucket.resetAt) {
-        rateLimitStore.delete(storedKey);
-      }
-    }
-
-    // Do not let spoofed client keys turn the in-memory limiter into an
-    // unbounded memory allocation. A full store fails closed for new keys.
-    if (rateLimitStore.size >= MAX_TRACKED_CLIENTS && !existing) {
-      return { allowed: false, retryAfterSeconds: Math.ceil(config.windowMs / 1000) };
-    }
+  if (rateLimitStore.size >= MAX_TRACKED_BUCKETS && !existing) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.ceil(config.windowMs / 1000),
+    };
   }
 
   if (!existing || now >= existing.resetAt) {
+    if (cost > config.max) {
+      return {
+        allowed: false,
+        retryAfterSeconds: Math.ceil(config.windowMs / 1000),
+      };
+    }
+
     rateLimitStore.set(key, {
-      count: 1,
+      count: cost,
       resetAt: now + config.windowMs,
     });
     return { allowed: true, retryAfterSeconds: 0 };
   }
 
-  if (existing.count >= config.max) {
-    const retryAfterSeconds = Math.max(
-      1,
-      Math.ceil((existing.resetAt - now) / 1000),
-    );
-    return { allowed: false, retryAfterSeconds };
+  if (existing.count + cost > config.max) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.max(
+        1,
+        Math.ceil((existing.resetAt - now) / 1000),
+      ),
+    };
   }
 
-  existing.count += 1;
+  existing.count += cost;
   rateLimitStore.set(key, existing);
   return { allowed: true, retryAfterSeconds: 0 };
+}
+
+export function checkCheckoutRateLimit(
+  headerList: Headers,
+): RateLimitCheckResult {
+  return consumeFixedWindow(
+    `checkout:${getClientAddress(headerList)}`,
+    checkoutConfig(),
+  );
+}
+
+export function reserveStripeApiBudget(cost: number): RateLimitCheckResult {
+  const normalizedCost = Number.isSafeInteger(cost) && cost > 0 ? cost : 1;
+  return consumeFixedWindow(
+    "stripe-api:global",
+    stripeApiBudgetConfig(),
+    normalizedCost,
+  );
 }
 
 export function clearRateLimitStore() {

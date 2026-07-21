@@ -6,7 +6,15 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 
 import { getSiteOrigin } from "@/lib/config/server";
-import { checkRouteRateLimit } from "@/lib/rate-limit";
+import {
+  checkCheckoutRateLimit,
+  reserveStripeApiBudget,
+} from "@/lib/rate-limit";
+import {
+  parsePositiveInt,
+  readRequestText,
+  RequestBodyTooLargeError,
+} from "@/lib/request-body";
 import { stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
@@ -35,11 +43,13 @@ const CHECKOUT_ERROR_CODES = {
   promoInvalid: "promo_invalid",
   promoApplyFailed: "promo_apply_failed",
   rateLimited: "rate_limited",
+  payloadTooLarge: "payload_too_large",
   checkoutFailed: "checkout_failed",
 } as const;
 const STRIPE_METADATA_VALUE_LIMIT = 500;
 const RECEIPT_TOKEN_COOKIE = "checkout_receipt_token";
 const RECEIPT_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
+const DEFAULT_CHECKOUT_BODY_LIMIT_BYTES = 16 * 1024;
 
 async function lookupPromotionCode(code: string) {
   try {
@@ -76,7 +86,11 @@ async function validateCheckoutPrice(priceId: string): Promise<boolean> {
       expand: ["product"],
     });
 
-    if (!price.active || price.type !== "one_time" || !isActiveProduct(price.product)) {
+    if (
+      !price.active ||
+      price.type !== "one_time" ||
+      !isActiveProduct(price.product)
+    ) {
       return false;
     }
 
@@ -113,7 +127,7 @@ function normalizeMetadata(
 export async function POST(request: Request) {
   try {
     const headerList = await Promise.resolve(headers());
-    const rateLimit = checkRouteRateLimit("checkout", headerList);
+    const rateLimit = checkCheckoutRateLimit(headerList);
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -129,7 +143,29 @@ export async function POST(request: Request) {
       );
     }
 
-    const json = await request.json().catch(() => null);
+    let json: unknown = null;
+
+    try {
+      const body = await readRequestText(
+        request,
+        parsePositiveInt(
+          process.env.CHECKOUT_MAX_BODY_BYTES,
+          DEFAULT_CHECKOUT_BODY_LIMIT_BYTES,
+        ),
+      );
+      json = JSON.parse(body);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return NextResponse.json(
+          {
+            error: "Checkout request is too large.",
+            code: CHECKOUT_ERROR_CODES.payloadTooLarge,
+          },
+          { status: 413 },
+        );
+      }
+    }
+
     const parsed = requestSchema.safeParse(json);
 
     if (!parsed.success) {
@@ -146,6 +182,27 @@ export async function POST(request: Request) {
     const uniquePriceIds = Array.from(
       new Set(parsed.data.items.map((item) => item.priceId)),
     );
+    const hasPromotionCode = Boolean(parsed.data.promotionCode?.trim());
+    const stripeCallBudget = reserveStripeApiBudget(
+      uniquePriceIds.length + (hasPromotionCode ? 1 : 0) + 1,
+    );
+
+    if (!stripeCallBudget.allowed) {
+      return NextResponse.json(
+        {
+          error:
+            "Checkout is temporarily busy. Please wait a moment and try again.",
+          code: CHECKOUT_ERROR_CODES.rateLimited,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(stripeCallBudget.retryAfterSeconds),
+          },
+        },
+      );
+    }
+
     const validPriceIds = new Set<string>();
 
     for (const priceId of uniquePriceIds) {

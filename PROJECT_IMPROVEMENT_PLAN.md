@@ -46,11 +46,19 @@ exception, with no high or critical findings.
 
 ### 2. Move abuse controls to a shared boundary
 
-**Problem:** `lib/rate-limit.ts` is a process-local map. It resets on restart,
+**Status (2026-07-21): Application safeguards complete; deployment action
+required.** Checkout and webhook bodies are read as bounded streams, Checkout
+keys its fallback limit only by a provider-controlled IP, and each instance
+atomically reserves a global budget before making Stripe API calls. The lossy
+webhook limiter was removed so valid signed retries are not discarded. The
+shared Vercel Firewall rule documented in `README.md` must still be enabled and
+observed in Log mode before this item is fully complete.
+
+**Problem (partially resolved):** `lib/rate-limit.ts` is a process-local map. It resets on restart,
 is not shared between serverless instances, and cannot provide a global request
-budget. Checkout also reads the full JSON body before schema validation. The
-webhook route applies the same local limiter to legitimate Stripe deliveries,
-which can delay events without reducing distributed abuse.
+budget. Before this change, Checkout also read the full JSON body before schema
+validation, and the webhook route applied the same local limiter to legitimate
+Stripe deliveries, which could delay events without reducing distributed abuse.
 
 **Plan:** Enforce request-size and rate limits at the hosting edge/WAF. Use a
 shared atomic store for application limits when edge controls are insufficient.
