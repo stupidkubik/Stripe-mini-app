@@ -3,11 +3,8 @@ import { afterAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { createJsonRequest, createTextRequest } from "./test-utils/next-api";
 import { setMockHeaders } from "./test-utils/next-headers";
 
-const { stripeMock } = vi.hoisted(() => ({
+const { stripeMock, getProductByPriceIdMock } = vi.hoisted(() => ({
   stripeMock: {
-    prices: {
-      retrieve: vi.fn(),
-    },
     promotionCodes: {
       list: vi.fn(),
     },
@@ -17,10 +14,12 @@ const { stripeMock } = vi.hoisted(() => ({
       },
     },
   },
+  getProductByPriceIdMock: vi.fn(),
 }));
 
 vi.mock("@/lib/stripe", () => ({
   stripe: stripeMock,
+  getProductByPriceId: getProductByPriceIdMock,
 }));
 
 const loadRoute = async () => await import("@/app/api/checkout/route");
@@ -64,7 +63,8 @@ describe("POST /api/checkout", () => {
     delete process.env.STRIPE_API_BUDGET_MAX;
     delete process.env.STRIPE_API_BUDGET_WINDOW_MS;
     delete process.env.VERCEL;
-    stripeMock.prices.retrieve.mockReset();
+    getProductByPriceIdMock.mockReset();
+    getProductByPriceIdMock.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockReset();
     stripeMock.checkout.sessions.create.mockReset();
     setMockHeaders();
@@ -151,7 +151,7 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toMatchObject({
       code: "invalid_payload",
     });
-    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+    expect(getProductByPriceIdMock).not.toHaveBeenCalled();
   });
 
   it("returns 413 before parsing an oversized payload", async () => {
@@ -170,15 +170,12 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toMatchObject({
       code: "payload_too_large",
     });
-    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+    expect(getProductByPriceIdMock).not.toHaveBeenCalled();
     expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("returns 400 when item is unavailable", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue({
-      ...validPrice,
-      active: false,
-    });
+    getProductByPriceIdMock.mockResolvedValue(null);
 
     const { POST } = await loadRoute();
     const request = createJsonRequest("http://localhost:3000/api/checkout", {
@@ -195,7 +192,6 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 400 when promo code is invalid", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockResolvedValue({ data: [] });
 
     const { POST } = await loadRoute();
@@ -213,7 +209,6 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 500 when promo lookup fails", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockRejectedValue(
       new Error("lookup failed"),
     );
@@ -233,7 +228,6 @@ describe("POST /api/checkout", () => {
   });
 
   it("creates a Stripe session with discounts", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockResolvedValue({
       data: [{ id: "promo_1" }],
     });
@@ -277,7 +271,6 @@ describe("POST /api/checkout", () => {
   });
 
   it("ignores spoofed origin/referer headers when building redirect urls", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_456",
     });
@@ -308,7 +301,6 @@ describe("POST /api/checkout", () => {
     delete process.env.SITE_URL;
     delete process.env.NEXT_PUBLIC_SITE_URL;
     process.env.VERCEL_PROJECT_PRODUCTION_URL = "shop-live.vercel.app";
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_vercel_fallback",
     });
@@ -336,7 +328,6 @@ describe("POST /api/checkout", () => {
   });
 
   it("returns 500 when Stripe session creation fails", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockRejectedValue(
       new Error("Stripe down"),
     );
@@ -359,7 +350,6 @@ describe("POST /api/checkout", () => {
     process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS = "60000";
     process.env.VERCEL = "1";
 
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_limit",
     });
@@ -393,7 +383,6 @@ describe("POST /api/checkout", () => {
   it("reserves a global per-instance budget before contacting Stripe", async () => {
     process.env.STRIPE_API_BUDGET_MAX = "2";
     process.env.STRIPE_API_BUDGET_WINDOW_MS = "60000";
-    stripeMock.prices.retrieve.mockResolvedValue(validPrice);
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_budget",
     });
@@ -413,12 +402,12 @@ describe("POST /api/checkout", () => {
     await expect(secondResponse.json()).resolves.toMatchObject({
       code: "rate_limited",
     });
-    expect(stripeMock.prices.retrieve).toHaveBeenCalledTimes(1);
+    expect(getProductByPriceIdMock).toHaveBeenCalledTimes(1);
     expect(stripeMock.checkout.sessions.create).toHaveBeenCalledTimes(1);
   });
 
   it("rejects carts with more than ten distinct items before contacting Stripe", async () => {
-    stripeMock.prices.retrieve.mockImplementation(async (priceId: string) => ({
+    getProductByPriceIdMock.mockImplementation(async (priceId: string) => ({
       ...validPrice,
       id: priceId,
       product: {
@@ -441,15 +430,12 @@ describe("POST /api/checkout", () => {
     const response = await POST(request);
 
     expect(response.status).toBe(400);
-    expect(stripeMock.prices.retrieve).not.toHaveBeenCalled();
+    expect(getProductByPriceIdMock).not.toHaveBeenCalled();
     expect(stripeMock.checkout.sessions.create).not.toHaveBeenCalled();
   });
 
   it("rejects an active non-default price", async () => {
-    stripeMock.prices.retrieve.mockResolvedValue({
-      ...validPrice,
-      id: "price_legacy",
-    });
+    getProductByPriceIdMock.mockResolvedValue(null);
 
     const { POST } = await loadRoute();
     const response = await POST(

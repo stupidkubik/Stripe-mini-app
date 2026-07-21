@@ -1,16 +1,16 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type Stripe from "stripe";
 
 const { stripeState, StripeInvalidRequestError } = vi.hoisted(() => {
   class StripeInvalidRequestError extends Error {
     code?: string;
+    statusCode?: number;
   }
 
   return {
     stripeState: {
       products: {
         list: vi.fn(),
-        retrieve: vi.fn(),
-        search: vi.fn(),
       },
       prices: {
         retrieve: vi.fn(),
@@ -20,6 +20,18 @@ const { stripeState, StripeInvalidRequestError } = vi.hoisted(() => {
     StripeInvalidRequestError,
   };
 });
+
+vi.mock("next/cache", () => ({
+  unstable_cache: <T extends (...args: never[]) => Promise<unknown>>(
+    callback: T,
+  ) => {
+    let cached: ReturnType<T> | undefined;
+    return ((...args: Parameters<T>) => {
+      cached ??= callback(...args) as ReturnType<T>;
+      return cached;
+    }) as T;
+  },
+}));
 
 vi.mock("stripe", () => {
   class StripeMock {
@@ -35,7 +47,6 @@ vi.mock("stripe", () => {
 
 const FALLBACK_IMAGE =
   "https://images.unsplash.com/photo-1470163395405-d2b80e7450ed?auto=format&fit=crop&w=1200&q=80";
-
 const ORIGINAL_KEY = process.env.STRIPE_SECRET_KEY;
 
 const loadStripeModule = async () => {
@@ -44,14 +55,32 @@ const loadStripeModule = async () => {
   return await import("@/lib/stripe");
 };
 
-describe("stripe server helpers", () => {
+function product(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "prod_1",
+    name: "Fern",
+    description: "Leafy",
+    images: [],
+    active: true,
+    metadata: { slug: "fern" },
+    default_price: {
+      id: "price_1",
+      active: true,
+      type: "one_time",
+      unit_amount: 1800,
+      currency: "usd",
+    },
+    ...overrides,
+  };
+}
+
+describe("Stripe catalogue snapshot", () => {
   beforeEach(() => {
     stripeState.products.list.mockReset();
-    stripeState.products.retrieve.mockReset();
-    stripeState.products.search.mockReset();
     stripeState.prices.retrieve.mockReset();
     stripeState.prices.list.mockReset();
-    vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -63,320 +92,214 @@ describe("stripe server helpers", () => {
     }
   });
 
-  it("lists products and normalizes prices", async () => {
+  it("builds one normalized snapshot reused by every lookup", async () => {
     stripeState.products.list.mockResolvedValue({
-      data: [
-        {
-          id: "prod_b",
-          name: "Zebra Plant",
-          description: null,
-          images: [],
-          default_price: {
-            id: "price_b",
-            unit_amount: 2000,
-            currency: "usd",
-          },
-        },
-        {
-          id: "prod_a",
-          name: "Aloe",
-          description: "Succulent",
-          images: ["https://example.com/aloe.png"],
-          default_price: "price_a",
-        },
-      ],
-    });
-    stripeState.prices.retrieve.mockResolvedValue({
-      id: "price_a",
-      unit_amount: 1500,
-      currency: "eur",
+      data: [product()],
+      has_more: false,
     });
 
-    const { listProducts } = await loadStripeModule();
+    const { getProduct, getProductByPriceId, getProductBySlug, listProducts } =
+      await loadStripeModule();
 
     const products = await listProducts();
 
-    expect(products.map((entry) => entry.name)).toEqual([
-      "Aloe",
-      "Zebra Plant",
+    expect(products).toEqual([
+      {
+        id: "prod_1",
+        name: "Fern",
+        description: "Leafy",
+        image: FALLBACK_IMAGE,
+        priceId: "price_1",
+        currency: "USD",
+        unitAmount: 1800,
+        metadata: { slug: "fern" },
+      },
     ]);
-    expect(products[0]).toEqual({
-      id: "prod_a",
-      name: "Aloe",
-      description: "Succulent",
-      image: "https://example.com/aloe.png",
-      priceId: "price_a",
-      currency: "EUR",
-      unitAmount: 1500,
+    await expect(getProduct("PROD_1")).resolves.toBe(products[0]);
+    await expect(getProductBySlug(" FERN ")).resolves.toBe(products[0]);
+    await expect(getProductByPriceId("price_1")).resolves.toBe(products[0]);
+    expect(stripeState.products.list).toHaveBeenCalledTimes(1);
+    expect(stripeState.products.list).toHaveBeenCalledWith({
+      active: true,
+      expand: ["data.default_price"],
+      limit: 100,
     });
-    expect(products[1].image).toBe(FALLBACK_IMAGE);
+    expect(stripeState.products).not.toHaveProperty("search");
   });
 
-  it("paginates through all Stripe product pages", async () => {
+  it("paginates once while building the snapshot", async () => {
     stripeState.products.list
       .mockResolvedValueOnce({
-        data: [
-          {
-            id: "prod_1",
-            name: "Page One",
-            description: null,
-            images: [],
-            default_price: {
-              id: "price_1",
-              unit_amount: 1100,
-              currency: "usd",
-            },
-          },
-        ],
+        data: [product()],
         has_more: true,
       })
       .mockResolvedValueOnce({
         data: [
-          {
+          product({
             id: "prod_2",
-            name: "Page Two",
-            description: null,
-            images: [],
+            name: "Aloe",
+            metadata: { slug: "aloe" },
             default_price: {
               id: "price_2",
-              unit_amount: 1200,
-              currency: "usd",
+              active: true,
+              type: "one_time",
+              unit_amount: 1500,
+              currency: "eur",
             },
-          },
+          }),
         ],
         has_more: false,
       });
 
     const { listProducts } = await loadStripeModule();
-    const products = await listProducts();
 
-    expect(products.map((entry) => entry.id)).toEqual(["prod_1", "prod_2"]);
-    expect(stripeState.products.list).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        active: true,
-        expand: ["data.default_price"],
-        limit: 100,
-      }),
-    );
+    await expect(listProducts()).resolves.toMatchObject([
+      { id: "prod_2" },
+      { id: "prod_1" },
+    ]);
     expect(stripeState.products.list).toHaveBeenNthCalledWith(
       2,
-      expect.objectContaining({
-        active: true,
-        expand: ["data.default_price"],
-        limit: 100,
-        starting_after: "prod_1",
-      }),
+      expect.objectContaining({ starting_after: "prod_1" }),
     );
   });
 
-  it("filters products without valid prices", async () => {
+  it("resolves and indexes a fallback price when default_price is absent", async () => {
     stripeState.products.list.mockResolvedValue({
-      data: [
-        {
-          id: "prod_bad",
-          name: "Bad",
-          description: null,
-          images: [],
-          default_price: {
-            id: "price_bad",
-            unit_amount: null,
-            currency: "usd",
-          },
-        },
-      ],
-    });
-
-    const { listProducts } = await loadStripeModule();
-
-    const products = await listProducts();
-
-    expect(products).toEqual([]);
-  });
-
-  it("returns null when Stripe reports missing product", async () => {
-    const error = new StripeInvalidRequestError("missing");
-    error.code = "resource_missing";
-    stripeState.products.retrieve.mockRejectedValue(error);
-
-    const { getProduct } = await loadStripeModule();
-
-    await expect(getProduct("prod_missing")).resolves.toBeNull();
-  });
-
-  it("returns null for deleted products", async () => {
-    stripeState.products.retrieve.mockResolvedValue({
-      id: "prod_deleted",
-      deleted: true,
-    });
-
-    const { getProduct } = await loadStripeModule();
-
-    await expect(getProduct("prod_deleted")).resolves.toBeNull();
-  });
-
-  it("uses prices.list when default price is missing", async () => {
-    stripeState.products.retrieve.mockResolvedValue({
-      id: "prod_1",
-      name: "Fern",
-      description: null,
-      images: [],
-      default_price: null,
+      data: [product({ default_price: null })],
+      has_more: false,
     });
     stripeState.prices.list.mockResolvedValue({
       data: [
         {
-          id: "price_1",
-          unit_amount: 1800,
+          id: "price_fallback",
+          active: true,
+          type: "one_time",
+          unit_amount: 2100,
           currency: "usd",
         },
       ],
     });
 
-    const { getProduct } = await loadStripeModule();
+    const { getProductByPriceId } = await loadStripeModule();
 
-    const product = await getProduct("prod_1");
-
-    expect(product).toEqual({
+    await expect(getProductByPriceId("price_fallback")).resolves.toMatchObject({
       id: "prod_1",
-      name: "Fern",
-      description: null,
-      image: FALLBACK_IMAGE,
-      priceId: "price_1",
-      currency: "USD",
-      unitAmount: 1800,
+      priceId: "price_fallback",
+    });
+    expect(stripeState.prices.list).toHaveBeenCalledWith({
+      product: "prod_1",
+      active: true,
+      type: "one_time",
+      limit: 1,
     });
   });
 
-  it("finds products by slug and normalizes metadata", async () => {
-    stripeState.products.search.mockResolvedValue({
-      data: [
-        {
-          id: "prod_slug",
-          name: "Slug Plant",
-          description: "Prickly",
-          images: [],
-          metadata: {
-            slug: "fern",
-            category: "Cactus",
-            light: "Bright",
-            pet_safe: "TRUE",
-            watering: "Monthly",
-          },
-          default_price: {
-            id: "price_slug",
-            unit_amount: 2400,
-            currency: "usd",
-          },
-        },
-      ],
-    });
-
-    const { getProductBySlug } = await loadStripeModule();
-
-    const product = await getProductBySlug(" fern ");
-
-    expect(product).toEqual({
-      id: "prod_slug",
-      name: "Slug Plant",
-      description: "Prickly",
-      image: FALLBACK_IMAGE,
-      priceId: "price_slug",
-      currency: "USD",
-      unitAmount: 2400,
-      metadata: {
-        slug: "fern",
-        category: "cactus",
-        light: "bright",
-        petSafe: true,
-        watering: "monthly",
-      },
-    });
-  });
-
-  it("falls back to listing products when search fails", async () => {
-    stripeState.products.search.mockRejectedValue(new Error("search down"));
+  it("filters products whose normalized price is incomplete", async () => {
     stripeState.products.list.mockResolvedValue({
       data: [
-        {
-          id: "prod_list",
-          name: "Listed",
-          description: null,
-          images: [],
-          metadata: { slug: "aloe" },
+        product({
           default_price: {
-            id: "price_list",
-            unit_amount: 1900,
+            id: "price_invalid",
+            unit_amount: null,
             currency: "usd",
           },
-        },
+        }),
       ],
+      has_more: false,
     });
 
-    const { getProductBySlug } = await loadStripeModule();
+    const { listProducts } = await loadStripeModule();
 
-    const product = await getProductBySlug("ALOE");
-
-    expect(product?.id).toBe("prod_list");
-    expect(product?.metadata?.slug).toBe("aloe");
+    await expect(listProducts()).resolves.toEqual([]);
   });
 
-  it("falls back to product id lookup when slug is not found", async () => {
-    stripeState.products.search.mockResolvedValue({ data: [] });
+  it.each([
+    ["inactive product", { active: false }],
+    [
+      "inactive price",
+      { default_price: { ...product().default_price, active: false } },
+    ],
+    [
+      "recurring price",
+      { default_price: { ...product().default_price, type: "recurring" } },
+    ],
+  ])("filters an %s", async (_case, overrides) => {
     stripeState.products.list.mockResolvedValue({
-      data: [
-        {
-          id: "prod_other",
-          name: "Other",
-          description: null,
-          images: [],
-          metadata: { slug: "other" },
-          default_price: {
-            id: "price_other",
-            unit_amount: 2100,
-            currency: "usd",
-          },
-        },
-      ],
-    });
-    stripeState.products.retrieve.mockResolvedValue({
-      id: "prod_1",
-      name: "Fallback",
-      description: null,
-      images: [],
-      default_price: {
-        id: "price_fallback",
-        unit_amount: 1600,
-        currency: "usd",
-      },
+      data: [product(overrides)],
+      has_more: false,
     });
 
-    const { getProductBySlug } = await loadStripeModule();
+    const { listProducts } = await loadStripeModule();
 
-    const product = await getProductBySlug("PROD_1");
-
-    expect(stripeState.products.retrieve).toHaveBeenCalledWith("prod_1", {
-      expand: ["default_price"],
-    });
-    expect(product?.id).toBe("prod_1");
+    await expect(listProducts()).resolves.toEqual([]);
   });
 
-  it("does not lookup product id for regular slugs", async () => {
-    stripeState.products.search.mockResolvedValue({ data: [] });
+  it("skips a product whose referenced default price was deleted", async () => {
     stripeState.products.list.mockResolvedValue({
-      data: [],
+      data: [product({ default_price: "price_deleted" })],
+      has_more: false,
     });
+    const error = new StripeInvalidRequestError("missing");
+    error.code = "resource_missing";
+    stripeState.prices.retrieve.mockRejectedValue(error);
 
-    const { getProductBySlug } = await loadStripeModule();
+    const { listProducts } = await loadStripeModule();
 
-    await expect(getProductBySlug("fern-deluxe")).resolves.toBeNull();
-    expect(stripeState.products.retrieve).not.toHaveBeenCalled();
+    await expect(listProducts()).resolves.toEqual([]);
   });
 
-  it("returns null for blank slugs", async () => {
-    const { getProductBySlug } = await loadStripeModule();
+  it("does not load the snapshot for blank lookup keys", async () => {
+    const { getProduct, getProductByPriceId, getProductBySlug } =
+      await loadStripeModule();
 
-    await expect(getProductBySlug("   ")).resolves.toBeNull();
-    expect(stripeState.products.search).not.toHaveBeenCalled();
+    await expect(getProduct("  ")).resolves.toBeNull();
+    await expect(getProductBySlug("  ")).resolves.toBeNull();
+    await expect(getProductByPriceId("  ")).resolves.toBeNull();
+    expect(stripeState.products.list).not.toHaveBeenCalled();
+  });
+
+  it("retries bounded transient failures before publishing a snapshot", async () => {
+    const transientError = new StripeInvalidRequestError("rate limited");
+    transientError.statusCode = 429;
+    stripeState.products.list
+      .mockRejectedValueOnce(transientError)
+      .mockRejectedValueOnce(transientError)
+      .mockResolvedValueOnce({ data: [product()], has_more: false });
+
+    const { StripeCatalogueRepository } = await import("@/lib/catalogue");
+    const retryDelay = vi.fn(async () => undefined);
+    const repository = new StripeCatalogueRepository(
+      stripeState as unknown as Stripe,
+      retryDelay,
+    );
+
+    await expect(repository.getSnapshot()).resolves.toMatchObject({
+      products: [{ id: "prod_1" }],
+    });
+    expect(stripeState.products.list).toHaveBeenCalledTimes(3);
+    expect(retryDelay).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails clearly and logs only sanitized fields after retries are exhausted", async () => {
+    const transientError = Object.assign(
+      new Error("buyer@example.com https://dashboard.stripe.com/private"),
+      { type: "StripeRateLimitError", statusCode: 429 },
+    );
+    stripeState.products.list.mockRejectedValue(transientError);
+
+    const { CatalogueUnavailableError, StripeCatalogueRepository } =
+      await import("@/lib/catalogue");
+    const repository = new StripeCatalogueRepository(
+      stripeState as unknown as Stripe,
+      async () => undefined,
+    );
+
+    await expect(repository.getSnapshot()).rejects.toBeInstanceOf(
+      CatalogueUnavailableError,
+    );
+    expect(stripeState.products.list).toHaveBeenCalledTimes(3);
+    expect(JSON.stringify(vi.mocked(console.error).mock.calls)).not.toMatch(
+      /buyer|dashboard|private/,
+    );
   });
 });

@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import { randomUUID } from "crypto";
 
 import { z } from "zod";
@@ -16,7 +15,7 @@ import {
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
 import { logServerError } from "@/lib/server-log";
-import { stripe } from "@/lib/stripe";
+import { getProductByPriceId, stripe } from "@/lib/stripe";
 
 const checkoutItemSchema = z.object({
   priceId: z.string().min(1, "Price ID is missing for one of the items."),
@@ -62,51 +61,8 @@ async function lookupPromotionCode(code: string) {
   return result.data[0] ?? null;
 }
 
-function isActiveProduct(
-  product: Stripe.Price["product"],
-): product is Stripe.Product {
-  if (!product || typeof product === "string") {
-    return false;
-  }
-
-  if ("deleted" in product && product.deleted) {
-    return false;
-  }
-
-  return product.active;
-}
-
 async function validateCheckoutPrice(priceId: string): Promise<boolean> {
-  try {
-    const price = await stripe.prices.retrieve(priceId, {
-      expand: ["product"],
-    });
-
-    if (
-      !price.active ||
-      price.type !== "one_time" ||
-      !isActiveProduct(price.product)
-    ) {
-      return false;
-    }
-
-    const defaultPrice = price.product.default_price;
-    const defaultPriceId =
-      typeof defaultPrice === "string" ? defaultPrice : defaultPrice?.id;
-
-    // The client may only purchase the default price of an active catalogue
-    // product. This blocks old/internal active prices from being submitted.
-    return defaultPriceId === price.id;
-  } catch (error) {
-    if (
-      error instanceof Stripe.errors.StripeInvalidRequestError &&
-      error.code === "resource_missing"
-    ) {
-      return false;
-    }
-
-    throw error;
-  }
+  return Boolean(await getProductByPriceId(priceId));
 }
 
 function normalizeMetadata(

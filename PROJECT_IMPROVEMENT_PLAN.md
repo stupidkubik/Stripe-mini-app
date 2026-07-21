@@ -96,7 +96,15 @@ bounded structured event without secrets, PII, headers, or dashboard URLs.
 
 ### 4. Build one cached catalogue snapshot
 
-**Problem:** Static parameters, metadata, product pages, and sitemap generation
+**Status (2026-07-21): Complete.** A `CatalogueRepository` now publishes one
+validated, serializable snapshot through the Next.js Data Cache with 60-second
+revalidation. It is indexed by normalized product ID, slug, and price ID, and
+all catalogue pages, metadata, sitemap generation, and Checkout eligibility use
+those indexes. Stripe 429/5xx calls have a three-attempt exponential backoff
+with jitter and fail with a sanitized domain error. The production build emits
+no Stripe 429 warnings.
+
+**Problem (resolved):** Static parameters, metadata, product pages, and sitemap generation
 repeat catalogue work. `getProductBySlug` calls Stripe Search per slug and falls
 back to a full catalogue fetch. The production build already hit Stripe rate
 limits while generating pages.
@@ -112,6 +120,11 @@ offline build fixture.
 build emits no 429 warnings, and every catalogue consumer sees the same data.
 
 ### 5. Make catalogue and Checkout eligibility identical
+
+**Status (2026-07-21): Partially resolved by item 4.** Catalogue display and
+Checkout now use the same snapshot, and the repository rejects inactive
+products, inactive or recurring prices, and prices without amount/currency.
+The explicit storefront currency and metadata policy remains to be completed.
 
 **Problem:** The catalogue falls back to the first active price for a product
 without `default_price`, while Checkout accepts only an active default price.

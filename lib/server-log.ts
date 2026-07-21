@@ -5,6 +5,7 @@ export type ServerLogOperation =
   | "stripe.catalog.price.retrieve"
   | "stripe.catalog.product.retrieve"
   | "stripe.catalog.product.search"
+  | "stripe.catalog.snapshot.load"
   | "stripe.checkout.process"
   | "stripe.checkout.promotion.lookup"
   | "stripe.checkout.session.create"
