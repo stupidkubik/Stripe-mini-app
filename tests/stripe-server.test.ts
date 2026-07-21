@@ -14,7 +14,6 @@ const { stripeState, StripeInvalidRequestError } = vi.hoisted(() => {
       },
       prices: {
         retrieve: vi.fn(),
-        list: vi.fn(),
       },
     },
     StripeInvalidRequestError,
@@ -78,7 +77,6 @@ describe("Stripe catalogue snapshot", () => {
   beforeEach(() => {
     stripeState.products.list.mockReset();
     stripeState.prices.retrieve.mockReset();
-    stripeState.prices.list.mockReset();
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
@@ -163,35 +161,15 @@ describe("Stripe catalogue snapshot", () => {
     );
   });
 
-  it("resolves and indexes a fallback price when default_price is absent", async () => {
+  it("filters a product when default_price is absent", async () => {
     stripeState.products.list.mockResolvedValue({
       data: [product({ default_price: null })],
       has_more: false,
     });
-    stripeState.prices.list.mockResolvedValue({
-      data: [
-        {
-          id: "price_fallback",
-          active: true,
-          type: "one_time",
-          unit_amount: 2100,
-          currency: "usd",
-        },
-      ],
-    });
 
-    const { getProductByPriceId } = await loadStripeModule();
+    const { listProducts } = await loadStripeModule();
 
-    await expect(getProductByPriceId("price_fallback")).resolves.toMatchObject({
-      id: "prod_1",
-      priceId: "price_fallback",
-    });
-    expect(stripeState.prices.list).toHaveBeenCalledWith({
-      product: "prod_1",
-      active: true,
-      type: "one_time",
-      limit: 1,
-    });
+    await expect(listProducts()).resolves.toEqual([]);
   });
 
   it("filters products whose normalized price is incomplete", async () => {
@@ -199,9 +177,8 @@ describe("Stripe catalogue snapshot", () => {
       data: [
         product({
           default_price: {
-            id: "price_invalid",
+            ...product().default_price,
             unit_amount: null,
-            currency: "usd",
           },
         }),
       ],
@@ -222,6 +199,18 @@ describe("Stripe catalogue snapshot", () => {
     [
       "recurring price",
       { default_price: { ...product().default_price, type: "recurring" } },
+    ],
+    [
+      "negative amount",
+      { default_price: { ...product().default_price, unit_amount: -1 } },
+    ],
+    [
+      "fractional minor-unit amount",
+      { default_price: { ...product().default_price, unit_amount: 10.5 } },
+    ],
+    [
+      "malformed currency",
+      { default_price: { ...product().default_price, currency: "USDX" } },
     ],
   ])("filters an %s", async (_case, overrides) => {
     stripeState.products.list.mockResolvedValue({
@@ -246,6 +235,55 @@ describe("Stripe catalogue snapshot", () => {
     const { listProducts } = await loadStripeModule();
 
     await expect(listProducts()).resolves.toEqual([]);
+  });
+
+  it("indexes only the current default price and rejects a replaced price", async () => {
+    stripeState.products.list.mockResolvedValue({
+      data: [product()],
+      has_more: false,
+    });
+
+    const { getProductByPriceId } = await loadStripeModule();
+
+    await expect(getProductByPriceId("price_1")).resolves.toMatchObject({
+      id: "prod_1",
+    });
+    await expect(getProductByPriceId("price_replaced")).resolves.toBeNull();
+  });
+
+  it("normalizes valid metadata and discards unsafe storefront fields", async () => {
+    stripeState.products.list.mockResolvedValue({
+      data: [
+        product({
+          name: "  Fern  ",
+          images: ["javascript:alert(1)"],
+          metadata: {
+            slug: " Bad / Slug ",
+            category: " Tropical ",
+            light: "invalid",
+            pet_safe: "TRUE",
+            watering: "Monthly",
+          },
+        }),
+      ],
+      has_more: false,
+    });
+
+    const { listProducts } = await loadStripeModule();
+
+    await expect(listProducts()).resolves.toMatchObject([
+      {
+        name: "Fern",
+        image: FALLBACK_IMAGE,
+        metadata: {
+          category: "tropical",
+          petSafe: true,
+          watering: "monthly",
+        },
+      },
+    ]);
+    expect((await listProducts())[0]?.metadata?.slug).toBeUndefined();
+    expect((await listProducts())[0]?.metadata?.light).toBeUndefined();
   });
 
   it("does not load the snapshot for blank lookup keys", async () => {

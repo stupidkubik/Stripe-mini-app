@@ -121,12 +121,14 @@ build emits no 429 warnings, and every catalogue consumer sees the same data.
 
 ### 5. Make catalogue and Checkout eligibility identical
 
-**Status (2026-07-21): Partially resolved by item 4.** Catalogue display and
-Checkout now use the same snapshot, and the repository rejects inactive
-products, inactive or recurring prices, and prices without amount/currency.
-The explicit storefront currency and metadata policy remains to be completed.
+**Status (2026-07-21): Complete.** Catalogue display and Checkout now consume
+the same `SellableProduct` snapshot. The repository requires an active product
+with its current active one-time `default_price`, a safe integer amount, a
+valid Stripe currency, and normalized storefront metadata. Missing, inactive,
+recurring, replaced, and malformed prices are covered by tests. The separate
+single-currency cart policy remains item 6.
 
-**Problem:** The catalogue falls back to the first active price for a product
+**Problem (resolved):** The catalogue falls back to the first active price for a product
 without `default_price`, while Checkout accepts only an active default price.
 This can display an item that cannot be purchased.
 

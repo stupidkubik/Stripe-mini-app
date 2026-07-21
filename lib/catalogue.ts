@@ -11,11 +11,13 @@ import type {
 import { logServerError } from "@/lib/server-log";
 
 export type CatalogueSnapshot = {
-  products: ProductDTO[];
-  byId: Record<string, ProductDTO>;
-  bySlug: Record<string, ProductDTO>;
-  byPriceId: Record<string, ProductDTO>;
+  products: SellableProduct[];
+  byId: Record<string, SellableProduct>;
+  bySlug: Record<string, SellableProduct>;
+  byPriceId: Record<string, SellableProduct>;
 };
+
+export type SellableProduct = ProductDTO;
 
 export interface CatalogueRepository {
   getSnapshot(): Promise<CatalogueSnapshot>;
@@ -55,6 +57,28 @@ function normalizeMetadataValue(value: string | undefined): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function normalizeSlug(value: string | undefined): string | undefined {
+  const normalized = normalizeMetadataValue(value)?.toLowerCase();
+  return normalized && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalized)
+    ? normalized
+    : undefined;
+}
+
+function normalizeImage(value: string | undefined): string {
+  if (!value) {
+    return FALLBACK_IMAGE;
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.toString()
+      : FALLBACK_IMAGE;
+  } catch {
+    return FALLBACK_IMAGE;
+  }
+}
+
 function normalizeEnumValue<T extends string>(
   value: string | undefined,
   allowed: readonly T[],
@@ -90,7 +114,7 @@ function normalizeProductMetadata(
 
   const raw = metadata as Record<string, string | undefined>;
   const normalized: ProductMetadata = {
-    slug: normalizeMetadataValue(raw.slug),
+    slug: normalizeSlug(raw.slug),
     category: normalizeMetadataValue(raw.category)?.toLowerCase(),
     light: normalizeEnumValue<ProductLight>(raw.light, PRODUCT_LIGHTS),
     petSafe: normalizeBoolean(raw.pet_safe),
@@ -105,27 +129,34 @@ function normalizeProductMetadata(
     : undefined;
 }
 
-function normalizeProduct(
+function createSellableProduct(
   product: Stripe.Product,
   price: Stripe.Price,
-): ProductDTO | null {
+): SellableProduct | null {
+  const name = product.name.trim();
+  const currency = price.currency?.trim().toUpperCase();
+
   if (
     !product.active ||
     !price.active ||
     price.type !== "one_time" ||
     price.unit_amount == null ||
-    !price.currency
+    !Number.isSafeInteger(price.unit_amount) ||
+    price.unit_amount < 0 ||
+    !currency ||
+    !/^[A-Z]{3}$/.test(currency) ||
+    name.length === 0
   ) {
     return null;
   }
 
   return {
     id: product.id,
-    name: product.name,
+    name,
     description: product.description,
-    image: product.images?.[0] ?? FALLBACK_IMAGE,
+    image: normalizeImage(product.images?.[0]),
     priceId: price.id,
-    currency: price.currency.toUpperCase(),
+    currency,
     unitAmount: price.unit_amount,
     metadata: normalizeProductMetadata(product.metadata),
   };
@@ -200,16 +231,7 @@ export class StripeCatalogueRepository implements CatalogueRepository {
       }
     }
 
-    const prices = await this.withRetry(() =>
-      this.stripe.prices.list({
-        product: product.id,
-        active: true,
-        type: "one_time",
-        limit: 1,
-      }),
-    );
-
-    return prices.data[0] ?? null;
+    return null;
   }
 
   private async loadProducts(): Promise<ProductDTO[]> {
@@ -238,27 +260,27 @@ export class StripeCatalogueRepository implements CatalogueRepository {
       }
     }
 
-    const normalized: Array<ProductDTO | null> = [];
+    const normalized: Array<SellableProduct | null> = [];
 
     // Stripe normally expands every default price in the list call. Resolve
     // exceptional products sequentially so missing defaults cannot create an
     // unbounded burst of fallback Price API calls.
     for (const product of products) {
       const price = await this.resolvePrice(product);
-      normalized.push(price ? normalizeProduct(product, price) : null);
+      normalized.push(price ? createSellableProduct(product, price) : null);
     }
 
     return normalized
-      .filter((product): product is ProductDTO => product !== null)
+      .filter((product): product is SellableProduct => product !== null)
       .sort((left, right) => left.name.localeCompare(right.name));
   }
 
   async getSnapshot(): Promise<CatalogueSnapshot> {
     try {
       const products = await this.loadProducts();
-      const byId: Record<string, ProductDTO> = {};
-      const bySlug: Record<string, ProductDTO> = {};
-      const byPriceId: Record<string, ProductDTO> = {};
+      const byId: Record<string, SellableProduct> = {};
+      const bySlug: Record<string, SellableProduct> = {};
+      const byPriceId: Record<string, SellableProduct> = {};
 
       for (const product of products) {
         const idKey = normalizeLookupKey(product.id);
