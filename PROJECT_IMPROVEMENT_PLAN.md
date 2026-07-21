@@ -27,13 +27,18 @@ the current build.
 
 ### 1. Apply the safe transitive dependency fixes
 
-**Problem:** The lockfile still contains vulnerable dev-only versions of
+**Status (2026-07-21): Complete.** Applied the non-breaking audit fix. The
+full and production audits now contain only the two documented moderate
+Next.js/PostCSS entries; high, critical, and other dev-toolchain findings are
+cleared. Lint, all 134 unit tests, and the production build pass.
+
+**Problem (resolved):** The lockfile contained vulnerable dev-only versions of
 `brace-expansion`, `js-yaml`, and `picomatch`, plus moderate/low AJV and Babel
 findings. These are not runtime-reachable in the storefront, but they process
 repository and tool input in CI and on developer machines.
 
-**Plan:** Run the non-breaking audit fix, review the lockfile-only changes, then
-rerun lint, unit tests, build, and the full audit. Keep the Next.js/PostCSS item
+**Remediation:** Ran the non-breaking audit fix, reviewed the lockfile-only
+changes, then reran lint, unit tests, build, and the full audit. Keep the Next.js/PostCSS item
 as an explicit, time-bounded exception; never run `npm audit fix --force` for it.
 
 **Done when:** The full audit contains only the documented Next.js/PostCSS
