@@ -6,15 +6,14 @@ import type Stripe from "stripe";
 
 import OrderSuccess from "@/components/cart/order-success";
 import { isSuccessPreviewEnabled } from "@/lib/config/server";
+import { getReceiptCookieName, verifyReceiptProof } from "@/lib/receipt-proof";
 import { logServerError } from "@/lib/server-log";
 import { stripe } from "@/lib/stripe";
 
 const searchParamsSchema = z.object({
-  session_id: z.string().min(1, "session_id is required"),
+  session_id: z.string().min(1, "session_id is required").max(255),
   preview: z.string().optional(),
 });
-const RECEIPT_TOKEN_COOKIE = "checkout_receipt_token";
-
 type SuccessPageProps = {
   searchParams: Promise<{ session_id?: string }>;
 };
@@ -135,9 +134,22 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     redirect("/cart");
   }
 
+  const allowPreview =
+    parsed.data.preview === "1" &&
+    (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
+  const cookieStore = await Promise.resolve(cookies());
+  const receiptProof = cookieStore.get(
+    getReceiptCookieName(parsed.data.session_id),
+  )?.value;
+
+  if (
+    !allowPreview &&
+    !verifyReceiptProof(parsed.data.session_id, receiptProof)
+  ) {
+    redirect("/cart");
+  }
+
   try {
-    const cookieStore = await Promise.resolve(cookies());
-    const receiptToken = cookieStore.get(RECEIPT_TOKEN_COOKIE)?.value;
     const session = await stripe.checkout.sessions.retrieve(
       parsed.data.session_id,
       {
@@ -152,19 +164,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
       },
     );
 
-    const allowPreview =
-      parsed.data.preview === "1" &&
-      (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
-
-    const hasReceiptProof =
-      receiptToken !== undefined &&
-      receiptToken === session?.metadata?.receipt_token;
-
-    if (
-      !session ||
-      (!hasReceiptProof && !allowPreview) ||
-      (session.payment_status !== "paid" && !allowPreview)
-    ) {
+    if (!session || (session.payment_status !== "paid" && !allowPreview)) {
       redirect("/cart");
     }
 

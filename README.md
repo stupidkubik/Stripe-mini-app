@@ -21,7 +21,7 @@ Verdant Lane is a compact e-commerce demo that connects a polished Next.js App R
 - Persisted cart (Zustand) with quantity controls, toast feedback, theme toggle, and keyboard-friendly interactions.
 - Stripe Checkout session creator that accepts only each active product's default price, enforces cart/quantity limits, and applies approved promotion codes server-side.
 - Webhook handler that verifies Stripe signatures and records privacy-minimal payment status events for operational logs.
-- Success page includes a receipt-token protected timeline and itemized order summary (images, quantities, totals, promo code).
+- Success page verifies a per-session signed receipt cookie before loading the itemized order summary (images, quantities, totals, promo code).
 - SEO upgrades: dynamic Open Graph image generator, canonical metadata, Twitter cards, and auto-generated `sitemap.xml` + `robots.txt`.
 - Test suite with Vitest (unit/UI) and Playwright (E2E) plus reporting helpers.
 
@@ -134,7 +134,7 @@ Algorithm for viewing a successful payment flow:
 /success?session_id=cs_test_...&preview=1
 ```
 
-Without `preview=1`, the session must be paid and the browser must hold the matching receipt token created when it started Checkout; otherwise the app redirects to `/cart`.
+Without `preview=1`, the session must be paid and the browser must hold the matching signed receipt cookie created when it started Checkout; otherwise the app redirects to `/cart` without contacting Stripe.
 
 ## ✅ Testing
 

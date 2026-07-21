@@ -1,7 +1,5 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-
 import { z } from "zod";
 
 import { getSiteOrigin } from "@/lib/config/server";
@@ -14,6 +12,7 @@ import {
   readRequestText,
   RequestBodyTooLargeError,
 } from "@/lib/request-body";
+import { createReceiptProof, getReceiptCookieName } from "@/lib/receipt-proof";
 import { logServerError } from "@/lib/server-log";
 import { isStorefrontCurrency } from "@/lib/storefront-policy";
 import { getProductByPriceId, stripe } from "@/lib/stripe";
@@ -49,7 +48,6 @@ const CHECKOUT_ERROR_CODES = {
   checkoutFailed: "checkout_failed",
 } as const;
 const STRIPE_METADATA_VALUE_LIMIT = 500;
-const RECEIPT_TOKEN_COOKIE = "checkout_receipt_token";
 const RECEIPT_TOKEN_MAX_AGE_SECONDS = 24 * 60 * 60;
 const DEFAULT_CHECKOUT_BODY_LIMIT_BYTES = 16 * 1024;
 
@@ -257,9 +255,6 @@ export async function POST(request: Request) {
       cart_item_count: String(totalItemsInCart),
       cart_unique_items: String(lineItemsMap.size),
     };
-    const receiptToken = randomUUID();
-    metadata.receipt_token = receiptToken;
-
     if (parsed.data.promotionCode) {
       metadata.promotion_code = parsed.data.promotionCode;
     }
@@ -279,9 +274,11 @@ export async function POST(request: Request) {
     });
 
     const response = NextResponse.json({ sessionId: session.id });
+    const receiptCookieName = getReceiptCookieName(session.id);
+    const receiptProof = createReceiptProof(session.id);
     response.headers.append(
       "Set-Cookie",
-      `${RECEIPT_TOKEN_COOKIE}=${receiptToken}; Max-Age=${RECEIPT_TOKEN_MAX_AGE_SECONDS}; Path=/success; HttpOnly; SameSite=Lax${
+      `${receiptCookieName}=${receiptProof}; Max-Age=${RECEIPT_TOKEN_MAX_AGE_SECONDS}; Path=/success; HttpOnly; SameSite=Lax${
         process.env.NODE_ENV === "production" ? "; Secure" : ""
       }`,
     );

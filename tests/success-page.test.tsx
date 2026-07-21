@@ -77,12 +77,17 @@ const baseSession = {
 };
 
 describe("Success page", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     stripeMock.checkout.sessions.retrieve.mockReset();
     redirectMock.mockClear();
     delete process.env.DEMO_SUCCESS;
     delete process.env.NEXT_PUBLIC_DEMO_SUCCESS;
-    setMockCookies({ checkout_receipt_token: "receipt-token" });
+    process.env.RECEIPT_SIGNING_SECRET = "test-receipt-signing-secret";
+    const { createReceiptProof, getReceiptCookieName } =
+      await import("@/lib/receipt-proof");
+    setMockCookies({
+      [getReceiptCookieName("cs_123")]: createReceiptProof("cs_123"),
+    });
   });
 
   it("redirects when session_id is missing", async () => {
@@ -96,6 +101,11 @@ describe("Success page", () => {
   });
 
   it("redirects when payment is not confirmed", async () => {
+    const { createReceiptProof, getReceiptCookieName } =
+      await import("@/lib/receipt-proof");
+    setMockCookies({
+      [getReceiptCookieName("cs_unpaid")]: createReceiptProof("cs_unpaid"),
+    });
     stripeMock.checkout.sessions.retrieve.mockResolvedValue({
       id: "cs_unpaid",
       payment_status: "unpaid",
@@ -113,7 +123,11 @@ describe("Success page", () => {
   });
 
   it("redirects when the browser does not have the matching receipt token", async () => {
-    setMockCookies({ checkout_receipt_token: "another-browser" });
+    const { createReceiptProof, getReceiptCookieName } =
+      await import("@/lib/receipt-proof");
+    setMockCookies({
+      [getReceiptCookieName("cs_123")]: createReceiptProof("cs_other"),
+    });
     stripeMock.checkout.sessions.retrieve.mockResolvedValue(baseSession);
 
     const { default: SuccessPage } = await loadPage();
@@ -122,6 +136,7 @@ describe("Success page", () => {
       SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_123" }) }),
     ).rejects.toBeInstanceOf(RedirectError);
     expect(redirectMock).toHaveBeenCalledWith("/cart");
+    expect(stripeMock.checkout.sessions.retrieve).not.toHaveBeenCalled();
   });
 
   it("returns order summary with derived props", async () => {

@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import CartError from "@/app/cart/error";
 import CartLoading from "@/app/cart/loading";
@@ -11,36 +11,6 @@ import ProductsError from "@/app/products/error";
 import ProductDetailLoading from "@/app/products/[slug]/loading";
 import ProductNotFound from "@/app/products/[slug]/not-found";
 import ProductDetailError from "@/app/products/[slug]/error";
-
-class RedirectError extends Error {
-  url: string;
-
-  constructor(url: string) {
-    super(`redirect:${url}`);
-    this.url = url;
-  }
-}
-
-const { stripeMock, redirectMock } = vi.hoisted(() => ({
-  stripeMock: {
-    checkout: {
-      sessions: {
-        retrieve: vi.fn(),
-      },
-    },
-  },
-  redirectMock: vi.fn((url: string) => {
-    throw new RedirectError(url);
-  }),
-}));
-
-vi.mock("next/navigation", () => ({
-  redirect: redirectMock,
-}));
-
-vi.mock("@/lib/stripe", () => ({
-  stripe: stripeMock,
-}));
 
 vi.mock("@/components/cart/cancel-cart-summary", () => ({
   __esModule: true,
@@ -54,11 +24,6 @@ vi.mock("@/components/cart/cart-page-client", () => ({
 }));
 
 describe("Quick pages", () => {
-  beforeEach(() => {
-    stripeMock.checkout.sessions.retrieve.mockReset();
-    redirectMock.mockClear();
-  });
-
   it("renders cart error and retries", async () => {
     const error = new Error("boom");
     const reset = vi.fn();
@@ -108,32 +73,8 @@ describe("Quick pages", () => {
     expect(home).toHaveAttribute("href", "/");
   });
 
-  it("redirects cancel page when session id is missing", async () => {
-    await expect(
-      CancelPage({ searchParams: Promise.resolve({}) }),
-    ).rejects.toBeInstanceOf(RedirectError);
-
-    expect(redirectMock).toHaveBeenCalledWith("/cart");
-  });
-
-  it("redirects cancel page when stripe lookup fails", async () => {
-    stripeMock.checkout.sessions.retrieve.mockRejectedValue(new Error("fail"));
-
-    await expect(
-      CancelPage({ searchParams: Promise.resolve({ session_id: "cs_fail" }) }),
-    ).rejects.toBeInstanceOf(RedirectError);
-
-    expect(stripeMock.checkout.sessions.retrieve).toHaveBeenCalledWith(
-      "cs_fail",
-    );
-  });
-
-  it("renders cancel page content", async () => {
-    stripeMock.checkout.sessions.retrieve.mockResolvedValue({ id: "cs_ok" });
-
-    const element = await CancelPage({
-      searchParams: Promise.resolve({ session_id: "cs_ok" }),
-    });
+  it("renders cancel page without a session lookup", () => {
+    const element = CancelPage();
 
     render(element);
 

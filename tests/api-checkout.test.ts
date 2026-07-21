@@ -36,6 +36,7 @@ const ORIGINAL_STRIPE_API_BUDGET_MAX = process.env.STRIPE_API_BUDGET_MAX;
 const ORIGINAL_STRIPE_API_BUDGET_WINDOW =
   process.env.STRIPE_API_BUDGET_WINDOW_MS;
 const ORIGINAL_VERCEL_FLAG = process.env.VERCEL;
+const ORIGINAL_RECEIPT_SIGNING_SECRET = process.env.RECEIPT_SIGNING_SECRET;
 
 const validPrice = {
   id: "price_1",
@@ -64,6 +65,7 @@ describe("POST /api/checkout", () => {
     delete process.env.STRIPE_API_BUDGET_MAX;
     delete process.env.STRIPE_API_BUDGET_WINDOW_MS;
     delete process.env.VERCEL;
+    process.env.RECEIPT_SIGNING_SECRET = "test-receipt-signing-secret";
     getProductByPriceIdMock.mockReset();
     getProductByPriceIdMock.mockResolvedValue(validPrice);
     stripeMock.promotionCodes.list.mockReset();
@@ -133,6 +135,12 @@ describe("POST /api/checkout", () => {
       delete process.env.VERCEL;
     } else {
       process.env.VERCEL = ORIGINAL_VERCEL_FLAG;
+    }
+
+    if (ORIGINAL_RECEIPT_SIGNING_SECRET === undefined) {
+      delete process.env.RECEIPT_SIGNING_SECRET;
+    } else {
+      process.env.RECEIPT_SIGNING_SECRET = ORIGINAL_RECEIPT_SIGNING_SECRET;
     }
   });
 
@@ -270,6 +278,9 @@ describe("POST /api/checkout", () => {
     await expect(response.json()).resolves.toEqual({
       sessionId: "cs_test_123",
     });
+    expect(response.headers.get("Set-Cookie")).toMatch(
+      /^checkout_receipt_[A-Za-z0-9_-]{24}=v1\.[A-Za-z0-9_-]+;/,
+    );
     expect(stripeMock.promotionCodes.list).toHaveBeenCalledWith({
       code: "SUMMER25",
       active: true,
@@ -289,6 +300,9 @@ describe("POST /api/checkout", () => {
         allow_promotion_codes: false,
       }),
     );
+    expect(
+      stripeMock.checkout.sessions.create.mock.calls[0]?.[0]?.metadata,
+    ).not.toHaveProperty("receipt_token");
   });
 
   it("ignores spoofed origin/referer headers when building redirect urls", async () => {

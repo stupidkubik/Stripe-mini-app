@@ -1,43 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { z } from "zod";
 
 import CancelCartSummary from "@/components/cart/cancel-cart-summary";
 import { Button } from "@/components/ui/button";
-import { logServerError } from "@/lib/server-log";
-import { stripe } from "@/lib/stripe";
 import styles from "./page.module.css";
-
-const searchParamsSchema = z.object({
-  session_id: z.string().min(1, "session_id is required"),
-});
 
 export const metadata: Metadata = {
   title: "Checkout cancelled | Mini Shop",
   description: "Stripe checkout cancellation page for Mini Shop orders.",
 };
 
-export const dynamic = "force-dynamic";
-
-type CancelPageProps = {
-  searchParams: Promise<{ session_id?: string }>;
-};
-
-export default async function CancelPage({ searchParams }: CancelPageProps) {
-  const parsed = searchParamsSchema.safeParse(await searchParams);
-
-  if (!parsed.success) {
-    redirect("/cart");
-  }
-
-  try {
-    await stripe.checkout.sessions.retrieve(parsed.data.session_id);
-  } catch (error) {
-    logServerError("stripe.checkout.session.retrieve.cancel", error);
-    redirect("/cart");
-  }
-
+export default function CancelPage() {
   return (
     <section className={styles.page}>
       <div className={styles.panel}>

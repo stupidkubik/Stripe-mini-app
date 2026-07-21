@@ -160,7 +160,14 @@ Stripe Session error.
 
 ### 7. Remove Session-ID-only work from success and cancel pages
 
-**Problem:** Receipt authorization is fixed, but a browser has only one receipt
+**Status (2026-07-21): Complete.** Checkout now creates a per-session HMAC
+receipt proof in an independently named HttpOnly cookie. The success page
+verifies that proof before calling Stripe, so parallel tabs remain independent
+and fabricated Session IDs consume no Stripe quota. Receipt secrets are no
+longer copied into Stripe metadata. The generic cancel page performs no Stripe
+lookup and renders without requiring a Session ID.
+
+**Problem (resolved):** Receipt authorization is fixed, but a browser has only one receipt
 token cookie. A second Checkout overwrites the first token. Also, `/success` and
 `/cancel` call Stripe before establishing proof; arbitrary leaked or fabricated
 Session IDs can consume API quota. The cancel page retrieves a Session only to
