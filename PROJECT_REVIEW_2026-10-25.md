@@ -209,6 +209,19 @@ CTE и outbox, фикстурный каталог для CI, read-only workflow
 | 0.4 | `npx prettier -w .` одним коммитом без правок логики                                                                                                                                                                                                                                                 | 11 файлов                                        | S      | `prettier --check .` чист                                                |
 | 0.5 | Убрать `export const runtime = "edge"` из `app/opengraph-image.tsx`, обновить `tests/opengraph-image.test.ts` если он проверяет экспорт                                                                                                                                                              | `app/opengraph-image.tsx`                        | S      | build без предупреждения про Edge Runtime, `/opengraph-image` отдаёт PNG |
 
+**Статус: выполнено 2026-10-25**, ветка `fix/stage-0-build-and-audit`. Гейт
+из раздела 6 зелёный: tsc без ошибок, build проходит, 157 тестов, E2E smoke
+4/4, `npm audit` 0 уязвимостей. Отличия от плана:
+
+- 0.3: `npm audit fix` не поднял vitest с 4.1.10, moderate advisory в
+  `@vitest/mocker` остался. `vitest` и `@vitest/coverage-v8` подняты явно до
+  `^4.1.12`.
+- 0.5: без Edge Runtime Next пререндерит `/opengraph-image` при сборке, и
+  сборка упала: Satori не принимает `display: "inline-flex"`. Та же ошибка
+  воспроизводится на старом коде при запросе к маршруту, то есть OG-картинка
+  не отдавалась и до перехода на Node.js runtime. Исправлено на
+  `display: "flex"`, маршрут теперь статический.
+
 ### Этап 1. CI, который ловит такие поломки (следующий PR)
 
 | #   | Задача                                                                                                                                                                                       | Файлы                                                         | Оценка | Готово, когда                                        |
