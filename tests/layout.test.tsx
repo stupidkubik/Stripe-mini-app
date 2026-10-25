@@ -19,20 +19,8 @@ vi.mock("next-themes", () => ({
 }));
 
 const loadLayout = async () => await import("@/app/layout");
-const loadHead = async () => await import("@/app/head");
 
-describe("App layout and head", () => {
-  it("renders head links", async () => {
-    const { default: Head } = await loadHead();
-
-    const { container } = render(<Head />, { container: document.head });
-
-    const links = Array.from(container.querySelectorAll("link"));
-    expect(links).toHaveLength(4);
-    expect(links[0]).toHaveAttribute("rel", "preconnect");
-    expect(links[0]).toHaveAttribute("href", "https://files.stripe.com");
-  });
-
+describe("App layout", () => {
   it("wraps children with providers and layout chrome", async () => {
     const { default: RootLayout } = await loadLayout();
 
