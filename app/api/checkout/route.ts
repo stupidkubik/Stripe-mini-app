@@ -74,7 +74,7 @@ function normalizeMetadata(
 
 export async function POST(request: Request) {
   try {
-    const headerList = await Promise.resolve(headers());
+    const headerList = await headers();
     const rateLimit = checkCheckoutRateLimit(headerList);
 
     if (!rateLimit.allowed) {
@@ -273,7 +273,14 @@ export async function POST(request: Request) {
       metadata: normalizeMetadata(metadata),
     });
 
-    const response = NextResponse.json({ sessionId: session.id });
+    if (!session.url) {
+      throw new Error("Stripe Checkout session has no redirect URL.");
+    }
+
+    const response = NextResponse.json({
+      sessionId: session.id,
+      url: session.url,
+    });
     const receiptCookieName = getReceiptCookieName(session.id);
     const receiptProof = createReceiptProof(session.id);
     response.headers.append(

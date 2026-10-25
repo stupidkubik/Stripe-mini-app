@@ -23,7 +23,6 @@ Enforced by `coverage.thresholds` in `vitest.config.mts`;
 - app/api/stripe/webhook/route.ts
 - lib/order-store.ts
 - lib/stripe.ts
-- lib/stripe-client.ts
 - app/success/page.tsx
 
 ## Run Scenarios

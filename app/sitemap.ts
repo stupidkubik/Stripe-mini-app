@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
 
+import { getSiteOrigin } from "@/lib/config/server";
 import { logServerError } from "@/lib/server-log";
 import { listProducts } from "@/lib/stripe";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const baseUrl = getSiteOrigin();
   const now = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
     {

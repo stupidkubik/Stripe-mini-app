@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/site-header", () => ({
   __esModule: true,
@@ -19,18 +19,19 @@ vi.mock("next-themes", () => ({
 }));
 
 const loadLayout = async () => await import("@/app/layout");
-const loadHead = async () => await import("@/app/head");
 
-describe("App layout and head", () => {
-  it("renders head links", async () => {
-    const { default: Head } = await loadHead();
+describe("App layout", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
 
-    const { container } = render(<Head />, { container: document.head });
+  it("resolves metadataBase from the site origin", async () => {
+    vi.stubEnv("SITE_URL", "https://shop.example.com/some/path");
+    vi.resetModules();
 
-    const links = Array.from(container.querySelectorAll("link"));
-    expect(links).toHaveLength(4);
-    expect(links[0]).toHaveAttribute("rel", "preconnect");
-    expect(links[0]).toHaveAttribute("href", "https://files.stripe.com");
+    const { metadata } = await loadLayout();
+
+    expect(String(metadata.metadataBase)).toBe("https://shop.example.com/");
   });
 
   it("wraps children with providers and layout chrome", async () => {

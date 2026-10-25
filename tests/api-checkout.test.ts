@@ -262,6 +262,7 @@ describe("POST /api/checkout", () => {
     });
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_123",
+      url: "https://checkout.stripe.com/c/pay/cs_test_123",
     });
     setMockHeaders({ origin: "https://example.com" });
 
@@ -277,6 +278,7 @@ describe("POST /api/checkout", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
       sessionId: "cs_test_123",
+      url: "https://checkout.stripe.com/c/pay/cs_test_123",
     });
     expect(response.headers.get("Set-Cookie")).toMatch(
       /^checkout_receipt_[A-Za-z0-9_-]{24}=v1\.[A-Za-z0-9_-]+;/,
@@ -308,6 +310,7 @@ describe("POST /api/checkout", () => {
   it("ignores spoofed origin/referer headers when building redirect urls", async () => {
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_456",
+      url: "https://checkout.stripe.com/c/pay/cs_test_456",
     });
     setMockHeaders({
       origin: "https://evil.example",
@@ -338,6 +341,7 @@ describe("POST /api/checkout", () => {
     process.env.VERCEL_PROJECT_PRODUCTION_URL = "shop-live.vercel.app";
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_vercel_fallback",
+      url: "https://checkout.stripe.com/c/pay/cs_test_vercel_fallback",
     });
     setMockHeaders({
       origin: "https://evil.example",
@@ -380,6 +384,26 @@ describe("POST /api/checkout", () => {
     });
   });
 
+  it("returns 500 without a receipt cookie when the session has no Checkout URL", async () => {
+    stripeMock.checkout.sessions.create.mockResolvedValue({
+      id: "cs_test_no_url",
+      url: null,
+    });
+
+    const { POST } = await loadRoute();
+    const request = createJsonRequest("http://localhost:3000/api/checkout", {
+      items: [{ priceId: validPrice.id, quantity: 1 }],
+    });
+
+    const response = await POST(request);
+
+    expect(response.status).toBe(500);
+    await expect(response.json()).resolves.toMatchObject({
+      code: "checkout_failed",
+    });
+    expect(response.headers.get("Set-Cookie")).toBeNull();
+  });
+
   it("returns 429 when checkout rate limit is exceeded", async () => {
     process.env.RATE_LIMIT_CHECKOUT_MAX = "1";
     process.env.RATE_LIMIT_CHECKOUT_WINDOW_MS = "60000";
@@ -387,6 +411,7 @@ describe("POST /api/checkout", () => {
 
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_limit",
+      url: "https://checkout.stripe.com/c/pay/cs_test_limit",
     });
     setMockHeaders({
       "x-vercel-forwarded-for": "203.0.113.7",
@@ -420,6 +445,7 @@ describe("POST /api/checkout", () => {
     process.env.STRIPE_API_BUDGET_WINDOW_MS = "60000";
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_budget",
+      url: "https://checkout.stripe.com/c/pay/cs_test_budget",
     });
 
     const { POST } = await loadRoute();
@@ -452,6 +478,7 @@ describe("POST /api/checkout", () => {
     }));
     stripeMock.checkout.sessions.create.mockResolvedValue({
       id: "cs_test_large_cart",
+      url: "https://checkout.stripe.com/c/pay/cs_test_large_cart",
     });
 
     const { POST } = await loadRoute();

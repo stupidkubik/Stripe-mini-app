@@ -118,8 +118,9 @@ security boundaries that are commonly skipped in portfolio checkout demos.
    authoritative amount or currency.
 4. **Session creation** — the server validates an optional promotion code,
    creates a Stripe Checkout Session with bounded adjustable quantities and
-   automatic tax, and returns only the Session ID. Redirect URLs come from
-   trusted server configuration rather than request headers.
+   automatic tax, and returns the Session ID and its hosted Checkout URL; the
+   browser navigates there without loading Stripe.js. Success and cancel URLs
+   come from trusted server configuration rather than request headers.
 5. **Receipt authorization** — Checkout also creates a per-session HMAC proof in
    an HttpOnly, SameSite cookie scoped to `/success`. A fabricated or leaked
    Session ID causes a redirect before any Stripe receipt lookup.
@@ -149,7 +150,7 @@ flowchart LR
     Catalogue -->|"ISR pages + trusted price index"| Browser
     Browser -->|"price IDs, quantities, email, promo"| Checkout
     Checkout -->|"validated Session creation"| Stripe
-    Checkout -->|"Session ID + HttpOnly receipt proof"| Browser
+    Checkout -->|"Checkout URL + HttpOnly receipt proof"| Browser
     Stripe -->|"hosted payment redirect"| Browser
     Stripe -->|"signed events"| Webhook
     Webhook -->|"atomic event/order update"| Postgres
@@ -171,7 +172,7 @@ flowchart LR
 | Webhook authenticity  | Stripe signatures are verified against the raw request body before event processing.                                                                     |
 | Event idempotency     | Stripe event IDs are unique, paid state is monotonic, and `(session_id, topic)` prevents duplicate fulfillment outbox records.                           |
 | Operational logging   | Server errors pass through an allow-list serializer that omits raw SDK messages, headers, URLs, tokens, promo codes, and customer email.                 |
-| Browser hardening     | Production responses enforce a Stripe-compatible CSP, `frame-ancestors 'none'`, HSTS, nosniff, strict referrer policy, and a minimal permissions policy. |
+| Browser hardening     | Production responses enforce a CSP without Stripe.js, `frame-ancestors 'none'`, HSTS, nosniff, strict referrer policy, and a minimal permissions policy. |
 | Configuration         | Typed Zod profiles separate build, public, runtime, database, and secret variables; runtime-only secrets do not break ordinary builds.                   |
 | CI trust boundary     | Unit, E2E, and ordinary builds use deterministic fixtures with read-only repository permissions and no Stripe secret.                                    |
 
@@ -223,7 +224,7 @@ predictable to change:
   Lucide icons.
 - **State and forms:** Zustand with versioned local persistence, React Hook Form,
   and Zod validation.
-- **Payments:** Stripe Node SDK, Stripe.js, hosted Checkout, Products, Prices,
+- **Payments:** Stripe Node SDK, hosted Checkout, Products, Prices,
   Promotion Codes, Checkout Sessions, and signed webhooks.
 - **Data:** Neon serverless Postgres with lazy schema initialization,
   transactionally idempotent event/order updates, and an outbox table.
@@ -255,7 +256,6 @@ Then adjust values for your Stripe workspace:
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 RECEIPT_SIGNING_SECRET=replace_with_a_long_random_secret
 DATABASE_URL=postgresql://user:password@host/database?sslmode=require
@@ -271,9 +271,10 @@ CHECKOUT_MAX_BODY_BYTES=16384
 STRIPE_WEBHOOK_MAX_BODY_BYTES=1048576
 ```
 
-> `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
+> `SITE_URL` is the trusted site origin used for Stripe Checkout redirect URLs,
+> metadata, `robots.txt`, and the sitemap. `NEXT_PUBLIC_SITE_URL` is a fallback
+> for it; when neither is set, the Vercel production URL is used.
 > `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
-> `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
 > `DATABASE_URL` is required only when processing payment webhooks; builds do not connect to it.
 > `RECEIPT_SIGNING_SECRET` is optional but recommended. If it is omitted, the
 > server derives receipt proofs from `STRIPE_SECRET_KEY`.
@@ -470,15 +471,14 @@ If gitleaks reports a false positive:
   enforce the documented Vercel WAF rule.
 - Preview mode bypasses paid-status and receipt-token checks only for demo/development use; it still fetches the Stripe Checkout session by `session_id`.
 - Product availability requires an active Stripe Product with an active `default_price`.
-- Follow-up work is tracked in [PROJECT_IMPROVEMENT_PLAN.md](./PROJECT_IMPROVEMENT_PLAN.md).
+- Follow-up work is tracked in [PROJECT_REVIEW_2026-10-25.md](./PROJECT_REVIEW_2026-10-25.md).
 
 ## 📦 Deployment
 
 Deploy to Vercel (or any Next.js-compatible host), connect a Marketplace
 Postgres database, and set the same environment variables
-(`STRIPE_SECRET_KEY`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`,
-`STRIPE_WEBHOOK_SECRET`, `DATABASE_URL`, `SITE_URL`, `NEXT_PUBLIC_SITE_URL`,
-`NEXT_PUBLIC_STOREFRONT_CURRENCY`). Add a dedicated `RECEIPT_SIGNING_SECRET` for
+(`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `DATABASE_URL`, `SITE_URL`,
+`NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_STOREFRONT_CURRENCY`). Add a dedicated `RECEIPT_SIGNING_SECRET` for
 independent receipt HMACs and `DEMO_SUCCESS` only if preview mode is intentionally
 enabled outside development.
 

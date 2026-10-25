@@ -3,7 +3,6 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useShallow } from "zustand/react/shallow";
 
 import { ProductDTO } from "@/app/types/product";
 import { AddToCartButton } from "@/components/add-to-cart-button";
@@ -128,13 +127,12 @@ const ProductCard = React.memo(function ProductCard({ product }: Props) {
   const productSlug = product.metadata?.slug ?? product.id;
   const productHref = `/products/${encodeURIComponent(productSlug)}`;
 
-  const { cartItem, updateQty, removeItem } = useCart(
-    useShallow((state) => ({
-      cartItem: state.items.find((item) => item.productId === product.id),
-      updateQty: state.updateQty,
-      removeItem: state.removeItem,
-    })),
+  const cartQuantity = useCart(
+    (state) =>
+      state.items.find((item) => item.productId === product.id)?.quantity,
   );
+  const updateQty = useCart((state) => state.updateQty);
+  const removeItem = useCart((state) => state.removeItem);
 
   const handleQuantityChange = React.useCallback(
     (nextQuantity: number) => {
@@ -169,9 +167,9 @@ const ProductCard = React.memo(function ProductCard({ product }: Props) {
           <Link href={productHref} className={styles.detailsLink}>
             View details
           </Link>
-          {cartItem ? (
+          {cartQuantity !== undefined ? (
             <QuantityInput
-              value={cartItem.quantity}
+              value={cartQuantity}
               onChange={handleQuantityChange}
               min={0}
               max={MAX_QUANTITY}

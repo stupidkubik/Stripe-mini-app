@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { formatPrice } from "@/lib/pricing";
-import { getStripePromise } from "@/lib/stripe-client";
 import styles from "./checkout-form.module.css";
 
 const checkoutSchema = z.object({
@@ -99,6 +98,7 @@ export function CheckoutForm({
   const { toast } = useToast();
   const [formError, setFormError] = React.useState<string | null>(null);
   const [formIssues, setFormIssues] = React.useState<string[]>([]);
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
   const helperId = "checkout-email-helper";
   const errorId = "checkout-email-error";
   const promoHelperId = "checkout-promo-helper";
@@ -169,6 +169,19 @@ export function CheckoutForm({
     return () => subscription.unsubscribe();
   }, [watch]);
 
+  React.useEffect(() => {
+    // Back navigation from Stripe can restore this page from the bfcache with
+    // the redirect still marked as in progress.
+    const resetRedirect = (event: PageTransitionEvent) => {
+      if (event.persisted) {
+        setIsRedirecting(false);
+      }
+    };
+
+    window.addEventListener("pageshow", resetRedirect);
+    return () => window.removeEventListener("pageshow", resetRedirect);
+  }, []);
+
   const handleCheckoutError = React.useCallback(
     (payload?: CheckoutErrorPayload | null) => {
       const resolved = resolveCheckoutError(payload);
@@ -236,7 +249,7 @@ export function CheckoutForm({
       });
 
       const payload = (await response.json().catch(() => null)) as {
-        sessionId?: string;
+        url?: string;
         error?: string;
         code?: string;
         issues?: string[];
@@ -247,8 +260,8 @@ export function CheckoutForm({
         return;
       }
 
-      const sessionId = payload?.sessionId;
-      if (!sessionId) {
+      const checkoutUrl = payload?.url;
+      if (!checkoutUrl) {
         handleCheckoutError({
           error: "Stripe session could not be created",
           code: "checkout_failed",
@@ -256,17 +269,8 @@ export function CheckoutForm({
         return;
       }
 
-      const stripe = await getStripePromise();
-      if (!stripe) {
-        throw new Error(
-          "Stripe.js failed to load. Check your publishable key.",
-        );
-      }
-
-      const { error } = await stripe.redirectToCheckout({ sessionId });
-      if (error) {
-        throw new Error(error.message);
-      }
+      setIsRedirecting(true);
+      window.location.assign(checkoutUrl);
     } catch (error) {
       const message =
         error instanceof Error
@@ -275,6 +279,8 @@ export function CheckoutForm({
       handleCheckoutError({ error: message });
     }
   });
+
+  const isBusy = isSubmitting || isRedirecting;
 
   return (
     <form onSubmit={onSubmit} className={styles.form} noValidate>
@@ -354,16 +360,16 @@ export function CheckoutForm({
         type="submit"
         className={styles.actionButton}
         size="lg"
-        disabled={isSubmitting || items.length === 0}
+        disabled={isBusy || items.length === 0}
       >
-        {isSubmitting ? "Redirecting…" : "Proceed to checkout"}
+        {isBusy ? "Redirecting…" : "Proceed to checkout"}
       </Button>
       <Button
         type="button"
         variant="ghost"
         className={styles.actionButton}
         onClick={onClear}
-        disabled={isSubmitting || items.length === 0}
+        disabled={isBusy || items.length === 0}
       >
         Clear cart
       </Button>

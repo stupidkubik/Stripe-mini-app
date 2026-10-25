@@ -39,10 +39,8 @@ export async function generateMetadata({
     };
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const productSlug = product.metadata?.slug ?? product.id;
   const relativeUrl = `/products/${encodeURIComponent(productSlug)}`;
-  const absoluteUrl = new URL(relativeUrl, baseUrl).toString();
   const ogImage = product.image ?? "/opengraph-image";
 
   return {
@@ -53,7 +51,7 @@ export async function generateMetadata({
     },
     openGraph: {
       type: "website",
-      url: absoluteUrl,
+      url: relativeUrl,
       title: `${product.name} | Mini Shop`,
       description: product.description ?? undefined,
       images: [
