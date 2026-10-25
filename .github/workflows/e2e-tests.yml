@@ -64,22 +64,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Build and run full e2e tests against next start
-        id: e2e
-        continue-on-error: true
-        run: npm run build && npm run test:e2e
+      - name: Build the production app
+        run: npm run build
 
-      - name: Generate badges
-        run: node scripts/generate-badges.mjs --e2e-status ${{ steps.e2e.outcome }}
-
-      - name: Upload badge artifact
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: e2e-test-badges
-          path: badges/*.svg
-          if-no-files-found: error
-
-      - name: Fail if e2e tests failed
-        if: steps.e2e.outcome == 'failure'
-        run: exit 1
+      - name: Run full e2e tests against next start
+        run: npm run test:e2e
