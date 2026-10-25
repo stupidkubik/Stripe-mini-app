@@ -74,7 +74,7 @@ function normalizeMetadata(
 
 export async function POST(request: Request) {
   try {
-    const headerList = await Promise.resolve(headers());
+    const headerList = await headers();
     const rateLimit = checkCheckoutRateLimit(headerList);
 
     if (!rateLimit.allowed) {

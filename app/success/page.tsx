@@ -137,7 +137,7 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
   const allowPreview =
     parsed.data.preview === "1" &&
     (isSuccessPreviewEnabled() || process.env.NODE_ENV === "development");
-  const cookieStore = await Promise.resolve(cookies());
+  const cookieStore = await cookies();
   const receiptProof = cookieStore.get(
     getReceiptCookieName(parsed.data.session_id),
   )?.value;
