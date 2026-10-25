@@ -2,7 +2,7 @@
 
 ## Coverage Targets (Vitest)
 
-Enforced by `coverage.thresholds` in `vitest.config.ts`;
+Enforced by `coverage.thresholds` in `vitest.config.mts`;
 `npm run test:unit:coverage` fails below them.
 
 - Lines >= 85%

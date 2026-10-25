@@ -12,7 +12,7 @@
     "test:e2e:smoke": "playwright test tests/e2e/cart.spec.ts tests/e2e/not-found.spec.ts tests/e2e/success.spec.ts",
     "test:unit": "vitest",
     "test:unit:coverage": "vitest --coverage",
-    "test:integration:stripe": "vitest --config vitest.integration.config.ts --run",
+    "test:integration:stripe": "vitest --config vitest.integration.config.mts --run",
     "format": "prettier -w .",
     "typecheck": "tsc --noEmit",
     "format:check": "prettier --check .",

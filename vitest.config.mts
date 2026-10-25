@@ -4,7 +4,7 @@ import path from "path";
 export default defineConfig({
   test: {
     environment: "jsdom",
-    setupFiles: [path.resolve(__dirname, "tests/setup.tsx")],
+    setupFiles: [path.resolve(import.meta.dirname, "tests/setup.tsx")],
     globals: true,
     css: false,
     exclude: [
@@ -15,7 +15,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "text-summary", "html", "json-summary", "lcov"],
-      reportsDirectory: path.resolve(__dirname, "coverage"),
+      reportsDirectory: path.resolve(import.meta.dirname, "coverage"),
       include: [
         "app/**/*.{ts,tsx}",
         "components/**/*.{ts,tsx}",
@@ -25,9 +25,8 @@ export default defineConfig({
         "tests/**",
         "playwright.config.ts",
         "**/playwright.config.ts",
-        "vitest.config.ts",
+        "vitest.config.mts",
         "next.config.ts",
-        "postcss.config.mjs",
         "eslint.config.mjs",
         "scripts/**",
       ],
@@ -41,14 +40,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
+      "@": path.resolve(import.meta.dirname, "./"),
       "server-only": path.resolve(
-        __dirname,
+        import.meta.dirname,
         "./tests/test-utils/server-only.ts",
       ),
     },
-  },
-  esbuild: {
-    jsx: "automatic",
   },
 });
