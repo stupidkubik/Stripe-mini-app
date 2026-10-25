@@ -61,10 +61,6 @@ const publicSchema = z.object({
     (value) => value === undefined || /^[A-Za-z]{3}$/.test(value),
     "must be a three-letter currency code",
   ),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: optionalText.refine(
-    (value) => value === undefined || /^pk_(test|live)(?:_|$)/.test(value),
-    "must be a Stripe publishable key",
-  ),
 });
 
 const siteRuntimeSchema = z.object({

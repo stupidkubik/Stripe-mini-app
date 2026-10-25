@@ -3,15 +3,15 @@ import type { NextConfig } from "next";
 const isDevelopment = process.env.NODE_ENV === "development";
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://js.stripe.com https://*.js.stripe.com https://checkout.stripe.com`,
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.stripe.com https://images.unsplash.com https://plus.unsplash.com",
   "font-src 'self' data:",
-  "connect-src 'self' https://api.stripe.com https://checkout.stripe.com",
-  "frame-src https://js.stripe.com https://*.js.stripe.com https://hooks.stripe.com https://checkout.stripe.com",
+  "connect-src 'self'",
+  "frame-src 'none'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self' https://checkout.stripe.com",
+  "form-action 'self'",
   "frame-ancestors 'none'",
   ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");

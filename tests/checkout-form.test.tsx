@@ -1,21 +1,22 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CheckoutForm } from "@/components/cart/checkout-form";
 import type { CartItem } from "@/app/store/cart";
 
 const toastMock = vi.hoisted(() => vi.fn());
-const getStripePromiseMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@/components/ui/use-toast", () => ({
   useToast: () => ({
     toast: toastMock,
   }),
-}));
-
-vi.mock("@/lib/stripe-client", () => ({
-  getStripePromise: getStripePromiseMock,
 }));
 
 describe("CheckoutForm", () => {
@@ -29,16 +30,18 @@ describe("CheckoutForm", () => {
     quantity: 1,
   };
   let fetchMock: ReturnType<typeof vi.fn>;
-  let redirectToCheckoutMock: ReturnType<typeof vi.fn>;
+  let assignMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     toastMock.mockClear();
     fetchMock = vi.fn();
     global.fetch = fetchMock as unknown as typeof fetch;
-    redirectToCheckoutMock = vi.fn().mockResolvedValue({});
-    getStripePromiseMock.mockResolvedValue({
-      redirectToCheckout: redirectToCheckoutMock,
-    });
+    assignMock = vi.fn();
+    vi.stubGlobal("location", { ...window.location, assign: assignMock });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("warns when submitting with an empty cart", async () => {
@@ -112,12 +115,12 @@ describe("CheckoutForm", () => {
     );
   });
 
-  it("handles missing Stripe session ids", async () => {
+  it("handles a missing Checkout URL", async () => {
     const user = userEvent.setup();
 
     fetchMock.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({}),
+      json: () => Promise.resolve({ sessionId: "sess_123" }),
     });
 
     render(
@@ -140,7 +143,7 @@ describe("CheckoutForm", () => {
     expect(
       await screen.findByText(/stripe session could not be created/i),
     ).toBeInTheDocument();
-    expect(getStripePromiseMock).not.toHaveBeenCalled();
+    expect(assignMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "destructive",
@@ -151,18 +154,14 @@ describe("CheckoutForm", () => {
     );
   });
 
-  it("surfaces Stripe redirect failures", async () => {
+  it("redirects to the hosted Checkout URL and keeps the button busy", async () => {
     const user = userEvent.setup();
+    const checkoutUrl = "https://checkout.stripe.com/c/pay/cs_test_123";
 
     fetchMock.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ sessionId: "sess_123" }),
-    });
-
-    redirectToCheckoutMock.mockResolvedValue({
-      error: {
-        message: "Stripe redirect failed",
-      },
+      json: () =>
+        Promise.resolve({ sessionId: "cs_test_123", url: checkoutUrl }),
     });
 
     render(
@@ -182,16 +181,49 @@ describe("CheckoutForm", () => {
       screen.getByRole("button", { name: /proceed to checkout/i }),
     );
 
-    expect(
-      await screen.findByText(/stripe redirect failed/i),
-    ).toBeInTheDocument();
-    expect(redirectToCheckoutMock).toHaveBeenCalledWith({
-      sessionId: "sess_123",
+    await waitFor(() => expect(assignMock).toHaveBeenCalledWith(checkoutUrl));
+    expect(screen.getByRole("button", { name: /redirecting/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /clear cart/i })).toBeDisabled();
+
+    const restored = new Event("pageshow") as PageTransitionEvent;
+    Object.defineProperty(restored, "persisted", { value: true });
+    act(() => {
+      window.dispatchEvent(restored);
     });
+
+    expect(
+      screen.getByRole("button", { name: /proceed to checkout/i }),
+    ).toBeEnabled();
+  });
+
+  it("surfaces network failures", async () => {
+    const user = userEvent.setup();
+
+    fetchMock.mockRejectedValue(new Error("Network unavailable"));
+
+    render(
+      <CheckoutForm
+        items={[baseItem]}
+        currency="USD"
+        total={2500}
+        onClear={vi.fn()}
+      />,
+    );
+
+    await user.type(
+      screen.getByLabelText(/email for receipts/i),
+      "buyer@test.com",
+    );
+    await user.click(
+      screen.getByRole("button", { name: /proceed to checkout/i }),
+    );
+
+    expect(await screen.findByText(/network unavailable/i)).toBeInTheDocument();
+    expect(assignMock).not.toHaveBeenCalled();
     expect(toastMock).toHaveBeenCalledWith(
       expect.objectContaining({
         variant: "destructive",
-        description: "Stripe redirect failed",
+        description: "Network unavailable",
       }),
     );
   });

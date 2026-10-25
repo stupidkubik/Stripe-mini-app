@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CATALOGUE_SOURCE: fixture
-      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
       E2E_PRODUCTION: "1"

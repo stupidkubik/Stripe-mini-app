@@ -33,6 +33,27 @@ describe("browser security headers", () => {
         ?.value,
     ).toContain("frame-ancestors 'none'");
   });
+
+  it("keeps Stripe.js and other third parties out of scripts, frames, and requests", () => {
+    const directives = Object.fromEntries(
+      (
+        securityHeaders.find(({ key }) => key === "Content-Security-Policy")
+          ?.value ?? ""
+      )
+        .split("; ")
+        .map((directive) => {
+          const [name, ...sources] = directive.split(" ");
+          return [name, sources];
+        }),
+    );
+
+    expect(directives["script-src"]).toEqual(
+      expect.not.arrayContaining([expect.stringMatching(/^https:/)]),
+    );
+    expect(directives["connect-src"]).toEqual(["'self'"]);
+    expect(directives["frame-src"]).toEqual(["'none'"]);
+    expect(directives["form-action"]).toEqual(["'self'"]);
+  });
 });
 
 describe("typed environment profiles", () => {

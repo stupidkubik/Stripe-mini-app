@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
 
@@ -33,15 +33,8 @@ vi.mock("@/app/store/cart", () => ({
     selector(mockState),
 }));
 
-const redirectToCheckoutMock = vi.fn(() => Promise.resolve({}));
+const assignMock = vi.fn();
 let fetchMock: ReturnType<typeof vi.fn>;
-
-vi.mock("@/lib/stripe-client", () => ({
-  getStripePromise: () =>
-    Promise.resolve({
-      redirectToCheckout: redirectToCheckoutMock,
-    }),
-}));
 
 describe("CartPageClient", () => {
   beforeEach(() => {
@@ -49,9 +42,14 @@ describe("CartPageClient", () => {
     mockState.removeItem.mockClear();
     mockState.updateQty.mockClear();
     mockState.clear.mockClear();
-    redirectToCheckoutMock.mockClear();
+    assignMock.mockClear();
+    vi.stubGlobal("location", { ...window.location, assign: assignMock });
     fetchMock = vi.fn();
     global.fetch = fetchMock as unknown as typeof fetch;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it("renders empty state when cart is empty", () => {
@@ -139,7 +137,11 @@ describe("CartPageClient", () => {
 
     fetchMock.mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ sessionId: "sess_valid" }),
+      json: () =>
+        Promise.resolve({
+          sessionId: "sess_valid",
+          url: "https://checkout.stripe.com/c/pay/sess_valid",
+        }),
     });
 
     mockState.items = [
@@ -170,8 +172,10 @@ describe("CartPageClient", () => {
         method: "POST",
       }),
     );
-    expect(redirectToCheckoutMock).toHaveBeenCalledWith({
-      sessionId: "sess_valid",
-    });
+    await waitFor(() =>
+      expect(assignMock).toHaveBeenCalledWith(
+        "https://checkout.stripe.com/c/pay/sess_valid",
+      ),
+    );
   });
 });
