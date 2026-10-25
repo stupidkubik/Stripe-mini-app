@@ -5,9 +5,9 @@
 [![E2E Tests](https://github.com/stupidkubik/Stripe-mini-app/actions/workflows/e2e-tests.yml/badge.svg?branch=main)](https://github.com/stupidkubik/Stripe-mini-app/actions/workflows/e2e-tests.yml)
 [![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop.vercel.app/)
 ![Node](https://img.shields.io/badge/node-24.x-3c873a?logo=node.js&logoColor=white)
-![Next.js](https://img.shields.io/badge/next.js-16.4.3-000000?logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/react-19.2.3-61dafb?logo=react&logoColor=000)
-![TypeScript](https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white)
+![Next.js](https://img.shields.io/github/package-json/dependency-version/stupidkubik/Stripe-mini-app/next?label=next.js&color=000000&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/github/package-json/dependency-version/stupidkubik/Stripe-mini-app/react?color=61dafb&logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/github/package-json/dependency-version/stupidkubik/Stripe-mini-app/dev/typescript?color=3178c6&logo=typescript&logoColor=white)
 
 Verdant Lane is a production-minded e-commerce demo that connects a polished
 Next.js App Router storefront to a live Stripe catalogue and a durable Postgres
