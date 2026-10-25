@@ -2,10 +2,13 @@
 
 ## Coverage Targets (Vitest)
 
-- Lines >= 60%
-- Statements >= 60%
-- Functions >= 50%
-- Branches >= 50%
+Enforced by `coverage.thresholds` in `vitest.config.ts`;
+`npm run test:unit:coverage` fails below them.
+
+- Lines >= 85%
+- Statements >= 85%
+- Functions >= 85%
+- Branches >= 70%
 
 ## Critical Modules (Required Unit Coverage)
 
@@ -26,10 +29,13 @@
 ## Run Scenarios
 
 - Quick check (unit only): `npm run test:unit`
+- Pre-push check (lint, typecheck, prettier, unit): `npm run check`
 - Coverage gate: `npm run test:unit:coverage`
-- E2E smoke (fast): `npm run test:e2e:smoke`
-- Full local verification: `npm run lint && npm run test:unit && npm run test:unit:coverage && npm run test:e2e`
+- E2E smoke (fast, dev server): `npm run test:e2e:smoke`
+- E2E against the production build: `npm run build && E2E_PRODUCTION=1 npm run test:e2e`
+- Full local verification: `npm run check && npm run test:unit:coverage && npm run build && E2E_PRODUCTION=1 npm run test:e2e`
 - E2E setup (once): `npx playwright install`
+- Quality gate (CI): lint, typecheck, `prettier --check` and a fixture build on every PR
 - Security gate (CI): `npm audit --omit=dev --audit-level=high` + gitleaks scan
 
 ## Security Gate Notes

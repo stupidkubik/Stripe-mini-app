@@ -234,6 +234,25 @@ CTE и outbox, фикстурный каталог для CI, read-only workflow
 | 1.6 | E2E full (push в main) и publish-badges гонять против `npm run build && npm run start`, smoke на PR оставить на `next dev`; убрать одинаковый тернарник в `playwright.config.ts`             | `playwright.config.ts`, `e2e-tests.yml`, `publish-badges.yml` | M      | e2e-full проходит на production-сборке               |
 | 1.7 | Включить `coverage.thresholds` в `vitest.config.ts`: lines 85, statements 85, functions 85, branches 70; синхронизировать `TESTING.md`                                                       | `vitest.config.ts`, `TESTING.md`                              | S      | `test:unit:coverage` падает при просадке ниже порога |
 
+**Статус: выполнено 2026-10-25**, ветка `ci/stage-1-quality-gates` поверх
+этапа 0. Локально: `npm run check` зелёный, полный E2E 7/7 на `next start`,
+порог покрытия роняет прогон при просадке. Отличия от плана:
+
+- 1.3: `engines.node` = `"24.x"`, а не `">=22.12"`. Vercel берёт версию Node
+  из `engines`; с диапазоном `>=` он выбирает последний мажор и сам переходит
+  на следующий. `24.x` держит прод на той же версии, что CI и `.nvmrc`.
+  Локально на Node 22 npm только предупреждает.
+- 1.4: группы `stripe`, `testing`, `lint` берут только minor/patch, мажоры
+  приходят отдельными PR. Группа `next` без ограничения, чтобы `next` и
+  `eslint-config-next` не расходились. Мажоры `@types/node` игнорируются,
+  типы следуют за Node 24.
+- 1.5: запинены последние релизы текущих мажоров (checkout и setup-node
+  v4.4.0, upload-artifact v4.6.2, codecov v5.5.5, gitleaks v2.3.9). Уже
+  вышли checkout, setup-node, upload-artifact и codecov v7, gitleaks v3; их
+  принесёт Dependabot отдельным PR из секции `github-actions`.
+- 1.6: в `e2e-full` и `publish-badges` сборка и E2E идут одним шагом, чтобы
+  упавшая сборка давала красный e2e-бейдж, а не старый из репозитория.
+
 ### Этап 2. Актуализация зависимостей без мажоров
 
 | #   | Задача                                                                                                                                                                                                                                                                | Файлы                                                            | Оценка | Готово, когда                                          |
@@ -243,6 +262,13 @@ CTE и outbox, фикстурный каталог для CI, read-only workflow
 | 2.3 | Удалить прямые зависимости-workaround'ы: `@eslint/eslintrc`, `baseline-browser-mapping`; `qs` перенести из `dependencies` в `overrides` (или удалить, если транзитивная версия у stripe ≥ 6.16)                                                                       | `package.json`                                                   | S      | `npm ls qs` показывает только транзитивную, audit чист |
 | 2.4 | Заменить `z.string().email()` на `z.email()` в route и форме                                                                                                                                                                                                          | `app/api/checkout/route.ts`, `components/cart/checkout-form.tsx` | S      | тесты валидации проходят                               |
 | 2.5 | `vitest.config.ts`: убрать блок `esbuild`, убрать `postcss.config.mjs` из exclude                                                                                                                                                                                     | `vitest.config.ts`                                               | S      | предупреждение oxc/esbuild исчезло                     |
+
+Дополнение к 2.5: после обновления Vite до 8.3 в этапе 0 Vitest пишет
+«Your Vite config uses features that are unsupported by
+`configLoader: 'native'`»: `vitest.config.ts` с ESM-синтаксисом грузится
+как CommonJS. Исправляется переименованием в `vitest.config.mts` (и
+`vitest.integration.config.ts` так же, с правкой скрипта
+`test:integration:stripe`).
 
 ### Этап 3. Базовый рефакторинг под Next 16.4
 
