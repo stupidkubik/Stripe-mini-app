@@ -91,13 +91,10 @@ const receiptSecretSchema = z
     RECEIPT_SIGNING_SECRET: optionalText,
     STRIPE_SECRET_KEY: optionalText,
   })
-  .refine(
-    (value) => value.RECEIPT_SIGNING_SECRET || value.STRIPE_SECRET_KEY,
-    {
-      message: "RECEIPT_SIGNING_SECRET or STRIPE_SECRET_KEY is required",
-      path: ["RECEIPT_SIGNING_SECRET"],
-    },
-  );
+  .refine((value) => value.RECEIPT_SIGNING_SECRET || value.STRIPE_SECRET_KEY, {
+    message: "RECEIPT_SIGNING_SECRET or STRIPE_SECRET_KEY is required",
+    path: ["RECEIPT_SIGNING_SECRET"],
+  });
 
 const databaseSchema = z
   .object({
@@ -110,7 +107,8 @@ const databaseSchema = z
       .string()
       .url()
       .refine(
-        (value) => ["postgres:", "postgresql:"].includes(new URL(value).protocol),
+        (value) =>
+          ["postgres:", "postgresql:"].includes(new URL(value).protocol),
         "must use the postgres or postgresql protocol",
       ),
   );

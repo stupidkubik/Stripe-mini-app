@@ -66,11 +66,7 @@ const ProductCardDetails = React.memo(function ProductCardDetails({
   const rating = getRatingPlaceholder(product.id, product.metadata?.slug);
   const ratingLabel = `Rating ${rating.value.toFixed(1)} out of 5`;
   const showcaseLabel =
-    showcaseTag === "new"
-      ? "New"
-      : showcaseTag === "hit"
-        ? "Hit"
-        : undefined;
+    showcaseTag === "new" ? "New" : showcaseTag === "hit" ? "Hit" : undefined;
 
   const metaBadges = [
     formatCategory(product.metadata?.category),
