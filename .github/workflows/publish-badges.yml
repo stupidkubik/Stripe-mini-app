@@ -18,17 +18,18 @@ jobs:
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      E2E_PRODUCTION: "1"
 
     steps:
       - name: Checkout trusted main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: main
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -42,10 +43,10 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E tests
+      - name: Build and run E2E tests against next start
         id: e2e
         continue-on-error: true
-        run: npm run test:e2e
+        run: npm run build && npm run test:e2e
 
       - name: Generate badge files
         run: node scripts/generate-badges.mjs --unit-status ${{ steps.unit.outcome }} --e2e-status ${{ steps.e2e.outcome }}

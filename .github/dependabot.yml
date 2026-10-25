@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      # @types/node follows the Node major in .nvmrc and engines.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # next and eslint-config-next must stay on the same version.
+      next:
+        patterns: ["next", "eslint-config-next"]
+      stripe:
+        patterns: ["stripe", "@stripe/*"]
+        update-types: [minor, patch]
+      testing:
+        patterns:
+          - vitest
+          - "@vitest/*"
+          - "@testing-library/*"
+          - "@playwright/test"
+          - jsdom
+        update-types: [minor, patch]
+      lint:
+        patterns: [eslint, "eslint-*", "@eslint/*", prettier]
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ["*"]
