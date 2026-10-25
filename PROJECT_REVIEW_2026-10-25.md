@@ -311,6 +311,46 @@ production-сборке нет ошибок гидратации. Отличия
 | 3.7 | Гигиена: `git rm --cached .DS_Store`, удалить `components.json`, решить судьбу `AGENTS.md` (закоммитить или в `.gitignore`), обновить бейджи и упоминания версий в README                                                                                                                                                                                                                                                                                | корень репозитория                                                                                                                   | S      | `git status` чист после `next dev`                                 |
 | 3.8 | Документация: по мере закрытия пунктов отмечать статус в этом файле; старые `SECURITY_REVIEW_2026-07-11.md` и `PROJECT_IMPROVEMENT_PLAN.md` удалены 2026-10-25, их итог зафиксирован в разделе 3                                                                                                                                                                                                                                                         | этот файл                                                                                                                            | S      | —                                                                  |
 
+**Статус: выполнено 2026-10-25**, ветка `refactor/stage-3-next-16-4`. Гейт
+зелёный: 160 тестов, coverage lines 91.9%, E2E smoke 4/4 и 7/7 на
+`next start`, `npm audit` 0. Checkout проверен вручную на production-сборке
+с тестовым Stripe-каталогом: `/api/checkout` отдаёт `{ sessionId, url }` и
+receipt-cookie, браузер уходит на `checkout.stripe.com`, CSP-ошибок нет.
+Отличия от плана:
+
+- Этап сделан одним PR с коммитом на пункт, а не тремя-четырьмя (раздел 7):
+  пункты небольшие, а статус в этом файле иначе конфликтовал бы между PR.
+- 3.1: `app/head.tsx` удалён, но preconnect/dns-prefetch в layout не
+  перенесены. Все картинки идут через `next/image`, браузер грузит их с
+  `/_next/image` и к `files.stripe.com`/`images.unsplash.com` не подключается,
+  так что подсказки открывали бы неиспользуемые соединения. Тест
+  переименован в `tests/layout.test.tsx`.
+- 3.3: вместо новой `getPublicSiteUrl()` везде используется существующая
+  `getSiteOrigin()` (`SITE_URL` → `NEXT_PUBLIC_SITE_URL` → URL продакшена
+  Vercel → localhost), по которой уже строились redirect-URL checkout. Так
+  источник один и для оплаты, и для метаданных. Без `NEXT_PUBLIC_SITE_URL`
+  canonical теперь указывает на продакшен Vercel, а не на localhost.
+  `openGraph.url` товаров относительный, Next достраивает его через
+  `metadataBase`. `readPublicConfig()` в коде по-прежнему не используется.
+- 3.5: кроме `script-src`, `connect-src` и `frame-src` из CSP убран
+  `checkout.stripe.com` в `form-action`; `connect-src 'self'`,
+  `frame-src 'none'`. Сессия без `url` даёт `checkout_failed` до установки
+  cookie. Кнопка остаётся в «Redirecting…» до ухода со страницы и
+  сбрасывается при возврате из bfcache. Из `e2e-full` убран
+  `environment: .env.github`: он был нужен только ради секрета с
+  publishable key. После мержа можно удалить
+  `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` из env Vercel и секрет с окружением
+  `.env.github` в GitHub.
+- 3.6: выбран вариант с примитивным селектором: карточка берёт только своё
+  количество и два action'а, `useShallow`-объекта больше нет. Индекс
+  `itemsByProductId` в store не добавлялся: `find` по корзине на карточку
+  остаётся, но без аллокации объекта на каждое обновление корзины.
+- 3.7: `.DS_Store` и `components.json` убраны ещё до этапа 0 (`679fcb7`,
+  сразу после ревью), `AGENTS.md` закоммичен в `193ee63` и есть в
+  `.prettierignore`; `git status` чист после `next dev`. Бейджи обновлены в
+  этапах 1–2. Дополнительно исправлена ссылка в README на удалённый
+  `PROJECT_IMPROVEMENT_PLAN.md`.
+
 ### Этап 4. Отдельная задача: Stripe SDK (по желанию, после этапов 0–3)
 
 | #   | Задача                                                                                                                                                                                                                                                                                       | Оценка | Примечание                                                                                          |
