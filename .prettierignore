@@ -1,0 +1,12 @@
+# Generated or third-party files that must not be reformatted
+.claude/
+.agents/
+AGENTS.md
+skills-lock.json
+badges/
+coverage/
+playwright-report/
+test-results/
+.next/
+.vercel/
+package-lock.json
