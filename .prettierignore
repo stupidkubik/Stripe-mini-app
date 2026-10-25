@@ -3,7 +3,6 @@
 .agents/
 AGENTS.md
 skills-lock.json
-badges/
 coverage/
 playwright-report/
 test-results/
