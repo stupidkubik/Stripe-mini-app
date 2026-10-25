@@ -28,7 +28,7 @@ const checkoutItemSchema = z.object({
 });
 
 const requestSchema = z.object({
-  customerEmail: z.string().email().optional(),
+  customerEmail: z.email().optional(),
   items: z
     .array(checkoutItemSchema)
     .min(1, "Your cart is empty.")

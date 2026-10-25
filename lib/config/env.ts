@@ -104,7 +104,6 @@ const databaseSchema = z
   .transform((value) => value.DATABASE_URL ?? value.POSTGRES_URL)
   .pipe(
     z
-      .string()
       .url()
       .refine(
         (value) =>
