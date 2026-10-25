@@ -15,6 +15,11 @@ updates:
       # Remove once it supports TS 7.
       - dependency-name: typescript
         update-types: ["version-update:semver-major"]
+      # eslint-config-next pulls eslint-plugin-react, eslint-plugin-import and
+      # eslint-plugin-jsx-a11y, whose peer ranges stop at ESLint 9.
+      # Remove once eslint-config-next supports ESLint 10.
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
     groups:
       # next and eslint-config-next must stay on the same version.
       next:
