@@ -11,7 +11,6 @@ import {
 import { FixtureCatalogueRepository } from "@/lib/catalogue-fixture";
 import { readBuildConfig, readStripeSecretConfig } from "@/lib/config/env";
 
-const STRIPE_API_VERSION = "2026-01-28.clover";
 const CATALOGUE_REVALIDATE_SECONDS = 60;
 let stripeClient: Stripe | undefined;
 
@@ -19,7 +18,9 @@ export function getStripeClient(): Stripe {
   const { STRIPE_SECRET_KEY: secretKey } = readStripeSecretConfig();
 
   stripeClient ??= new Stripe(secretKey, {
-    apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
+    // Requests use the API version the SDK types describe; see
+    // tests/stripe-api-version.test.ts for what guards a major release change.
+    apiVersion: Stripe.API_VERSION,
     typescript: true,
   });
   return stripeClient;
