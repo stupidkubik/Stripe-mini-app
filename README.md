@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/stupidkubik/Stripe-mini-app/branch/main/graph/badge.svg)](https://codecov.io/gh/stupidkubik/Stripe-mini-app)
 ![E2E Tests](./badges/e2e-tests.svg)
 [![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop.vercel.app/)
-![Node](https://img.shields.io/badge/node-20.x-3c873a?logo=node.js&logoColor=white)
+![Node](https://img.shields.io/badge/node-24.x-3c873a?logo=node.js&logoColor=white)
 ![Next.js](https://img.shields.io/badge/next.js-16.2.10-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19.2.3-61dafb?logo=react&logoColor=000)
 ![TypeScript](https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white)
@@ -354,16 +354,24 @@ Without `preview=1`, the session must be paid and the browser must hold the matc
 
 | Command                           | Description                                                                   |
 | --------------------------------- | ----------------------------------------------------------------------------- |
+| `npm run check`                   | Lint, typecheck, Prettier check and unit tests in one pass                    |
 | `npm run lint`                    | ESLint rules (TypeScript-aware)                                               |
+| `npm run typecheck`               | `tsc --noEmit` over the app and tests                                         |
+| `npm run format:check`            | Prettier check without writing                                                |
 | `npm run test:unit`               | Vitest + React Testing Library                                                |
-| `npm run test:unit:coverage`      | Vitest with v8 coverage reports                                               |
+| `npm run test:unit:coverage`      | Vitest with v8 coverage reports and enforced thresholds                       |
 | `npm run build`                   | Secretless deterministic production compilation using the catalogue fixture   |
 | `npm run build:stripe`            | Explicit live-Stripe build (protected integration environment only)           |
 | `npm run test:integration:stripe` | Read-only, one-request Stripe test-account integration check                  |
 | `npm run test:e2e:smoke`          | Fast Playwright subset (`cart`, `not-found`, `success` redirect checks)       |
 | `npm run test:e2e`                | Playwright scenarios (ensure browsers installed via `npx playwright install`) |
 
-Playwright spins up the dev server automatically. Use `npx playwright show-report` to inspect the latest run.
+Playwright spins up the dev server automatically. With `E2E_PRODUCTION=1` it
+serves a prior `npm run build` through `next start` instead; CI runs the full
+suite on `main` this way. Use `npx playwright show-report` to inspect the
+latest run.
+
+The Node version lives in `.nvmrc` (24) and every workflow reads it from there.
 
 Unit tests, PR E2E, and ordinary builds never need a Stripe secret. They use the
 versioned catalogue fixture in `lib/catalogue-fixture.ts`. A Vercel production

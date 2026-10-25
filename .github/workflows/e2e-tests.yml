@@ -21,12 +21,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -49,15 +49,16 @@ jobs:
       CATALOGUE_SOURCE: fixture
       SITE_URL: http://localhost:3000
       NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      E2E_PRODUCTION: "1"
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
-          node-version: 20
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies
@@ -66,17 +67,17 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run full e2e tests
+      - name: Build and run full e2e tests against next start
         id: e2e
         continue-on-error: true
-        run: npm run test:e2e
+        run: npm run build && npm run test:e2e
 
       - name: Generate badges
         run: node scripts/generate-badges.mjs --e2e-status ${{ steps.e2e.outcome }}
 
       - name: Upload badge artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: e2e-test-badges
           path: badges/*.svg

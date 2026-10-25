@@ -31,6 +31,12 @@ export default defineConfig({
         "eslint.config.mjs",
         "scripts/**",
       ],
+      thresholds: {
+        lines: 85,
+        statements: 85,
+        functions: 85,
+        branches: 70,
+      },
     },
   },
   resolve: {

@@ -13,7 +13,10 @@
     "test:unit": "vitest",
     "test:unit:coverage": "vitest --coverage",
     "test:integration:stripe": "vitest --config vitest.integration.config.ts --run",
-    "format": "prettier -w ."
+    "format": "prettier -w .",
+    "typecheck": "tsc --noEmit",
+    "format:check": "prettier --check .",
+    "check": "npm run lint && npm run typecheck && npm run format:check && npm run test:unit -- --run"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -41,7 +44,7 @@
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
-    "@types/node": "^20",
+    "@types/node": "^24.19.2",
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3",
     "@vitest/coverage-v8": "^4.1.12",
@@ -58,5 +61,8 @@
   "overrides": {
     "@types/react": "19.2.7",
     "@types/react-dom": "19.2.3"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
