@@ -471,7 +471,7 @@ If gitleaks reports a false positive:
   enforce the documented Vercel WAF rule.
 - Preview mode bypasses paid-status and receipt-token checks only for demo/development use; it still fetches the Stripe Checkout session by `session_id`.
 - Product availability requires an active Stripe Product with an active `default_price`.
-- Follow-up work is tracked in [PROJECT_IMPROVEMENT_PLAN.md](./PROJECT_IMPROVEMENT_PLAN.md).
+- Follow-up work is tracked in [PROJECT_REVIEW_2026-10-25.md](./PROJECT_REVIEW_2026-10-25.md).
 
 ## 📦 Deployment
 
