@@ -149,8 +149,11 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
     redirect("/cart");
   }
 
+  // Only the Stripe call is guarded: redirect() throws NEXT_REDIRECT, and JSX
+  // built inside try would not be covered by the catch anyway.
+  let session: Stripe.Checkout.Session;
   try {
-    const session = await getStripeClient().checkout.sessions.retrieve(
+    session = await getStripeClient().checkout.sessions.retrieve(
       parsed.data.session_id,
       {
         expand: [
@@ -163,65 +166,65 @@ export default async function SuccessPage({ searchParams }: SuccessPageProps) {
         ],
       },
     );
-
-    if (!session || (session.payment_status !== "paid" && !allowPreview)) {
-      redirect("/cart");
-    }
-
-    const lineItems = normalizeLineItems(session);
-    const orderPlacedAt = session.created ? session.created * 1000 : undefined;
-    const paymentConfirmedAt = resolvePaymentConfirmedAt(session);
-    const receiptSentAt = session.customer_details?.email
-      ? paymentConfirmedAt
-      : undefined;
-    const promoCode = resolvePromotionCode(session);
-
-    const amountSubtotal =
-      session.amount_subtotal ??
-      (lineItems.length > 0
-        ? lineItems.reduce((sum, item) => sum + (item.amountSubtotal ?? 0), 0)
-        : undefined);
-    const amountDiscount = session.total_details?.amount_discount ?? undefined;
-
-    return (
-      <OrderSuccess
-        sessionId={session.id}
-        amountTotal={session.amount_total}
-        amountSubtotal={amountSubtotal}
-        amountDiscount={amountDiscount}
-        promoCode={promoCode}
-        currency={session.currency}
-        customerEmail={session.customer_details?.email}
-        lineItems={lineItems}
-        timelineSteps={[
-          {
-            id: "order-placed",
-            label: "Order placed",
-            description: "We saved your items and locked in pricing.",
-            timestamp: orderPlacedAt,
-            status: "complete",
-          },
-          {
-            id: "payment-confirmed",
-            label: "Payment confirmed",
-            description: "Stripe verified the payment details.",
-            timestamp: paymentConfirmedAt,
-            status: "complete",
-          },
-          {
-            id: "receipt-sent",
-            label: "Receipt emailed",
-            description: session.customer_details?.email
-              ? `Sent to ${session.customer_details.email}`
-              : "Receipt is on the way.",
-            timestamp: receiptSentAt,
-            status: "complete",
-          },
-        ]}
-      />
-    );
   } catch (error) {
     logServerError("stripe.checkout.session.retrieve.success", error);
     redirect("/cart");
   }
+
+  if (!session || (session.payment_status !== "paid" && !allowPreview)) {
+    redirect("/cart");
+  }
+
+  const lineItems = normalizeLineItems(session);
+  const orderPlacedAt = session.created ? session.created * 1000 : undefined;
+  const paymentConfirmedAt = resolvePaymentConfirmedAt(session);
+  const receiptSentAt = session.customer_details?.email
+    ? paymentConfirmedAt
+    : undefined;
+  const promoCode = resolvePromotionCode(session);
+
+  const amountSubtotal =
+    session.amount_subtotal ??
+    (lineItems.length > 0
+      ? lineItems.reduce((sum, item) => sum + (item.amountSubtotal ?? 0), 0)
+      : undefined);
+  const amountDiscount = session.total_details?.amount_discount ?? undefined;
+
+  return (
+    <OrderSuccess
+      sessionId={session.id}
+      amountTotal={session.amount_total}
+      amountSubtotal={amountSubtotal}
+      amountDiscount={amountDiscount}
+      promoCode={promoCode}
+      currency={session.currency}
+      customerEmail={session.customer_details?.email}
+      lineItems={lineItems}
+      timelineSteps={[
+        {
+          id: "order-placed",
+          label: "Order placed",
+          description: "We saved your items and locked in pricing.",
+          timestamp: orderPlacedAt,
+          status: "complete",
+        },
+        {
+          id: "payment-confirmed",
+          label: "Payment confirmed",
+          description: "Stripe verified the payment details.",
+          timestamp: paymentConfirmedAt,
+          status: "complete",
+        },
+        {
+          id: "receipt-sent",
+          label: "Receipt emailed",
+          description: session.customer_details?.email
+            ? `Sent to ${session.customer_details.email}`
+            : "Receipt is on the way.",
+          timestamp: receiptSentAt,
+          status: "complete",
+        },
+      ]}
+    />
+  );
 }

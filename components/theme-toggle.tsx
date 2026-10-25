@@ -1,15 +1,14 @@
 "use client";
 
-import * as React from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useHydrated } from "@/lib/use-hydrated";
 import styles from "./theme-toggle.module.css";
 
 export default function ThemeToggle() {
   const { theme, setTheme, resolvedTheme } = useTheme();
-  const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  const mounted = useHydrated();
 
   // во время гидратации скрываем иконки, чтобы избежать рассинхрона
   if (!mounted) {

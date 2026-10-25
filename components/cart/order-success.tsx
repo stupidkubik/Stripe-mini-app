@@ -8,6 +8,7 @@ import { CheckCircle2 } from "lucide-react";
 import { useCart } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { formatPrice } from "@/lib/pricing";
+import { useHydrated } from "@/lib/use-hydrated";
 
 import styles from "./order-success.module.css";
 
@@ -64,11 +65,12 @@ export default function OrderSuccess({
   timelineSteps,
 }: OrderSuccessProps) {
   const clear = useCart((state) => state.clear);
-  const [cleared, setCleared] = React.useState(false);
+  // The cart is cleared by the effect below on the first client render, so
+  // "hydrated" doubles as "cleared" without a second state update.
+  const cleared = useHydrated();
 
   React.useEffect(() => {
     clear();
-    setCleared(true);
   }, [clear]);
 
   const formattedTotal = formatAmount(amountTotal, currency);

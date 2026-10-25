@@ -270,6 +270,34 @@ CTE и outbox, фикстурный каталог для CI, read-only workflow
 `vitest.integration.config.ts` так же, с правкой скрипта
 `test:integration:stripe`).
 
+**Статус: выполнено 2026-10-25**, ветка `chore/stage-2-deps`. Гейт зелёный:
+159 тестов, E2E smoke 4/4 и 7/7 на `next start`, `npm audit` 0, в
+production-сборке нет ошибок гидратации. Отличия от плана:
+
+- 2.1: eslint-config-next 16.4.3 включил правила React Compiler из
+  `eslint-plugin-react-hooks` и дал 4 ошибки lint. Исправлены в коде, а не
+  отключены: `theme-toggle` и `order-success` берут флаг гидратации из нового
+  `lib/use-hydrated.ts` (`useSyncExternalStore`) вместо `setState` в
+  эффекте; `product-grid` сбрасывает видимую партию при новом списке товаров
+  во время рендера, а не в эффекте (добавлен тест);
+  `app/success/page.tsx` строит JSX вне `try`. Осталось предупреждение
+  `incompatible-library` на `watch()` из react-hook-form в
+  `checkout-form.tsx`, оно не блокирует.
+- 3.2 закрыт попутно: в `try` success-страницы остался только запрос к
+  Stripe, `redirect` для неоплаченной сессии больше не перехватывается и не
+  пишет `[server-error]`. Добавлены тесты на оба пути.
+- 2.3: `qs` удалён без `overrides`: транзитивно у stripe остаётся 6.16.0.
+- 2.4: заодно `z.string().url()` → `z.url()` в `lib/config/env.ts`. В форме
+  email-схема `z.string().trim().min(1).pipe(z.email())`: прямой `z.email()`
+  проверял бы адрес до `trim`.
+- 2.5: конфиги переименованы в `.mts`, `__dirname` заменён на
+  `import.meta.dirname`, `**/*.mts` добавлен в `tsconfig.json`, чтобы
+  typecheck их покрывал. Оба предупреждения Vitest исчезли.
+- Prettier 3.9 по-новому форматирует union-типы:
+  `tests/test-utils/next-server.ts` переформатирован.
+- Вне плана остались react и react-dom 19.3 и `@types/react` 19.3 (minor):
+  версии запинены точно, обновлять отдельно.
+
 ### Этап 3. Базовый рефакторинг под Next 16.4
 
 | #   | Задача                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Файлы                                                                                                                                | Оценка | Готово, когда                                                      |

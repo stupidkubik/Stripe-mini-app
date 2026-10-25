@@ -110,6 +110,9 @@ describe("Success page", () => {
       id: "cs_unpaid",
       payment_status: "unpaid",
     });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const { default: SuccessPage } = await loadPage();
 
@@ -119,7 +122,37 @@ describe("Success page", () => {
       }),
     ).rejects.toBeInstanceOf(RedirectError);
 
+    expect(redirectMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).toHaveBeenCalledWith("/cart");
+    expect(consoleError).not.toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  it("logs and redirects when Stripe cannot return the session", async () => {
+    const { clearServerLogSamples } = await import("@/lib/server-log");
+    clearServerLogSamples();
+    stripeMock.checkout.sessions.retrieve.mockRejectedValue(
+      new Error("Stripe down"),
+    );
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const { default: SuccessPage } = await loadPage();
+
+    await expect(
+      SuccessPage({ searchParams: Promise.resolve({ session_id: "cs_123" }) }),
+    ).rejects.toBeInstanceOf(RedirectError);
+
+    expect(redirectMock).toHaveBeenCalledTimes(1);
+    expect(redirectMock).toHaveBeenCalledWith("/cart");
+    expect(consoleError).toHaveBeenCalledWith(
+      "[server-error]",
+      expect.objectContaining({
+        operation: "stripe.checkout.session.retrieve.success",
+      }),
+    );
+    consoleError.mockRestore();
   });
 
   it("redirects when the browser does not have the matching receipt token", async () => {

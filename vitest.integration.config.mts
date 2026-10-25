@@ -9,9 +9,9 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./"),
+      "@": path.resolve(import.meta.dirname, "./"),
       "server-only": path.resolve(
-        __dirname,
+        import.meta.dirname,
         "./tests/test-utils/server-only.ts",
       ),
     },

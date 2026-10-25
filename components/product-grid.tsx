@@ -13,15 +13,18 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
   const [visibleCount, setVisibleCount] = React.useState(() =>
     Math.min(products.length, INITIAL_VISIBLE),
   );
+  const [renderedProducts, setRenderedProducts] = React.useState(products);
   const [sentinel, setSentinel] = React.useState<HTMLLIElement | null>(null);
   const productsLengthRef = React.useRef(products.length);
   const setSentinelRef = React.useCallback((node: HTMLLIElement | null) => {
     setSentinel(node);
   }, []);
 
-  React.useEffect(() => {
+  // A new product list starts over from the first batch.
+  if (products !== renderedProducts) {
+    setRenderedProducts(products);
     setVisibleCount(Math.min(products.length, INITIAL_VISIBLE));
-  }, [products]);
+  }
 
   React.useEffect(() => {
     productsLengthRef.current = products.length;
