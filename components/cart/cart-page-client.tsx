@@ -10,6 +10,7 @@ import { useCart, type CartItem } from "@/app/store/cart";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatPrice } from "@/lib/pricing";
+import { STOREFRONT_CURRENCY } from "@/lib/storefront-policy";
 import { QuantityInput } from "@/components/quantity-input";
 import { CheckoutForm } from "@/components/cart/checkout-form";
 import CartStickySummary from "@/components/cart/cart-sticky-summary";
@@ -87,8 +88,6 @@ export default function CartPageClient() {
     })),
   );
 
-  const currency = items[0]?.currency ?? "USD";
-
   if (items.length === 0) {
     return (
       <section className={`${styles.page} ${styles.pageEmpty}`}>
@@ -135,7 +134,7 @@ export default function CartPageClient() {
           <div id="cart-checkout" className={styles.checkoutAnchor}>
             <CheckoutForm
               items={items}
-              currency={currency}
+              currency={STOREFRONT_CURRENCY}
               total={total}
               onClear={clear}
             />
