@@ -8,23 +8,17 @@ vi.mock("@/lib/stripe", () => ({
   listProducts: listProductsMock,
 }));
 
-const ORIGINAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-
 const loadRobots = async () => await import("@/app/robots");
 const loadSitemap = async () => await import("@/app/sitemap");
 
 describe("Robots and sitemap", () => {
   beforeEach(() => {
     listProductsMock.mockReset();
-    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com";
+    vi.stubEnv("SITE_URL", "https://example.com");
   });
 
   afterEach(() => {
-    if (ORIGINAL_SITE_URL === undefined) {
-      delete process.env.NEXT_PUBLIC_SITE_URL;
-    } else {
-      process.env.NEXT_PUBLIC_SITE_URL = ORIGINAL_SITE_URL;
-    }
+    vi.unstubAllEnvs();
     vi.useRealTimers();
   });
 

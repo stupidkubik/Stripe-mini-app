@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 class NotFoundError extends Error {}
 
@@ -67,8 +67,6 @@ const product = {
   },
 };
 
-const ORIGINAL_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL;
-
 describe("Products pages", () => {
   beforeEach(() => {
     listProductsMock.mockReset();
@@ -76,14 +74,6 @@ describe("Products pages", () => {
     notFoundMock.mockClear();
     productGridState.lastProps = null;
     purchaseActionsState.lastProps = null;
-  });
-
-  afterEach(() => {
-    if (ORIGINAL_SITE_URL === undefined) {
-      delete process.env.NEXT_PUBLIC_SITE_URL;
-    } else {
-      process.env.NEXT_PUBLIC_SITE_URL = ORIGINAL_SITE_URL;
-    }
   });
 
   it("renders empty catalog message", async () => {
@@ -141,7 +131,6 @@ describe("Products pages", () => {
   });
 
   it("generates metadata for product", async () => {
-    process.env.NEXT_PUBLIC_SITE_URL = "https://example.com";
     getProductBySlugMock.mockResolvedValue(product);
 
     const { generateMetadata } = await loadProductDetailPage();
@@ -152,7 +141,7 @@ describe("Products pages", () => {
 
     expect(metadata.title).toBe("Fern | Mini Shop");
     expect(metadata.alternates?.canonical).toBe("/products/fern");
-    expect(metadata.openGraph?.url).toBe("https://example.com/products/fern");
+    expect(metadata.openGraph?.url).toBe("/products/fern");
     expect(metadata.openGraph?.images).toMatchObject([{ url: product.image }]);
   });
 

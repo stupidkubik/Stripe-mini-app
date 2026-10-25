@@ -6,8 +6,6 @@ import styles from "./page.module.css";
 
 export const revalidate = 60;
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-
 export const metadata: Metadata = {
   title: "Catalog | Mini Shop",
   description:
@@ -19,7 +17,7 @@ export const metadata: Metadata = {
     title: "Catalog | Mini Shop",
     description:
       "Explore every plant and accessory available in the Verdant Lane mini shop.",
-    url: `${baseUrl}/products`,
+    url: "/products",
   },
   twitter: {
     card: "summary_large_image",

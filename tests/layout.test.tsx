@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/site-header", () => ({
   __esModule: true,
@@ -21,6 +21,19 @@ vi.mock("next-themes", () => ({
 const loadLayout = async () => await import("@/app/layout");
 
 describe("App layout", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("resolves metadataBase from the site origin", async () => {
+    vi.stubEnv("SITE_URL", "https://shop.example.com/some/path");
+    vi.resetModules();
+
+    const { metadata } = await loadLayout();
+
+    expect(String(metadata.metadataBase)).toBe("https://shop.example.com/");
+  });
+
   it("wraps children with providers and layout chrome", async () => {
     const { default: RootLayout } = await loadLayout();
 

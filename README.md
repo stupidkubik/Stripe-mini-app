@@ -271,9 +271,10 @@ CHECKOUT_MAX_BODY_BYTES=16384
 STRIPE_WEBHOOK_MAX_BODY_BYTES=1048576
 ```
 
-> `SITE_URL` is the trusted server-side origin used for Stripe Checkout redirect URLs.
+> `SITE_URL` is the trusted site origin used for Stripe Checkout redirect URLs,
+> metadata, `robots.txt`, and the sitemap. `NEXT_PUBLIC_SITE_URL` is a fallback
+> for it; when neither is set, the Vercel production URL is used.
 > `DEMO_SUCCESS` is optional and only needed if you want to preview `/success` without a paid session outside of dev.
-> `NEXT_PUBLIC_SITE_URL` is still used by metadata/sitemap generation and can match `SITE_URL`.
 > `DATABASE_URL` is required only when processing payment webhooks; builds do not connect to it.
 > `RECEIPT_SIGNING_SECRET` is optional but recommended. If it is omitted, the
 > server derives receipt proofs from `STRIPE_SECRET_KEY`.
