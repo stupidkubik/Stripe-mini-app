@@ -5,7 +5,7 @@
 ![E2E Tests](./badges/e2e-tests.svg)
 [![Vercel](https://img.shields.io/website?url=https%3A%2F%2Fstripe-mini-shop.vercel.app&label=vercel&logo=vercel&logoColor=white)](https://stripe-mini-shop.vercel.app/)
 ![Node](https://img.shields.io/badge/node-24.x-3c873a?logo=node.js&logoColor=white)
-![Next.js](https://img.shields.io/badge/next.js-16.2.10-000000?logo=nextdotjs&logoColor=white)
+![Next.js](https://img.shields.io/badge/next.js-16.4.3-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/react-19.2.3-61dafb?logo=react&logoColor=000)
 ![TypeScript](https://img.shields.io/badge/typescript-5.x-3178c6?logo=typescript&logoColor=white)
 
@@ -239,6 +239,9 @@ predictable to change:
 ```bash
 npm install
 ```
+
+`next` and `eslint-config-next` are pinned to the same exact version and must
+be upgraded together; Dependabot groups them into one PR.
 
 ### 2. Configure environment variables
 
