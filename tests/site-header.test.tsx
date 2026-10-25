@@ -44,8 +44,8 @@ describe("SiteHeader", () => {
   beforeEach(() => {
     mockState.items = [];
     mockState.countValue = 0;
-    mockState.count.mockImplementation(
-      () => mockState.items.reduce((total, item) => total + item.quantity, 0),
+    mockState.count.mockImplementation(() =>
+      mockState.items.reduce((total, item) => total + item.quantity, 0),
     );
     mockPathname.mockReturnValue("/");
   });

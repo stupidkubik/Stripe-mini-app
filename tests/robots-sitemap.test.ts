@@ -35,10 +35,12 @@ describe("Robots and sitemap", () => {
 
     expect(result.host).toBe("https://example.com");
     expect(result.sitemap).toBe("https://example.com/sitemap.xml");
-    expect(result.rules?.[0]).toMatchObject({
-      userAgent: "*",
-      allow: "/",
-    });
+    expect(result.rules).toMatchObject([
+      {
+        userAgent: "*",
+        allow: "/",
+      },
+    ]);
   });
 
   it("builds sitemap with products", async () => {
@@ -58,9 +60,7 @@ describe("Robots and sitemap", () => {
     expect(routes[6].url).toBe("https://example.com/products/prod_2");
 
     for (const route of routes) {
-      expect(route.lastModified?.toISOString()).toBe(
-        "2024-01-01T00:00:00.000Z",
-      );
+      expect(route.lastModified).toEqual(new Date("2024-01-01T00:00:00.000Z"));
     }
   });
 

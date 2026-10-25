@@ -15,12 +15,9 @@ export function ProductGrid({ products }: { products: ProductDTO[] }) {
   );
   const [sentinel, setSentinel] = React.useState<HTMLLIElement | null>(null);
   const productsLengthRef = React.useRef(products.length);
-  const setSentinelRef = React.useCallback(
-    (node: HTMLLIElement | null) => {
-      setSentinel(node);
-    },
-    [],
-  );
+  const setSentinelRef = React.useCallback((node: HTMLLIElement | null) => {
+    setSentinel(node);
+  }, []);
 
   React.useEffect(() => {
     setVisibleCount(Math.min(products.length, INITIAL_VISIBLE));

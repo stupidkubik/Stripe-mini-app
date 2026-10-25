@@ -19,14 +19,15 @@ describe("browser security headers", () => {
     const rules = await nextConfig.headers?.();
 
     expect(rules).toEqual([{ source: "/:path*", headers: securityHeaders }]);
-    expect(Object.fromEntries(securityHeaders.map(({ key, value }) => [key, value])))
-      .toMatchObject({
-        "X-Content-Type-Options": "nosniff",
-        "X-Frame-Options": "DENY",
-        "Referrer-Policy": "strict-origin-when-cross-origin",
-        "Strict-Transport-Security":
-          "max-age=63072000; includeSubDomains; preload",
-      });
+    expect(
+      Object.fromEntries(securityHeaders.map(({ key, value }) => [key, value])),
+    ).toMatchObject({
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Strict-Transport-Security":
+        "max-age=63072000; includeSubDomains; preload",
+    });
     expect(
       securityHeaders.find(({ key }) => key === "Content-Security-Policy")
         ?.value,

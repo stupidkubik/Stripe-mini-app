@@ -1,7 +1,6 @@
 import * as React from "react";
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "Verdant Lane — Stripe-powered houseplant boutique";
 export const size = {
   width: 1200,
@@ -37,7 +36,7 @@ export default async function OpenGraphImage() {
       >
         <span
           style={{
-            display: "inline-flex",
+            display: "flex",
             alignItems: "center",
             gap: "12px",
             fontSize: "24px",

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCategory, formatLight, formatWatering } from "@/lib/product-metadata";
+import {
+  formatCategory,
+  formatLight,
+  formatWatering,
+} from "@/lib/product-metadata";
 
 describe("product metadata formatting", () => {
   it("formats category segments and handles empty input", () => {

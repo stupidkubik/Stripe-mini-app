@@ -9,10 +9,7 @@ import {
   type CatalogueRepository,
 } from "@/lib/catalogue";
 import { FixtureCatalogueRepository } from "@/lib/catalogue-fixture";
-import {
-  readBuildConfig,
-  readStripeSecretConfig,
-} from "@/lib/config/env";
+import { readBuildConfig, readStripeSecretConfig } from "@/lib/config/env";
 
 const STRIPE_API_VERSION = "2026-01-28.clover";
 const CATALOGUE_REVALIDATE_SECONDS = 60;

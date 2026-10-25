@@ -5,9 +5,7 @@ test.describe("Products catalog", () => {
     const response = await page.goto("/products");
     expect(response?.ok()).toBeTruthy();
 
-    await expect(
-      page.getByRole("heading", { name: "Products" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
 
     const grid = page.locator("ul[role='list']");
     const emptyState = page.getByText(/products are not available/i);
@@ -16,17 +14,13 @@ test.describe("Products catalog", () => {
 
   test("navigates to product details when items exist", async ({ page }) => {
     await page.goto("/products");
-    await expect(
-      page.getByRole("heading", { name: "Products" }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Products" })).toBeVisible();
 
     const cards = page.locator("article");
     const cardCount = await cards.count();
 
     if (cardCount === 0) {
-      await expect(
-        page.getByText(/products are not available/i),
-      ).toBeVisible();
+      await expect(page.getByText(/products are not available/i)).toBeVisible();
       return;
     }
 

@@ -39,7 +39,10 @@ function hashValue(value: string) {
   return Math.abs(hash);
 }
 
-export function getShowcaseTag(id: string, slug?: string): ShowcaseTag | undefined {
+export function getShowcaseTag(
+  id: string,
+  slug?: string,
+): ShowcaseTag | undefined {
   const key = buildStableKey(id, slug);
   if (showcaseCache.has(key)) {
     return showcaseCache.get(key);

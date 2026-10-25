@@ -26,8 +26,7 @@ function resolvePaymentIntentId(
 }
 
 export async function POST(request: Request) {
-  const { STRIPE_WEBHOOK_SECRET: webhookSecret } =
-    readWebhookSecretConfig();
+  const { STRIPE_WEBHOOK_SECRET: webhookSecret } = readWebhookSecretConfig();
   const stripe = getStripeClient();
   const headerList = await Promise.resolve(headers());
   const signature = headerList.get("stripe-signature");
