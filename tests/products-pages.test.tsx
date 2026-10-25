@@ -153,7 +153,7 @@ describe("Products pages", () => {
     expect(metadata.title).toBe("Fern | Mini Shop");
     expect(metadata.alternates?.canonical).toBe("/products/fern");
     expect(metadata.openGraph?.url).toBe("https://example.com/products/fern");
-    expect(metadata.openGraph?.images?.[0]?.url).toBe(product.image);
+    expect(metadata.openGraph?.images).toMatchObject([{ url: product.image }]);
   });
 
   it("calls notFound when product is missing", async () => {

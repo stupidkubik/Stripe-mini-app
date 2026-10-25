@@ -28,7 +28,7 @@ vi.mock("next/cache", () => ({
     return ((...args: Parameters<T>) => {
       cached ??= callback(...args) as ReturnType<T>;
       return cached;
-    }) as T;
+    }) as unknown as T;
   },
 }));
 

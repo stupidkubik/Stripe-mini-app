@@ -1,4 +1,5 @@
 import * as React from "react";
+import type { ToasterProps } from "sonner";
 import { vi } from "vitest";
 
 type ToastFn = ReturnType<typeof vi.fn> & {
@@ -17,7 +18,7 @@ const toast = Object.assign(vi.fn(), {
   dismiss: vi.fn(),
 }) as ToastFn;
 
-export type ToasterProps = Record<string, unknown>;
+export type { ToasterProps };
 
 let lastToasterProps: ToasterProps | null = null;
 

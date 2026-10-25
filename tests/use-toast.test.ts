@@ -1,16 +1,18 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { toast as sonnerToast } from "sonner";
 
 import { useToast } from "@/components/ui/use-toast";
 
+const toastMock = vi.mocked(sonnerToast, true);
+
 describe("useToast", () => {
   beforeEach(() => {
-    sonnerToast.mockClear();
-    sonnerToast.error.mockClear();
-    sonnerToast.success.mockClear();
-    sonnerToast.info.mockClear();
-    sonnerToast.warning.mockClear();
-    sonnerToast.dismiss.mockClear();
+    toastMock.mockClear();
+    toastMock.error.mockClear();
+    toastMock.success.mockClear();
+    toastMock.info.mockClear();
+    toastMock.warning.mockClear();
+    toastMock.dismiss.mockClear();
   });
 
   it("dispatches string toasts", () => {

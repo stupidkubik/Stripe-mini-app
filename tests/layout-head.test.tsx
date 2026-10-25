@@ -37,7 +37,10 @@ describe("App layout and head", () => {
     const { default: RootLayout } = await loadLayout();
 
     const element = RootLayout({ children: <div data-testid="child" /> });
-    const body = element.props.children as React.ReactElement;
+    const body = element.props.children as React.ReactElement<{
+      className?: string;
+      children: React.ReactNode;
+    }>;
 
     expect(element.type).toBe("html");
     expect(element.props.lang).toBe("en");

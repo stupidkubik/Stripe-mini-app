@@ -32,7 +32,7 @@ describe("Sonner Toaster wrapper", () => {
     expect(props?.duration).toBe(4000);
     expect(props?.className).toBe("toaster");
     expect(props?.toastOptions?.classNames?.toast).toBe("toast");
-    expect(props?.style?.["--normal-bg"]).toBe("var(--popover)");
+    expect(props?.style).toMatchObject({ "--normal-bg": "var(--popover)" });
   });
 
   it("prefers explicit theme prop", () => {
