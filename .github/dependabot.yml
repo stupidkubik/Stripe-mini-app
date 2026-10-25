@@ -4,21 +4,32 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Ungrouped majors arrive one PR each; the default of 5 lets them block
+    # grouped updates.
+    open-pull-requests-limit: 10
     ignore:
       # @types/node follows the Node major in .nvmrc and engines.
       - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # typescript-eslint, used by eslint-config-next, rejects TypeScript 7.
+      # Remove once it supports TS 7.
+      - dependency-name: typescript
         update-types: ["version-update:semver-major"]
     groups:
       # next and eslint-config-next must stay on the same version.
       next:
         patterns: ["next", "eslint-config-next"]
+      # react and react-dom must be the same version, majors included.
+      react:
+        patterns: [react, react-dom, "@types/react", "@types/react-dom"]
+      # vitest and its @vitest/* packages are released and peered in lockstep.
+      vitest:
+        patterns: [vitest, "@vitest/*"]
       stripe:
         patterns: ["stripe", "@stripe/*"]
         update-types: [minor, patch]
       testing:
         patterns:
-          - vitest
-          - "@vitest/*"
           - "@testing-library/*"
           - "@playwright/test"
           - jsdom
