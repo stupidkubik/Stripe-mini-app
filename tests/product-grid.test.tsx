@@ -55,4 +55,23 @@ describe("ProductGrid", () => {
     expect(screen.getAllByTestId("product-card")).toHaveLength(20);
     expect(container.querySelector("li[aria-hidden]")).toBeNull();
   });
+
+  it("starts over from the first batch when the product list changes", () => {
+    const { container, rerender } = render(
+      <ProductGrid products={makeProducts(20)} />,
+    );
+    const sentinel = container.querySelector("li[aria-hidden]");
+
+    act(() => {
+      getIntersectionObservers()[0].trigger({
+        target: sentinel as Element,
+        isIntersecting: true,
+      });
+    });
+    expect(screen.getAllByTestId("product-card")).toHaveLength(16);
+
+    rerender(<ProductGrid products={makeProducts(12)} />);
+
+    expect(screen.getAllByTestId("product-card")).toHaveLength(8);
+  });
 });
